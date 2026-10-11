@@ -13,6 +13,15 @@ from xml.sax.saxutils import escape
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+# Topes de tamaño de lo que se acepta al crear o editar. Los textos son de
+# lectura humana (una alerta cabe en pantalla); sin tope, una petición con un
+# cuerpo enorme se guarda tal cual y se sirve a todos los lectores del feed.
+LARGO_TITULO = 200
+LARGO_LINEA = 300
+LARGO_TEXTO = 5000
+LARGO_BLOQUE = 3000
+MAX_DEPARTAMENTOS = 14
+
 TIPOS_ALERTA = ("dengue", "respiratorio")
 NIVELES_ALERTA = ("informativo", "atencion", "intensificacion")
 ETIQUETAS_ALERTA = ("test", "simulacro", "historica")
@@ -153,21 +162,23 @@ class AlertaCrear(BaseModel):
 
     tipo: str
     nivel: str
-    titulo: str
-    contexto: str
-    indicaciones: str
-    fuente: str
-    autor: str
+    titulo: str = Field(max_length=LARGO_TITULO)
+    contexto: str = Field(max_length=LARGO_TEXTO)
+    indicaciones: str = Field(max_length=LARGO_TEXTO)
+    fuente: str = Field(max_length=LARGO_LINEA)
+    autor: str = Field(max_length=LARGO_LINEA)
     vigente_desde: date
     vigente_hasta: date | None = None
     activa: bool = True
     etiqueta: str | None = None
-    departamentos: list[str] | None = None
-    signos_alarma: str | None = None
-    criterios_referencia: str | None = None
-    que_notificar: str | None = None
-    definicion_caso: str | None = None
-    contacto_vigilancia: str | None = None
+    departamentos: list[str] | None = Field(
+        default=None, max_length=MAX_DEPARTAMENTOS
+    )
+    signos_alarma: str | None = Field(default=None, max_length=LARGO_BLOQUE)
+    criterios_referencia: str | None = Field(default=None, max_length=LARGO_BLOQUE)
+    que_notificar: str | None = Field(default=None, max_length=LARGO_BLOQUE)
+    definicion_caso: str | None = Field(default=None, max_length=LARGO_BLOQUE)
+    contacto_vigilancia: str | None = Field(default=None, max_length=LARGO_LINEA)
 
     @field_validator("departamentos")
     @classmethod
@@ -216,21 +227,23 @@ class AlertaParche(BaseModel):
 
     tipo: str | None = None
     nivel: str | None = None
-    titulo: str | None = None
-    contexto: str | None = None
-    indicaciones: str | None = None
-    fuente: str | None = None
-    autor: str | None = None
+    titulo: str | None = Field(default=None, max_length=LARGO_TITULO)
+    contexto: str | None = Field(default=None, max_length=LARGO_TEXTO)
+    indicaciones: str | None = Field(default=None, max_length=LARGO_TEXTO)
+    fuente: str | None = Field(default=None, max_length=LARGO_LINEA)
+    autor: str | None = Field(default=None, max_length=LARGO_LINEA)
     vigente_desde: date | None = None
     vigente_hasta: date | None = None
     activa: bool | None = None
     etiqueta: str | None = Field(default=None)
-    departamentos: list[str] | None = None
-    signos_alarma: str | None = None
-    criterios_referencia: str | None = None
-    que_notificar: str | None = None
-    definicion_caso: str | None = None
-    contacto_vigilancia: str | None = None
+    departamentos: list[str] | None = Field(
+        default=None, max_length=MAX_DEPARTAMENTOS
+    )
+    signos_alarma: str | None = Field(default=None, max_length=LARGO_BLOQUE)
+    criterios_referencia: str | None = Field(default=None, max_length=LARGO_BLOQUE)
+    que_notificar: str | None = Field(default=None, max_length=LARGO_BLOQUE)
+    definicion_caso: str | None = Field(default=None, max_length=LARGO_BLOQUE)
+    contacto_vigilancia: str | None = Field(default=None, max_length=LARGO_LINEA)
 
     @field_validator("departamentos")
     @classmethod
