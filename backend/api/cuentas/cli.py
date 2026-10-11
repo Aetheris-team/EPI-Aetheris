@@ -7,6 +7,10 @@
 Se ejecutan con acceso a la base y al entorno del servicio (Render shell o un
 contenedor local); quien las usa ya tiene ese acceso, y cada una deja su fila
 en la auditoría como actor 'sistema'.
+
+`restablecer-factores` no pide la aprobación de un segundo administrador que
+sí exige la API sobre cuentas de administrador: es la salida cuando no queda
+otro administrador activo que pueda aprobar.
 """
 
 from __future__ import annotations

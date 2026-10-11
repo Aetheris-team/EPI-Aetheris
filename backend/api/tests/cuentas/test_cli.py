@@ -53,6 +53,14 @@ def test_restablecer_factores_por_consola(conn, config, entorno, crear_usuario, 
         cur.execute("SELECT actor_tipo FROM auditoria WHERE accion = 'factores_restablecidos' ORDER BY id DESC LIMIT 1")
         assert cur.fetchone()[0] == "sistema"
 
+def test_restablecer_factores_de_un_administrador_por_consola_no_necesita_aprobacion(conn, entorno, crear_usuario):
+    # Es la salida cuando no hay otro administrador que apruebe: la consola exige acceso a la base.
+    uid = crear_usuario(roles=("administrador",))
+    assert cli.main(["restablecer-factores", "--correo", "persona1@ejemplo.org", "--motivo", "Único administrador, sin quien apruebe"], conn=conn) == 0
+    with conn.cursor() as cur:
+        cur.execute("SELECT actor_tipo FROM auditoria WHERE accion = 'factores_restablecidos' AND objeto_id = %s", (uid,))
+        assert cur.fetchone()[0] == "sistema"
+
 def test_restablecer_factores_cuenta_inexistente(conn, entorno, capsys):
     assert cli.main(["restablecer-factores", "--correo", "nadie@ejemplo.org", "--motivo", "x"], conn=conn) == 1
 

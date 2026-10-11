@@ -212,6 +212,136 @@ def test_auditoria_visible_con_cadena_integra(conn, config, crear_usuario, web):
     assert r.status_code == 200 and r.json()["cadena_integra"] is True
 
 
+# --- restablecer factores de un administrador ------------------------------------------------------
+
+def _factor_totp(conn, uid):
+    with conn.cursor() as cur:
+        cur.execute(
+            "INSERT INTO factores_autenticacion (usuario_id, tipo, etiqueta, totp_secreto_cifrado, totp_clave_version, confirmado_en) "
+            "VALUES (%s, 'totp', 'Teléfono', %s, 1, now())",
+            (uid, b"cifrado"),
+        )
+
+
+def _factores_vigentes(conn, uid):
+    with conn.cursor() as cur:
+        cur.execute("SELECT count(*) FROM factores_autenticacion WHERE usuario_id = %s AND revocado_en IS NULL", (uid,))
+        return cur.fetchone()[0]
+
+
+def _entrar_como(conn, config, web, uid):
+    """Cambia la cookie del cliente a una sesión nueva de `uid` y devuelve sus cabeceras."""
+    from api.cuentas import csrf
+    web.cookies.clear()
+    token, _ = sesiones.crear(conn, config, usuario_id=uid, nivel="completo", metodos=["clave", "webauthn"], reciente=True)
+    web.cookies.set("__Host-epi_sid", token, domain="api.epi-aetheris.dev")
+    return {**ORIGEN, "x-csrf-token": csrf.token_para_sesion(config, sesiones.obtener(conn, config, token).id)}
+
+
+def _aislar_administradores(conn, *ids):
+    with conn.cursor() as cur:
+        cur.execute(
+            "UPDATE usuarios_roles SET revocado_en = now() WHERE rol = 'administrador' AND revocado_en IS NULL "
+            "AND NOT (usuario_id = ANY(%s::uuid[]))",
+            (list(ids),),
+        )
+
+
+def test_restablecer_a_un_administrador_queda_pendiente_hasta_que_otro_confirme(conn, config, crear_usuario, web):
+    objetivo = crear_usuario(roles=("administrador",))
+    _factor_totp(conn, objetivo)
+    pide = crear_usuario(roles=("administrador",))
+    aprueba = crear_usuario(roles=("administrador",))
+    _aislar_administradores(conn, pide, objetivo, aprueba)
+
+    h = _entrar_como(conn, config, web, pide)
+    r = web.post(f"/api/admin/usuarios/{objetivo}/restablecer-factores", headers=h, json={"motivo": "Perdió el teléfono"})
+    assert r.status_code == 202
+    aprobacion = r.json()["aprobacion"]["id"]
+    assert _factores_vigentes(conn, objetivo) == 1
+    # Quien pidió la ve, pero no puede confirmarla.
+    r = web.get("/api/admin/aprobaciones")
+    assert [(a["id"], a["puede_confirmar"], a["es_propia"]) for a in r.json()["aprobaciones"]] == [(aprobacion, False, True)]
+    r = web.post(f"/api/admin/aprobaciones/{aprobacion}/confirmar", headers=h)
+    assert r.status_code == 403 and r.json()["detail"]["codigo"] == "autoaprobacion"
+    assert _factores_vigentes(conn, objetivo) == 1
+
+    h = _entrar_como(conn, config, web, aprueba)
+    assert web.get("/api/admin/aprobaciones").json()["aprobaciones"][0]["puede_confirmar"] is True
+    r = web.post(f"/api/admin/aprobaciones/{aprobacion}/confirmar", headers=h)
+    assert r.status_code == 200
+    assert _factores_vigentes(conn, objetivo) == 0
+    assert web.get("/api/admin/aprobaciones").json()["aprobaciones"] == []
+    r = web.post(f"/api/admin/aprobaciones/{aprobacion}/confirmar", headers=h)
+    assert r.status_code == 409 and r.json()["detail"]["codigo"] == "aprobacion_resuelta"
+
+
+def test_la_cuenta_afectada_no_confirma_su_propio_restablecimiento(conn, config, crear_usuario, web):
+    objetivo = crear_usuario(roles=("administrador",))
+    _factor_totp(conn, objetivo)
+    pide = crear_usuario(roles=("administrador",))
+    aprueba = crear_usuario(roles=("administrador",))
+    _aislar_administradores(conn, pide, objetivo, aprueba)
+    h = _entrar_como(conn, config, web, pide)
+    aprobacion = web.post(f"/api/admin/usuarios/{objetivo}/restablecer-factores", headers=h, json={"motivo": "Perdió el teléfono"}).json()["aprobacion"]["id"]
+    h = _entrar_como(conn, config, web, objetivo)
+    r = web.post(f"/api/admin/aprobaciones/{aprobacion}/confirmar", headers=h)
+    assert r.status_code == 403 and r.json()["detail"]["codigo"] == "sobre_uno_mismo"
+    assert _factores_vigentes(conn, objetivo) == 1
+
+
+def test_confirmar_exige_llave_y_reautenticacion(conn, config, crear_usuario, web):
+    _, h = _admin_con_cookie(conn, config, crear_usuario, web, metodos=("clave", "totp"))
+    r = web.post("/api/admin/aprobaciones/00000000-0000-0000-0000-000000000000/confirmar", headers=h)
+    assert r.status_code == 403 and r.json()["detail"]["codigo"] == "requiere_llave"
+    uid = crear_usuario(roles=("administrador",))
+    token, _ = sesiones.crear(conn, config, usuario_id=uid, nivel="completo", metodos=["clave", "webauthn"], reciente=False)
+    web.cookies.set("__Host-epi_sid", token, domain="api.epi-aetheris.dev")
+    from api.cuentas import csrf
+    h = {**ORIGEN, "x-csrf-token": csrf.token_para_sesion(config, sesiones.obtener(conn, config, token).id)}
+    r = web.post("/api/admin/aprobaciones/00000000-0000-0000-0000-000000000000/confirmar", headers=h)
+    assert r.status_code == 403 and r.json()["detail"]["codigo"] == "requiere_reautenticacion"
+
+
+def test_solicitud_inexistente_o_mal_formada_da_404(conn, config, crear_usuario, web):
+    _, h = _admin_con_cookie(conn, config, crear_usuario, web)
+    for ruta in ("/api/admin/aprobaciones/no-es-uuid/confirmar", "/api/admin/aprobaciones/00000000-0000-0000-0000-000000000000/rechazar"):
+        r = web.post(ruta, headers=h)
+        assert r.status_code == 404 and r.json()["detail"]["codigo"] == "aprobacion_inexistente"
+
+
+def test_sin_otro_administrador_la_ruta_responde_409_y_remite_a_la_consola(conn, config, crear_usuario, web):
+    objetivo = crear_usuario(roles=("administrador",))
+    pide, h = _admin_con_cookie(conn, config, crear_usuario, web)
+    _aislar_administradores(conn, pide, objetivo)
+    r = web.post(f"/api/admin/usuarios/{objetivo}/restablecer-factores", headers=h, json={"motivo": "Perdió el teléfono"})
+    assert r.status_code == 409 and r.json()["detail"]["codigo"] == "sin_aprobador"
+    assert "api.cuentas.cli" in r.json()["detail"]["mensaje"]
+
+
+def test_restablecer_a_alguien_que_no_es_administrador_sigue_respondiendo_200(conn, config, crear_usuario, web):
+    objetivo = crear_usuario(roles=("publicador",))
+    _factor_totp(conn, objetivo)
+    _, h = _admin_con_cookie(conn, config, crear_usuario, web)
+    r = web.post(f"/api/admin/usuarios/{objetivo}/restablecer-factores", headers=h, json={"motivo": "Perdió el teléfono"})
+    assert r.status_code == 200 and _factores_vigentes(conn, objetivo) == 0
+
+
+def test_las_rutas_de_restablecimiento_tienen_limite_de_tasa(conn, config, crear_usuario):
+    app, _ = crear_app(conn, config, limite_auth="2/minute", limiter_activo=True)
+    cliente = TestClient(app, base_url="https://api.epi-aetheris.dev")
+    uid = crear_usuario(roles=("administrador",))
+    token, _ = sesiones.crear(conn, config, usuario_id=uid, nivel="completo", metodos=["clave", "webauthn"], reciente=True)
+    cliente.cookies.set("__Host-epi_sid", token, domain="api.epi-aetheris.dev")
+    from api.cuentas import csrf
+    h = {**ORIGEN, "x-csrf-token": csrf.token_para_sesion(config, sesiones.obtener(conn, config, token).id)}
+    otra = "00000000-0000-0000-0000-000000000000"
+    for ruta in (f"/api/admin/usuarios/{otra}/restablecer-factores", f"/api/admin/aprobaciones/{otra}/confirmar", f"/api/admin/aprobaciones/{otra}/rechazar"):
+        codigos = [cliente.post(ruta, headers=h, json={"motivo": "Prueba del límite"} if "usuarios" in ruta else None).status_code for _ in range(3)]
+        assert codigos[2] == 429, (ruta, codigos)
+        cliente.app.state.limiter.reset()
+
+
 # --- matriz de permisos ---------------------------------------------------------------------------
 
 @dataclass
@@ -293,7 +423,7 @@ def test_ninguna_ruta_de_administracion_acepta_otros_roles(conn, config, crear_u
     for r in _rutas_de(web.app_):
         if not r.path.startswith("/api/admin"):
             continue
-        ruta = r.path.replace("{usuario_id}", uid).replace("{institucion_id}", "1")
+        ruta = r.path.replace("{usuario_id}", uid).replace("{institucion_id}", "1").replace("{aprobacion_id}", uid)
         metodo = _metodo(r)
         resp = web.request(metodo, ruta, headers=h, json={} if metodo != "GET" else None)
         assert resp.status_code == 403, (metodo, r.path, resp.status_code)
@@ -306,7 +436,7 @@ def test_sin_cookie_toda_ruta_privada_da_401(web):
         metodo = _metodo(r)
         if (metodo, r.path) in rutas.RUTAS_SIN_SESION:
             continue
-        ruta = r.path.replace("{usuario_id}", "x").replace("{institucion_id}", "1").replace("{factor_id}", "x")
+        ruta = r.path.replace("{usuario_id}", "x").replace("{institucion_id}", "1").replace("{factor_id}", "x").replace("{aprobacion_id}", "x")
         resp = web.request(metodo, ruta, headers=ORIGEN, json={} if metodo != "GET" else None)
         assert resp.status_code == 401, (metodo, r.path, resp.status_code)
 

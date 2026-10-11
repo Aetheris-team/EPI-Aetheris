@@ -484,10 +484,40 @@ def crear_router(
         return {"mensaje": "Estado actualizado."}
 
     @admin.post("/usuarios/{usuario_id}/restablecer-factores")
-    def restablecer_factores(usuario_id: str, datos: MotivoIn, tareas: BackgroundTasks, sesion: Sesion = Depends(requerir("admin.restablecer_factores")), config: ConfigCuentas = Depends(_config)):
+    @limiter.limit(limite_auth)
+    def restablecer_factores(request: Request, response: Response, usuario_id: str, datos: MotivoIn, tareas: BackgroundTasks, sesion: Sesion = Depends(requerir("admin.restablecer_factores")), config: ConfigCuentas = Depends(_config)):
         with tx() as conn:
-            _enviar(tareas, conn, config, servicio.restablecer_factores(conn, usuario_id, actor=sesion, motivo=datos.motivo))
+            resultado = servicio.solicitar_restablecimiento_de_factores(conn, config, sesion, usuario_id, datos.motivo)
+            for pendiente in resultado.correos:
+                _enviar(tareas, conn, config, pendiente)
+        if resultado.hecho:
+            return {"mensaje": "Factores restablecidos."}
+        # Sobre un administrador queda esperando a que otro lo confirme.
+        response.status_code = 202
+        return {
+            "mensaje": "Solicitud creada. Otro administrador debe confirmarla antes de que caduque.",
+            "aprobacion": resultado.aprobacion,
+        }
+
+    @admin.get("/aprobaciones")
+    def aprobaciones(response: Response, sesion: Sesion = Depends(requerir("admin.ver_aprobaciones"))):
+        response.headers["Cache-Control"] = "no-store"
+        with abrir_conexion() as conn:
+            return {"aprobaciones": servicio.listar_aprobaciones(conn, sesion)}
+
+    @admin.post("/aprobaciones/{aprobacion_id}/confirmar")
+    @limiter.limit(limite_auth)
+    def confirmar_aprobacion(request: Request, aprobacion_id: str, tareas: BackgroundTasks, sesion: Sesion = Depends(requerir("admin.resolver_aprobaciones")), config: ConfigCuentas = Depends(_config)):
+        with tx() as conn:
+            _enviar(tareas, conn, config, servicio.confirmar_restablecimiento_de_factores(conn, sesion, aprobacion_id))
         return {"mensaje": "Factores restablecidos."}
+
+    @admin.post("/aprobaciones/{aprobacion_id}/rechazar")
+    @limiter.limit(limite_auth)
+    def rechazar_aprobacion(request: Request, aprobacion_id: str, sesion: Sesion = Depends(requerir("admin.resolver_aprobaciones"))):
+        with tx() as conn:
+            servicio.rechazar_restablecimiento_de_factores(conn, sesion, aprobacion_id)
+        return {"mensaje": "Solicitud resuelta sin cambios."}
 
     @admin.get("/instituciones")
     def instituciones(response: Response, sesion: Sesion = Depends(requerir("admin.gestionar_instituciones"))):

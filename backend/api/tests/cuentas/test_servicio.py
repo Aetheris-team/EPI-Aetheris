@@ -1,7 +1,8 @@
+import psycopg2.errors
 import pyotp
 import pytest
 
-from api.cuentas import auditoria, recuperacion, servicio, sesiones, tokens, totp
+from api.cuentas import auditoria, correo, recuperacion, servicio, sesiones, tokens, totp
 from api.cuentas.servicio import ErrorCuentas
 
 CLAVE = "una clave bastante larga 1"
@@ -355,6 +356,203 @@ def test_no_se_restablecen_los_propios_factores(conn, config, crear_usuario):
     admin = _admin_sesion(conn, config, crear_usuario)
     with pytest.raises(ErrorCuentas):
         servicio.restablecer_factores(conn, admin.usuario_id, actor=admin, motivo="no")
+
+
+# --- restablecer factores de un administrador: segunda aprobación ---------------------------------
+
+def _solo_estos_administradores(conn, *ids):
+    """Aísla la prueba de administradores que ya haya en la base."""
+    with conn.cursor() as cur:
+        cur.execute(
+            "UPDATE usuarios_roles SET revocado_en = now() WHERE rol = 'administrador' AND revocado_en IS NULL "
+            "AND NOT (usuario_id = ANY(%s::uuid[]))",
+            (list(ids),),
+        )
+
+
+def _sesion_de(conn, config, uid):
+    token, _ = sesiones.crear(conn, config, usuario_id=uid, nivel="completo", metodos=["clave", "webauthn"], reciente=True)
+    return sesiones.obtener(conn, config, token)
+
+
+def _administrador_con_factor(conn, crear_usuario) -> str:
+    uid = crear_usuario(roles=("administrador",))
+    with conn.cursor() as cur:
+        cur.execute(
+            "INSERT INTO factores_autenticacion (usuario_id, tipo, etiqueta, totp_secreto_cifrado, totp_clave_version, confirmado_en) "
+            "VALUES (%s, 'totp', 'Teléfono', %s, 1, now())",
+            (uid, b"cifrado"),
+        )
+    return uid
+
+
+def _tres_administradores(conn, config, crear_usuario):
+    """Quien pide, la cuenta afectada (con TOTP y una sesión abierta) y quien puede aprobar."""
+    pide = _admin_sesion(conn, config, crear_usuario)
+    uid_objetivo = _administrador_con_factor(conn, crear_usuario)
+    token_objetivo, _ = sesiones.crear(conn, config, usuario_id=uid_objetivo, nivel="completo", metodos=["clave", "totp"])
+    aprueba = _admin_sesion(conn, config, crear_usuario)
+    _solo_estos_administradores(conn, pide.usuario_id, uid_objetivo, aprueba.usuario_id)
+    return pide, uid_objetivo, token_objetivo, aprueba
+
+
+def _factores_vigentes(conn, uid) -> int:
+    with conn.cursor() as cur:
+        cur.execute("SELECT count(*) FROM factores_autenticacion WHERE usuario_id = %s AND revocado_en IS NULL", (uid,))
+        return cur.fetchone()[0]
+
+
+def test_un_administrador_no_restablece_solo_los_factores_de_otro_administrador(conn, config, crear_usuario):
+    pide, objetivo, token_objetivo, _ = _tres_administradores(conn, config, crear_usuario)
+    assert _factores_vigentes(conn, objetivo) == 1
+    resultado = servicio.solicitar_restablecimiento_de_factores(conn, config, pide, objetivo, "Perdió el teléfono")
+    assert not resultado.hecho and resultado.aprobacion["id"]
+    # Nada cambió en la cuenta afectada mientras nadie confirme.
+    assert _factores_vigentes(conn, objetivo) == 1
+    assert sesiones.obtener(conn, config, token_objetivo) is not None
+    with conn.cursor() as cur:
+        cur.execute("SELECT estado FROM usuarios WHERE id = %s", (objetivo,))
+        assert cur.fetchone()[0] == "activo"
+
+
+def test_la_funcion_de_bajo_nivel_tampoco_restablece_a_un_administrador_sin_aprobacion(conn, config, crear_usuario):
+    pide, objetivo, _, _ = _tres_administradores(conn, config, crear_usuario)
+    with pytest.raises(ErrorCuentas) as e:
+        servicio.restablecer_factores(conn, objetivo, actor=pide, motivo="Perdió el teléfono")
+    assert e.value.codigo == "requiere_aprobacion"
+    assert _factores_vigentes(conn, objetivo) == 1
+
+
+def test_otro_administrador_confirma_y_la_auditoria_nombra_a_los_dos(conn, config, crear_usuario):
+    pide, objetivo, token_objetivo, aprueba = _tres_administradores(conn, config, crear_usuario)
+    aprobacion = servicio.solicitar_restablecimiento_de_factores(conn, config, pide, objetivo, "Perdió el teléfono").aprobacion
+    aviso = servicio.confirmar_restablecimiento_de_factores(conn, aprueba, aprobacion["id"])
+    assert aviso.plantilla == "aviso_factores_restablecidos"
+    assert _factores_vigentes(conn, objetivo) == 0
+    assert sesiones.obtener(conn, config, token_objetivo) is None
+    with conn.cursor() as cur:
+        cur.execute("SELECT estado, resuelta_por FROM aprobaciones_administrativas WHERE id = %s", (aprobacion["id"],))
+        assert cur.fetchone() == ("aprobada", aprueba.usuario_id)
+        cur.execute("SELECT actor_id, detalle FROM auditoria WHERE accion = 'factores_restablecidos' AND objeto_id = %s", (objetivo,))
+        actor, detalle = cur.fetchone()
+        assert str(actor) == aprueba.usuario_id
+        assert detalle["solicitado_por"] == pide.usuario_id and detalle["aprobado_por"] == aprueba.usuario_id
+        assert detalle["aprobacion_id"] == aprobacion["id"]
+        cur.execute("SELECT actor_id FROM auditoria WHERE accion = 'restablecimiento_factores_solicitado' AND objeto_id = %s", (objetivo,))
+        assert str(cur.fetchone()[0]) == pide.usuario_id
+    assert servicio.listar_aprobaciones(conn, aprueba) == []
+
+
+def test_nadie_aprueba_su_propia_solicitud_ni_la_de_su_cuenta(conn, config, crear_usuario):
+    pide, objetivo, token_objetivo, _ = _tres_administradores(conn, config, crear_usuario)
+    aprobacion = servicio.solicitar_restablecimiento_de_factores(conn, config, pide, objetivo, "Perdió el teléfono").aprobacion
+    with pytest.raises(ErrorCuentas) as e:
+        servicio.confirmar_restablecimiento_de_factores(conn, pide, aprobacion["id"])
+    assert e.value.codigo == "autoaprobacion"
+    with pytest.raises(ErrorCuentas) as e:
+        servicio.confirmar_restablecimiento_de_factores(conn, _sesion_de(conn, config, objetivo), aprobacion["id"])
+    assert e.value.codigo == "sobre_uno_mismo"
+    assert _factores_vigentes(conn, objetivo) == 1
+    assert sesiones.obtener(conn, config, token_objetivo) is not None
+
+
+def test_la_base_rechaza_una_aprobacion_del_propio_solicitante(conn, config, crear_usuario):
+    pide, objetivo, _, _ = _tres_administradores(conn, config, crear_usuario)
+    aprobacion = servicio.solicitar_restablecimiento_de_factores(conn, config, pide, objetivo, "Perdió el teléfono").aprobacion
+    with conn.cursor() as cur:
+        cur.execute("SAVEPOINT intento")
+        with pytest.raises(psycopg2.errors.CheckViolation):
+            cur.execute(
+                "UPDATE aprobaciones_administrativas SET estado = 'aprobada', resuelta_por = solicitante_id, "
+                "resuelta_en = now() WHERE id = %s",
+                (aprobacion["id"],),
+            )
+        cur.execute("ROLLBACK TO SAVEPOINT intento")
+
+
+def test_la_solicitud_caduca(conn, config, crear_usuario):
+    pide, objetivo, token_objetivo, aprueba = _tres_administradores(conn, config, crear_usuario)
+    aprobacion = servicio.solicitar_restablecimiento_de_factores(conn, config, pide, objetivo, "Perdió el teléfono").aprobacion
+    with conn.cursor() as cur:
+        cur.execute(
+            "UPDATE aprobaciones_administrativas SET creada_en = now() - interval '2 days', "
+            "caduca_en = now() - interval '1 day' WHERE id = %s",
+            (aprobacion["id"],),
+        )
+    assert servicio.listar_aprobaciones(conn, aprueba) == []
+    with pytest.raises(ErrorCuentas) as e:
+        servicio.confirmar_restablecimiento_de_factores(conn, aprueba, aprobacion["id"])
+    assert e.value.codigo == "aprobacion_caducada" and e.value.status == 410
+    assert _factores_vigentes(conn, objetivo) == 1
+    assert sesiones.obtener(conn, config, token_objetivo) is not None
+    with conn.cursor() as cur:
+        cur.execute("SELECT estado FROM aprobaciones_administrativas WHERE id = %s", (aprobacion["id"],))
+        assert cur.fetchone()[0] == "caducada"
+    # Con la anterior caducada se puede pedir otra.
+    assert not servicio.solicitar_restablecimiento_de_factores(conn, config, pide, objetivo, "Perdió el teléfono").hecho
+
+
+def test_sin_otro_administrador_la_solicitud_se_niega_y_la_consola_sigue_siendo_la_salida(conn, config, crear_usuario):
+    pide = _admin_sesion(conn, config, crear_usuario)
+    objetivo = _administrador_con_factor(conn, crear_usuario)
+    _solo_estos_administradores(conn, pide.usuario_id, objetivo)
+    with pytest.raises(ErrorCuentas) as e:
+        servicio.solicitar_restablecimiento_de_factores(conn, config, pide, objetivo, "Perdió el teléfono")
+    assert e.value.codigo == "sin_aprobador" and "cli" in e.value.mensaje
+    assert _factores_vigentes(conn, objetivo) == 1
+    # La consola del propietario no necesita aprobación y deja actor 'sistema'.
+    servicio.restablecer_factores(conn, objetivo, actor=None, motivo="Salida de la consola")
+    assert _factores_vigentes(conn, objetivo) == 0
+
+
+def test_no_hay_dos_solicitudes_pendientes_para_la_misma_cuenta(conn, config, crear_usuario):
+    pide, objetivo, _, aprueba = _tres_administradores(conn, config, crear_usuario)
+    servicio.solicitar_restablecimiento_de_factores(conn, config, pide, objetivo, "Perdió el teléfono")
+    for actor in (pide, aprueba):
+        with pytest.raises(ErrorCuentas) as e:
+            servicio.solicitar_restablecimiento_de_factores(conn, config, actor, objetivo, "Otra vez, por si acaso")
+        assert e.value.codigo == "aprobacion_pendiente"
+
+
+def test_rechazar_y_cancelar_dejan_la_cuenta_intacta(conn, config, crear_usuario):
+    pide, objetivo, _, aprueba = _tres_administradores(conn, config, crear_usuario)
+    primera = servicio.solicitar_restablecimiento_de_factores(conn, config, pide, objetivo, "Perdió el teléfono").aprobacion
+    servicio.rechazar_restablecimiento_de_factores(conn, aprueba, primera["id"])
+    segunda = servicio.solicitar_restablecimiento_de_factores(conn, config, pide, objetivo, "Perdió el teléfono").aprobacion
+    servicio.rechazar_restablecimiento_de_factores(conn, pide, segunda["id"])
+    with conn.cursor() as cur:
+        cur.execute("SELECT estado FROM aprobaciones_administrativas WHERE id IN (%s, %s) ORDER BY creada_en", (primera["id"], segunda["id"]))
+        assert [f[0] for f in cur.fetchall()] == ["rechazada", "cancelada"]
+    with pytest.raises(ErrorCuentas) as e:
+        servicio.confirmar_restablecimiento_de_factores(conn, aprueba, primera["id"])
+    assert e.value.codigo == "aprobacion_resuelta"
+    assert _factores_vigentes(conn, objetivo) == 1
+
+
+def test_si_quien_pidio_ya_no_es_administrador_no_se_ejecuta(conn, config, crear_usuario):
+    pide, objetivo, _, aprueba = _tres_administradores(conn, config, crear_usuario)
+    aprobacion = servicio.solicitar_restablecimiento_de_factores(conn, config, pide, objetivo, "Perdió el teléfono").aprobacion
+    servicio.cambiar_estado(conn, aprueba, pide.usuario_id, "suspendido", "Cuenta comprometida")
+    with pytest.raises(ErrorCuentas) as e:
+        servicio.confirmar_restablecimiento_de_factores(conn, aprueba, aprobacion["id"])
+    assert e.value.codigo == "solicitante_sin_vigencia"
+    assert _factores_vigentes(conn, objetivo) == 1
+
+
+def test_la_solicitud_avisa_a_los_demas_administradores(conn, config, crear_usuario):
+    pide, objetivo, _, aprueba = _tres_administradores(conn, config, crear_usuario)
+    resultado = servicio.solicitar_restablecimiento_de_factores(conn, config, pide, objetivo, "Perdió el teléfono")
+    assert {c.usuario_id for c in resultado.correos} == {objetivo, aprueba.usuario_id}
+    assert all(c.plantilla == "aprobacion_pendiente" for c in resultado.correos)
+    construido = correo.construir("aprobacion_pendiente", "x@ejemplo.org", resultado.correos[0].datos)
+    assert "/admin/usuarios" in construido.cuerpo
+
+
+def test_restablecer_a_alguien_que_no_es_administrador_sigue_siendo_inmediato(conn, config, crear_usuario):
+    pide, _, _, _ = _tres_administradores(conn, config, crear_usuario)
+    uid, _, _ = _alta_completa(conn, config, pide, correo="publicadora@ejemplo.org")
+    resultado = servicio.solicitar_restablecimiento_de_factores(conn, config, pide, uid, "Perdió el teléfono")
+    assert resultado.hecho and _factores_vigentes(conn, uid) == 0
 
 
 def test_auditoria_encadenada_y_sin_secretos(conn, config, crear_usuario):

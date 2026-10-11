@@ -24,6 +24,8 @@ POLITICA: dict[str, frozenset[str]] = {
     "admin.cambiar_roles": frozenset({"administrador"}),
     "admin.suspender": frozenset({"administrador"}),
     "admin.restablecer_factores": frozenset({"administrador"}),
+    "admin.ver_aprobaciones": frozenset({"administrador"}),
+    "admin.resolver_aprobaciones": frozenset({"administrador"}),
     "admin.gestionar_instituciones": frozenset({"administrador"}),
     "admin.ver_auditoria": frozenset({"administrador"}),
 }
@@ -37,6 +39,7 @@ REQUIEREN_REAUTENTICACION = frozenset(
         "admin.cambiar_roles",
         "admin.suspender",
         "admin.restablecer_factores",
+        "admin.resolver_aprobaciones",
     }
 )
 
@@ -48,6 +51,7 @@ REQUIEREN_LLAVE = frozenset(
         "admin.invitar",
         "admin.cambiar_roles",
         "admin.restablecer_factores",
+        "admin.resolver_aprobaciones",
         "admin.suspender",
     }
 )
