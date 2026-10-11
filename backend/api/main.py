@@ -1198,10 +1198,12 @@ def ira_departamental(request: Request, response: Response):
     espejo de /api/casos-departamentales. Capa DESCRIPTIVA, ver
     AVISO_HONESTIDAD_IRA.
 
-    RATE_LIMIT_HEAVY (no el limite global): LEFT JOIN + GROUP BY sobre toda
-    la ventana cargada en cada request, el endpoint mas lento reportado por
-    el informe de rendimiento externo -- mismo criterio que
-    /api/casos-departamentales."""
+    RATE_LIMIT_HEAVY (no el limite global), mismo criterio que
+    /api/casos-departamentales. El informe de rendimiento externo lo señaló
+    como el más lento; medido con el seed, la consulta tarda ~2 ms con las
+    páginas en memoria y ~160 ms cuando hay que leerlas de disco (la BD de
+    Render tiene 256 MB). El cache de respuestas la evita salvo una vez por
+    CACHE_TTL_HISTORICO."""
     clave = ("ira-departamental",)
     if (cacheada := _desde_cache(clave)) is not None:
         return cacheada

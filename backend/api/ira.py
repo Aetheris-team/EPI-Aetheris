@@ -32,7 +32,11 @@ AVISO_HONESTIDAD_IRA = (
 def cargar_ira_departamental(conn) -> list[dict]:
     """Resumen por departamento: total notificado, semanas con dato, rango
     de años. Mismo patrón que /api/casos-departamentales (main.py) pero
-    filtrando clasificacion='notificado' en vez de probable/confirmado."""
+    filtrando clasificacion='notificado' en vez de probable/confirmado.
+
+    count(c.id) y no count(*): el LEFT JOIN sin coincidencias deja una
+    fila con c.* = NULL, y count(*) la cuenta como una semana con dato
+    (fila fantasma, issue #84; misma corrección que neumonias.py)."""
     with conn.cursor() as cur:
         cur.execute(
             """
@@ -40,7 +44,7 @@ def cargar_ira_departamental(conn) -> list[dict]:
                 r.nombre,
                 r.codigo,
                 sum(c.conteo) AS notificado_total,
-                count(*) AS semanas_con_dato,
+                count(c.id) AS semanas_con_dato,
                 min(c.anio) AS primer_anio,
                 max(c.anio) AS ultimo_anio
             FROM regiones r

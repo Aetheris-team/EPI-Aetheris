@@ -19,6 +19,7 @@ BACKEND_DIR = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(BACKEND_DIR))
 
 from api.main import app  # noqa: E402
+from api.ira import cargar_ira_departamental  # noqa: E402
 from api.neumonias import cargar_neumonias_departamental  # noqa: E402
 
 ENDPOINTS_DEGRADABLES = [
@@ -136,5 +137,37 @@ def test_cargar_neumonias_departamental_semanas_cero_si_join_vacio():
     assert filas[0]["notificado_total"] == 0
     assert filas[0]["primer_anio"] is None
     assert filas[0]["ultimo_anio"] is None
+    assert "count(c.id)" in conn.cur.sql
+    assert "count(*)" not in conn.cur.sql
+
+
+def test_cargar_ira_departamental_semanas_cero_si_join_vacio():
+    """Mismo caso que neumonías: un departamento sin filas de IRA no debe
+    reportar semanas_con_dato=1 por la fila fantasma del LEFT JOIN."""
+
+    class _Cursor:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def execute(self, sql, params=None):
+            self.sql = sql
+
+        def fetchall(self):
+            return [("Ahuachapán", "SV-AH", None, 0, None, None)]
+
+    class _Conn:
+        def __init__(self):
+            self.cur = _Cursor()
+
+        def cursor(self):
+            return self.cur
+
+    conn = _Conn()
+    filas = cargar_ira_departamental(conn)
+    assert filas[0]["semanas_con_dato"] == 0
+    assert filas[0]["notificado_total"] == 0
     assert "count(c.id)" in conn.cur.sql
     assert "count(*)" not in conn.cur.sql
