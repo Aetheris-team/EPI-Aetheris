@@ -5,9 +5,11 @@ from dataclasses import dataclass
 import pyotp
 import pytest
 from fastapi.routing import APIRoute
+from pydantic import ValidationError
 from starlette.testclient import TestClient
 
 from api.cuentas import permisos, rutas, servicio, sesiones
+from api.cuentas.rutas import InstitucionIn
 
 from .conftest_http import crear_app
 from .test_servicio import CLAVE, _admin_sesion
@@ -339,3 +341,17 @@ def test_sin_configuracion_las_rutas_responden_503(conn):
         config_fn=sin_config, remitente=correo.RemitenteEnMemoria(), ip_fn=lambda r: "x"))
     resp = TestClient(app).post("/api/cuenta/ingresar", headers=ORIGEN, json={"correo": "a@b.org", "contrasena": "x"})
     assert resp.status_code == 503 and resp.json()["detail"]["codigo"] == "cuentas_no_configuradas"
+
+
+@pytest.mark.parametrize(
+    "sitio", ["javascript:alert(1)", "data:text/html,<b>x</b>", "ftp://institucion.org", "//institucion.org", "institucion.org", "https://"]
+)
+def test_institucion_rechaza_sitio_web_que_no_es_http(sitio):
+    with pytest.raises(ValidationError):
+        InstitucionIn(nombre="Institución de prueba", tipo="academica", sitio_web=sitio)
+
+
+@pytest.mark.parametrize("sitio", ["https://institucion.org", " http://institucion.org/ruta ", None, "  "])
+def test_institucion_acepta_sitio_web_http_o_vacio(sitio):
+    datos = InstitucionIn(nombre="Institución de prueba", tipo="academica", sitio_web=sitio)
+    assert datos.sitio_web in ("https://institucion.org", "http://institucion.org/ruta", None)
