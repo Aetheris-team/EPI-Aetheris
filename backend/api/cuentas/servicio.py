@@ -586,6 +586,19 @@ def cambiar_clave(conn, config: ConfigCuentas, sesion: Sesion, *, actual: str, n
 
 # --- Administración de personas -------------------------------------------------------------
 
+# Número arbitrario y fijo: todas las operaciones que pueden reducir el grupo
+# de administradores toman este bloqueo antes de contarlos. Sin él, dos
+# administradores que se suspenden entre sí a la vez ven cada uno al otro como
+# activo (READ COMMITTED) y ambos pasan la comprobación, y el sistema se queda
+# sin administradores. El bloqueo se libera solo al cerrar la transacción.
+_BLOQUEO_ADMINISTRADORES = 5_202_410_001
+
+
+def _serializar_cambios_de_administradores(conn) -> None:
+    with conn.cursor() as cur:
+        cur.execute("SELECT pg_advisory_xact_lock(%s)", (_BLOQUEO_ADMINISTRADORES,))
+
+
 def _administradores_activos(conn, excluyendo: str | None = None) -> int:
     with conn.cursor() as cur:
         cur.execute(
@@ -619,6 +632,7 @@ def cambiar_roles(conn, config: ConfigCuentas, actor: Sesion, usuario_id: str, r
         raise ErrorCuentas("roles_invalidos", "Hay roles que no existen.")
     if usuario_id == actor.usuario_id:
         raise ErrorCuentas("sobre_uno_mismo", "No puedes cambiar tus propios roles.", 403)
+    _serializar_cambios_de_administradores(conn)
     actuales = roles_de(conn, usuario_id)
     if "administrador" in actuales and "administrador" not in roles and _administradores_activos(conn, usuario_id) < 1:
         raise ErrorCuentas("ultimo_administrador", "No se puede dejar al sistema sin administradores.", 409)
@@ -648,6 +662,7 @@ def cambiar_estado(conn, actor: Sesion, usuario_id: str, nuevo_estado: str, moti
         raise ErrorCuentas("sobre_uno_mismo", "No puedes cambiar el estado de tu propia cuenta.", 403)
     if len(motivo.strip()) < 5:
         raise ErrorCuentas("motivo_corto", "Escribe el motivo.")
+    _serializar_cambios_de_administradores(conn)
     with conn.cursor() as cur:
         cur.execute("SELECT estado FROM usuarios WHERE id = %s FOR UPDATE", (usuario_id,))
         fila = cur.fetchone()

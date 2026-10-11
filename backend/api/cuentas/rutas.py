@@ -15,9 +15,10 @@ from __future__ import annotations
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from typing import Callable
+from urllib.parse import urlparse
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, Response
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from . import auditoria, correo, csrf, llaves, permisos, servicio, sesiones
 from .config import COOKIE_SESION, ConfigCuentas
@@ -124,6 +125,18 @@ class InstitucionIn(_Entrada):
     tipo: str = Field(max_length=20)
     dominios_correo: list[str] = Field(default_factory=list, max_length=20)
     sitio_web: str | None = Field(default=None, max_length=300)
+
+    @field_validator("sitio_web")
+    @classmethod
+    def _solo_http(cls, valor: str | None) -> str | None:
+        # Solo http(s): un esquema como javascript: o data: en un href futuro
+        # ejecutaría código en quien haga clic.
+        if valor is None or not valor.strip():
+            return None
+        partes = urlparse(valor.strip())
+        if partes.scheme not in ("http", "https") or not partes.netloc:
+            raise ValueError("El sitio web debe empezar por http:// o https://")
+        return valor.strip()
 
 
 class VerificarInstitucionIn(_Entrada):

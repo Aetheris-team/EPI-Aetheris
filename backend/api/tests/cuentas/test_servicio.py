@@ -296,6 +296,39 @@ def test_no_se_deja_al_sistema_sin_administradores(conn, config, crear_usuario):
     assert e.value.codigo == "ultimo_administrador"
 
 
+def _tiene_el_bloqueo_de_administradores(conn) -> bool:
+    # La auditoría también toma bloqueos asesores (cadena de hashes), así que se
+    # busca el de administradores por su clave. pg_locks parte la clave bigint
+    # en classid (32 bits altos) y objid (32 bajos).
+    clave = servicio._BLOQUEO_ADMINISTRADORES
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT count(*) FROM pg_locks WHERE locktype = 'advisory' AND pid = pg_backend_pid() "
+            "AND classid = %s AND objid = %s AND objsubid = 1",
+            (clave >> 32, clave & 0xFFFFFFFF),
+        )
+        return cur.fetchone()[0] == 1
+
+
+def test_cambiar_estado_serializa_los_cambios_de_administradores(conn, config, crear_usuario):
+    # Dos administradores que se suspenden entre sí a la vez pasarían ambos la
+    # cuenta de "queda otro activo" (READ COMMITTED). El bloqueo asesor los
+    # pone en fila; la prueba comprueba que se toma, sin simular la concurrencia.
+    actor = _admin_sesion(conn, config, crear_usuario)
+    otro = crear_usuario(roles=("administrador",))
+    assert not _tiene_el_bloqueo_de_administradores(conn)
+    servicio.cambiar_estado(conn, actor, otro, "suspendido", "Prueba de serialización")
+    assert _tiene_el_bloqueo_de_administradores(conn)
+
+
+def test_cambiar_roles_serializa_los_cambios_de_administradores(conn, config, crear_usuario):
+    actor = _admin_sesion(conn, config, crear_usuario)
+    otro = crear_usuario(roles=("administrador",))
+    assert not _tiene_el_bloqueo_de_administradores(conn)
+    servicio.cambiar_roles(conn, config, actor, otro, ["publicador"])
+    assert _tiene_el_bloqueo_de_administradores(conn)
+
+
 def test_cambio_de_roles_cierra_sesiones_y_audita(conn, config, crear_usuario):
     actor = _admin_sesion(conn, config, crear_usuario)
     uid = crear_usuario(roles=("publicador",))
