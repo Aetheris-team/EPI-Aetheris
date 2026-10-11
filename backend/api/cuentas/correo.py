@@ -46,6 +46,14 @@ PLANTILLAS: dict[str, tuple[str, str]] = {
         "Un administrador restableció los segundos factores de tu cuenta de EPI-Aetheris.\n"
         "La próxima vez que ingreses con tu contraseña te pediremos configurarlos de nuevo.\n",
     ),
+    "aprobacion_pendiente": (
+        "Hay un restablecimiento de factores pendiente de tu aprobación",
+        "{solicitante} pidió restablecer los segundos factores de la cuenta de administrador de {objetivo}.\n"
+        "Motivo indicado: {motivo}\n\n"
+        "Otro administrador, distinto de quien lo pidió y de la cuenta afectada, debe confirmarlo o rechazarlo "
+        "antes de que caduque. Hazlo desde el panel de administración:\n{enlace}\n\n"
+        "Si no reconoces la solicitud, recházala.\n",
+    ),
     "aviso_codigo_recuperacion": (
         "Usaste un código de recuperación",
         "Se usó un código de recuperación para entrar a tu cuenta de EPI-Aetheris.\n"

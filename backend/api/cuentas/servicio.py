@@ -8,7 +8,8 @@ persona son `ErrorCuentas` con un mensaje apto para la interfaz.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import uuid
+from dataclasses import dataclass, field
 
 import psycopg2.errors
 
@@ -683,28 +684,271 @@ def cambiar_estado(conn, actor: Sesion, usuario_id: str, nuevo_estado: str, moti
     )
 
 
+def _es_uuid(valor: str) -> bool:
+    try:
+        uuid.UUID(str(valor))
+    except ValueError:
+        return False
+    return True
+
+
+def _es_administrador_activo(conn, usuario_id: str) -> bool:
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT 1 FROM usuarios u JOIN usuarios_roles r ON r.usuario_id = u.id "
+            "WHERE u.id = %s AND u.estado = 'activo' AND r.rol = 'administrador' AND r.revocado_en IS NULL",
+            (usuario_id,),
+        )
+        return cur.fetchone() is not None
+
+
+def _administradores_activos_excepto(conn, excluyendo: list[str]) -> list[tuple[str, str, str]]:
+    """[(id, correo, nombre)] de los administradores activos que no están en `excluyendo`."""
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT DISTINCT u.id, u.correo, u.nombre_visible FROM usuarios u "
+            "JOIN usuarios_roles r ON r.usuario_id = u.id "
+            "WHERE u.estado = 'activo' AND r.rol = 'administrador' AND r.revocado_en IS NULL "
+            "AND NOT (u.id = ANY(%s::uuid[])) ORDER BY u.id",
+            (excluyendo,),
+        )
+        return [(str(a), b, c) for a, b, c in cur.fetchall()]
+
+
 def restablecer_factores(
-    conn, usuario_id: str, *, actor: Sesion | None, motivo: str
+    conn, usuario_id: str, *, actor: Sesion | None, motivo: str, aprobacion: dict | None = None
 ) -> CorreoPendiente | None:
     """Revoca factores y códigos y devuelve la cuenta al paso de alta: la
-    persona entra con su contraseña y configura sus factores de nuevo."""
+    persona entra con su contraseña y configura sus factores de nuevo.
+
+    Sobre una cuenta de administrador, quien actúa como persona necesita una
+    aprobación ya confirmada de otro administrador (`aprobacion`). La consola
+    del propietario (`actor=None`) no la necesita: es la salida documentada
+    cuando no hay un segundo administrador disponible."""
     if actor is not None and actor.usuario_id == usuario_id:
         raise ErrorCuentas("sobre_uno_mismo", "No puedes restablecer tus propios factores.", 403)
+    if not _es_uuid(usuario_id):
+        raise ErrorCuentas("usuario_inexistente", "No existe esa persona.", 404)
     with conn.cursor() as cur:
         cur.execute("SELECT correo, estado FROM usuarios WHERE id = %s FOR UPDATE", (usuario_id,))
         fila = cur.fetchone()
         if fila is None or fila[1] == "sistema":
             raise ErrorCuentas("usuario_inexistente", "No existe esa persona.", 404)
+        if actor is not None and aprobacion is None and "administrador" in roles_de(conn, usuario_id):
+            raise ErrorCuentas(
+                "requiere_aprobacion",
+                "Restablecer los factores de un administrador necesita la aprobación de otro administrador.",
+                409,
+            )
         cur.execute("UPDATE factores_autenticacion SET revocado_en = now() WHERE usuario_id = %s AND revocado_en IS NULL", (usuario_id,))
         cur.execute("UPDATE codigos_recuperacion SET usado_en = now() WHERE usuario_id = %s AND usado_en IS NULL", (usuario_id,))
         cur.execute("UPDATE usuarios SET estado = 'invitado' WHERE id = %s AND estado = 'activo'", (usuario_id,))
-    sesiones.revocar_todas(conn, usuario_id, "factores_restablecidos")
+    cerradas = sesiones.revocar_todas(conn, usuario_id, "factores_restablecidos")
     auditoria.registrar(
         conn, categoria="administracion" if actor else "sistema", accion="factores_restablecidos",
         actor_tipo="usuario" if actor else "sistema", actor_id=actor.usuario_id if actor else None,
-        sesion_id=actor.id if actor else None, objeto_tipo="usuario", objeto_id=usuario_id, detalle={"motivo": motivo},
+        sesion_id=actor.id if actor else None, objeto_tipo="usuario", objeto_id=usuario_id,
+        detalle={"motivo": motivo, "sesiones_cerradas": cerradas, **(aprobacion or {})},
     )
     return CorreoPendiente("aviso_factores_restablecidos", fila[0], usuario_id, {})
+
+
+@dataclass(frozen=True)
+class ResultadoRestablecimiento:
+    """`aprobacion` viene con datos solo cuando la acción quedó esperando a otro administrador."""
+
+    correos: list[CorreoPendiente] = field(default_factory=list)
+    aprobacion: dict | None = None
+
+    @property
+    def hecho(self) -> bool:
+        return self.aprobacion is None
+
+
+def solicitar_restablecimiento_de_factores(
+    conn, config: ConfigCuentas, actor: Sesion, usuario_id: str, motivo: str
+) -> ResultadoRestablecimiento:
+    """Restablece de inmediato los factores de una cuenta que no es de
+    administrador. Sobre un administrador abre una solicitud que otro
+    administrador, distinto de quien la pide y de la cuenta afectada, debe
+    confirmar con `confirmar_restablecimiento_de_factores`."""
+    if actor.usuario_id == usuario_id:
+        raise ErrorCuentas("sobre_uno_mismo", "No puedes restablecer tus propios factores.", 403)
+    if not _es_uuid(usuario_id):
+        raise ErrorCuentas("usuario_inexistente", "No existe esa persona.", 404)
+    _serializar_cambios_de_administradores(conn)
+    if "administrador" not in roles_de(conn, usuario_id):
+        return ResultadoRestablecimiento(correos=[restablecer_factores(conn, usuario_id, actor=actor, motivo=motivo)])
+
+    motivo = motivo.strip()
+    if len(motivo) < 5:
+        raise ErrorCuentas("motivo_corto", "Escribe el motivo.")
+    with conn.cursor() as cur:
+        cur.execute("SELECT nombre_visible FROM usuarios WHERE id = %s", (usuario_id,))
+        objetivo = cur.fetchone()
+    if objetivo is None:
+        raise ErrorCuentas("usuario_inexistente", "No existe esa persona.", 404)
+    _caducar_vencidas(conn)
+    aprobadores = _administradores_activos_excepto(conn, [actor.usuario_id, usuario_id])
+    if not aprobadores:
+        raise ErrorCuentas(
+            "sin_aprobador",
+            "No hay otro administrador activo que pueda aprobarlo. Quien opera el servicio puede hacerlo desde la "
+            "consola con `python -m api.cuentas.cli restablecer-factores`.",
+            409,
+        )
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT 1 FROM aprobaciones_administrativas WHERE accion = 'restablecer_factores' "
+            "AND objetivo_id = %s AND estado = 'pendiente'",
+            (usuario_id,),
+        )
+        if cur.fetchone():
+            raise ErrorCuentas(
+                "aprobacion_pendiente",
+                "Ya hay una solicitud pendiente para esa cuenta. Espera a que otro administrador la resuelva o a que caduque.",
+                409,
+            )
+        cur.execute(
+            "INSERT INTO aprobaciones_administrativas (accion, objetivo_id, solicitante_id, motivo, caduca_en) "
+            "VALUES ('restablecer_factores', %s, %s, %s, now() + make_interval(secs => %s)) RETURNING id, caduca_en",
+            (usuario_id, actor.usuario_id, motivo, config.caduca_aprobacion_s),
+        )
+        aprobacion_id, caduca_en = cur.fetchone()
+    auditoria.registrar(
+        conn, categoria="administracion", accion="restablecimiento_factores_solicitado",
+        actor_id=actor.usuario_id, sesion_id=actor.id, objeto_tipo="usuario", objeto_id=usuario_id,
+        detalle={"aprobacion_id": str(aprobacion_id), "motivo": motivo, "caduca_en": caduca_en.isoformat()},
+    )
+    # Avisan a los demás administradores, incluida la cuenta afectada.
+    datos = {
+        "solicitante": actor.nombre_visible, "objetivo": objetivo[0], "motivo": motivo,
+        "enlace": f"{config.origen_canonico}/admin/usuarios",
+    }
+    correos = [
+        CorreoPendiente("aprobacion_pendiente", correo, uid, datos)
+        for uid, correo, _ in _administradores_activos_excepto(conn, [actor.usuario_id])
+    ]
+    return ResultadoRestablecimiento(
+        correos=correos, aprobacion={"id": str(aprobacion_id), "caduca_en": caduca_en.isoformat()}
+    )
+
+
+def _caducar_vencidas(conn) -> None:
+    with conn.cursor() as cur:
+        cur.execute(
+            "UPDATE aprobaciones_administrativas SET estado = 'caducada', resuelta_en = now() "
+            "WHERE estado = 'pendiente' AND caduca_en <= now() RETURNING id, objetivo_id, solicitante_id"
+        )
+        vencidas = cur.fetchall()
+    for aprobacion_id, objetivo_id, solicitante_id in vencidas:
+        auditoria.registrar(
+            conn, categoria="administracion", accion="restablecimiento_factores_caducado",
+            actor_tipo="sistema", objeto_tipo="usuario", objeto_id=str(objetivo_id),
+            detalle={"aprobacion_id": str(aprobacion_id), "solicitado_por": str(solicitante_id)},
+        )
+
+
+def _aprobacion_pendiente(conn, aprobacion_id: str) -> tuple:
+    """Bloquea y devuelve (id, objetivo_id, solicitante_id, motivo) de una solicitud vigente."""
+    if not _es_uuid(aprobacion_id):
+        raise ErrorCuentas("aprobacion_inexistente", "No existe esa solicitud.", 404)
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT id, objetivo_id, solicitante_id, motivo, estado, caduca_en <= now() "
+            "FROM aprobaciones_administrativas WHERE id = %s FOR UPDATE",
+            (aprobacion_id,),
+        )
+        fila = cur.fetchone()
+    if fila is None:
+        raise ErrorCuentas("aprobacion_inexistente", "No existe esa solicitud.", 404)
+    if fila[4] != "pendiente":
+        raise ErrorCuentas("aprobacion_resuelta", "Esa solicitud ya se resolvió.", 409)
+    if fila[5]:
+        _caducar_vencidas(conn)
+        raise ErrorCuentas("aprobacion_caducada", "La solicitud caducó. Quien la pidió puede crear otra.", 410)
+    return fila[0], str(fila[1]), str(fila[2]), fila[3]
+
+
+def confirmar_restablecimiento_de_factores(conn, actor: Sesion, aprobacion_id: str) -> CorreoPendiente | None:
+    """Segunda aprobación: ejecuta el restablecimiento que otro administrador pidió."""
+    _serializar_cambios_de_administradores(conn)
+    aprobacion_id, objetivo_id, solicitante_id, motivo = _aprobacion_pendiente(conn, aprobacion_id)
+    if actor.usuario_id == solicitante_id:
+        raise ErrorCuentas("autoaprobacion", "No puedes aprobar una solicitud que hiciste tú.", 403)
+    if actor.usuario_id == objetivo_id:
+        raise ErrorCuentas("sobre_uno_mismo", "No puedes aprobar el restablecimiento de tus propios factores.", 403)
+    if not _es_administrador_activo(conn, actor.usuario_id):
+        raise ErrorCuentas("sin_permiso", "No tienes permiso para esta acción.", 403)
+    if not _es_administrador_activo(conn, solicitante_id):
+        # Quien pidió ya no es administrador activo: la solicitud perdió a su responsable.
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE aprobaciones_administrativas SET estado = 'cancelada', resuelta_en = now() WHERE id = %s",
+                (aprobacion_id,),
+            )
+        auditoria.registrar(
+            conn, categoria="administracion", accion="restablecimiento_factores_cancelado", actor_tipo="sistema",
+            objeto_tipo="usuario", objeto_id=objetivo_id,
+            detalle={"aprobacion_id": str(aprobacion_id), "razon": "solicitante_sin_vigencia"},
+        )
+        raise ErrorCuentas("solicitante_sin_vigencia", "Quien pidió el restablecimiento ya no es administrador activo.", 409)
+    aviso = restablecer_factores(
+        conn, objetivo_id, actor=actor, motivo=motivo,
+        aprobacion={
+            "aprobacion_id": str(aprobacion_id), "solicitado_por": solicitante_id, "aprobado_por": actor.usuario_id,
+        },
+    )
+    with conn.cursor() as cur:
+        cur.execute(
+            "UPDATE aprobaciones_administrativas SET estado = 'aprobada', resuelta_por = %s, resuelta_en = now() WHERE id = %s",
+            (actor.usuario_id, aprobacion_id),
+        )
+    return aviso
+
+
+def rechazar_restablecimiento_de_factores(conn, actor: Sesion, aprobacion_id: str) -> None:
+    """Cualquier administrador puede rechazar; si lo hace quien la pidió, queda como cancelada."""
+    aprobacion_id, objetivo_id, solicitante_id, _ = _aprobacion_pendiente(conn, aprobacion_id)
+    if not _es_administrador_activo(conn, actor.usuario_id):
+        raise ErrorCuentas("sin_permiso", "No tienes permiso para esta acción.", 403)
+    estado, accion = (
+        ("cancelada", "restablecimiento_factores_cancelado")
+        if actor.usuario_id == solicitante_id
+        else ("rechazada", "restablecimiento_factores_rechazado")
+    )
+    with conn.cursor() as cur:
+        cur.execute(
+            "UPDATE aprobaciones_administrativas SET estado = %s, resuelta_por = %s, resuelta_en = now() WHERE id = %s",
+            (estado, actor.usuario_id, aprobacion_id),
+        )
+    auditoria.registrar(
+        conn, categoria="administracion", accion=accion,
+        actor_id=actor.usuario_id, sesion_id=actor.id, objeto_tipo="usuario", objeto_id=objetivo_id,
+        detalle={"aprobacion_id": str(aprobacion_id), "solicitado_por": solicitante_id},
+    )
+
+
+def listar_aprobaciones(conn, actor: Sesion) -> list[dict]:
+    """Solicitudes vigentes, con lo que `actor` puede hacer con cada una."""
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT a.id, a.accion, a.objetivo_id, o.nombre_visible, o.correo, a.solicitante_id, s.nombre_visible, "
+            "a.motivo, a.creada_en, a.caduca_en FROM aprobaciones_administrativas a "
+            "JOIN usuarios o ON o.id = a.objetivo_id JOIN usuarios s ON s.id = a.solicitante_id "
+            "WHERE a.estado = 'pendiente' AND a.caduca_en > now() ORDER BY a.creada_en"
+        )
+        return [
+            {
+                "id": str(i), "accion": accion,
+                "objetivo": {"id": str(oid), "nombre": onombre, "correo": ocorreo},
+                "solicitante": {"id": str(sid), "nombre": snombre},
+                "motivo": motivo, "creada_en": creada.isoformat(), "caduca_en": caduca.isoformat(),
+                "es_propia": str(sid) == actor.usuario_id,
+                "puede_confirmar": actor.usuario_id not in (str(sid), str(oid)),
+            }
+            for i, accion, oid, onombre, ocorreo, sid, snombre, motivo, creada, caduca in cur.fetchall()
+        ]
 
 
 def crear_institucion(conn, actor: Sesion | None, *, nombre: str, tipo: str, dominios: list[str], sitio_web: str | None) -> int:
