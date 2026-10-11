@@ -10,8 +10,6 @@
 import { RUTA_PREDICCION } from '../lib/enlaces';
 import { CUENTAS_HABILITADAS } from '../lib/cuentas-config';
 
-const API_BASE = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8000';
-
 interface Enlace {
   href: string;
   etiqueta: string;
@@ -62,11 +60,6 @@ const COLUMNAS: { id: string; titulo: string; enlaces: Enlace[] }[] = [
       {
         href: '/biblioteca/06-arquitectura-y-reproducibilidad',
         etiqueta: 'Arquitectura y reproducibilidad',
-      },
-      {
-        href: `${API_BASE}/docs`,
-        etiqueta: 'API pública (Swagger)',
-        externo: true,
       },
       {
         href: 'https://boletin.salud.gob.sv',

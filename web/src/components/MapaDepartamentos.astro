@@ -1441,10 +1441,20 @@ import { rutaFicha } from '../fichas/registro';
 
       pintarSelector(id);
       contenedorAviso!.textContent = capa.aviso;
-      contenedorLeyenda!.innerHTML =
-        '<div class="flex items-center gap-2" aria-hidden="true">' +
-        '<div class="skeleton h-4 w-40"></div><div class="skeleton h-4 w-24"></div><div class="skeleton h-4 w-24"></div>' +
-        '</div>';
+      // Solo se reemplaza la leyenda por el esqueleto al cambiar de capa. Si
+      // solo cambió la semana (Play recorriendo el slider) la leyenda
+      // anterior se queda puesta hasta que la nueva esté lista -- si se
+      // limpiaba en cada semana, el panel lateral se achicaba al esqueleto
+      // (una línea) y volvía a crecer a la leyenda real un instante después;
+      // como el mapa y el panel comparten fila con items-stretch, esa
+      // oscilación de alto hacía que el mapa se encogiera y estirara en
+      // cada cuadro de la animación.
+      if (idCapaPintada !== id) {
+        contenedorLeyenda!.innerHTML =
+          '<div class="flex items-center gap-2" aria-hidden="true">' +
+          '<div class="skeleton h-4 w-40"></div><div class="skeleton h-4 w-24"></div><div class="skeleton h-4 w-24"></div>' +
+          '</div>';
+      }
       contenedorNoDisponible!.classList.add('hidden');
       contenedorNoDisponible!.replaceChildren();
 

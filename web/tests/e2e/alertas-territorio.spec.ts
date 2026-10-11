@@ -104,4 +104,54 @@ test.describe('alertas con alcance territorial', () => {
       'Sin marcar ninguno, la alerta es nacional',
     );
   });
+
+  test('la vista previa de indicaciones muestra el HTML como texto', async ({
+    page,
+  }) => {
+    await page.goto('/alertas/nueva');
+    await page
+      .locator('textarea[name="indicaciones"]')
+      .fill(
+        '- <img src=x onerror="window.__inyectado = true"> uno\n<b>dos</b>',
+      );
+    const vista = page.locator('#preview-indicaciones');
+    await expect(vista).toContainText('<img src=x onerror=');
+    await expect(vista.locator('img, b')).toHaveCount(0);
+    expect(await page.evaluate(() => 'inyectado' in window)).toBe(false);
+  });
+
+  test('el token recordado vive en sessionStorage, no en localStorage', async ({
+    page,
+  }) => {
+    await page.goto('/alertas/nueva');
+    await page.evaluate(() =>
+      window.localStorage.setItem('epi-aetheris:alertas-token', 'viejo'),
+    );
+    await page.reload();
+    expect(
+      await page.evaluate(() =>
+        window.localStorage.getItem('epi-aetheris:alertas-token'),
+      ),
+    ).toBeNull();
+
+    await page.locator('input[name="token"]').fill('secreto-de-prueba');
+    await page.locator('[data-alerta-recordar-token]').check();
+    // Un envío con el formulario incompleto no llega al servidor, pero el
+    // navegador no dispara submit; se fuerza para ejercitar el guardado.
+    await page.evaluate(() =>
+      document
+        .querySelector<HTMLFormElement>('[data-form-alerta]')
+        ?.dispatchEvent(new Event('submit', { cancelable: true })),
+    );
+    expect(
+      await page.evaluate(() =>
+        window.sessionStorage.getItem('epi-aetheris:alertas-token'),
+      ),
+    ).toBe('secreto-de-prueba');
+    expect(
+      await page.evaluate(() =>
+        window.localStorage.getItem('epi-aetheris:alertas-token'),
+      ),
+    ).toBeNull();
+  });
 });

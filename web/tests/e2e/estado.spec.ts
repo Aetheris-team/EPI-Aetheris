@@ -48,3 +48,12 @@ test('/estado explica el fallo de la consulta sin romper la página', async ({
     'No se pudo consultar',
   );
 });
+
+test('/estado no enlaza a la documentación interactiva de la API', async ({
+  page,
+}) => {
+  await page.route('**/health', (r) => r.fulfill({ json: { status: 'ok' } }));
+  await page.goto('/estado');
+  await expect(page.locator('main a[href$="/docs"]')).toHaveCount(0);
+  await expect(page.locator('main a[href$="/redoc"]')).toHaveCount(0);
+});

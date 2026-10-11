@@ -3,6 +3,10 @@ import tailwindcss from '@tailwindcss/vite';
 import icon from 'astro-icon';
 import sitemap from '@astrojs/sitemap';
 
+// El único origen de datos al que el navegador puede conectarse además del
+// propio sitio: la API. Sale de la misma variable que usa el código (build).
+const apiBase = process.env.PUBLIC_API_URL ?? 'http://localhost:8000';
+
 // Configuración principal del framework Astro
 export default defineConfig({
   // Dominio de producción de ESTE repo. aetheris-nitor es el fork-vitrina de
@@ -89,6 +93,34 @@ export default defineConfig({
         !pagina.includes('/incrustar'),
     }),
   ],
+  // Política de contenido (cuentas con sesión y llaves de acceso: un XSS aquí
+  // tiene más alcance que antes). Astro calcula los hashes de los scripts y
+  // estilos que emite y la inserta como <meta>; las cabeceras de Render no
+  // se pueden versionar con el sitio. frame-ancestors no admite <meta>: se
+  // pone como cabecera en el panel (ver docs de despliegue).
+  // Consecuencia: un <script is:inline> con código no se ejecuta, porque Astro no
+  // lo hashea. Los scripts van sin is:inline (se empaquetan); los JSON de datos
+  // (type="application/json") no cuentan como script.
+  security: {
+    csp: {
+      directives: [
+        "default-src 'self'",
+        `connect-src 'self' ${apiBase}`,
+        // Teselas de OpenStreetMap en los mapas de Leaflet; data: y blob: para
+        // las imágenes que generan los gráficos al exportar.
+        "img-src 'self' data: blob: https://*.tile.openstreetmap.org",
+        "font-src 'self' data:",
+        "object-src 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
+      ],
+      // ECharts y Leaflet escriben atributos style en línea; los estilos en
+      // <style> y los scripts siguen limitados a los hashes calculados.
+      styleDirective: {
+        resources: [{ resource: "'unsafe-inline'", kind: 'attribute' }],
+      },
+    },
+  },
   server: {
     // Permite que el servidor sea accesible desde fuera del contenedor Docker
     host: true,

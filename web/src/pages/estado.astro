@@ -1,6 +1,5 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import Icono from '../components/Icono.astro';
 import { rutaFicha } from '../fichas/registro';
 
 const apiBase = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8000';
@@ -151,27 +150,12 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8000';
         lentitud inicial o reintento, una vez despierto el contenedor las
         peticiones subsiguientes se responden en milisegundos.
       </p>
-      <div class="mt-4 flex items-center gap-2">
-        <a
-          href={`${apiBase}/docs`}
-          target="_blank"
-          rel="noopener noreferrer"
-          class="inline-flex items-center gap-1.5 font-sans text-xs font-medium text-accent hover:underline"
-        >
-          <Icono nombre="api" class="h-3.5 w-3.5" />
-          <span>Ver documentación interactiva de la API (/docs)</span>
-          <Icono
-            nombre="external-link"
-            class="h-3.5 w-3.5 text-ink-muted shrink-0"
-          />
-          <span class="sr-only"> (abre en una nueva pestaña)</span>
-        </a>
-      </div>
     </section>
   </main>
 </Layout>
 
-<script is:inline define:vars={{ apiBase }}>
+<script>
+  const apiBase = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8000';
   const dot = document.getElementById('api-dot');
   const badge = document.getElementById('api-badge');
   const contenedor = document.getElementById('api-contenedor-estado');
@@ -234,7 +218,7 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8000';
   }
 
   // El detalle técnico se muestra aparte, en pequeño, para quien diagnostica.
-  function mostrarReintento(mensaje, detalle) {
+  function mostrarReintento(mensaje: string, detalle: string) {
     if (!contenedor) return;
     contenedor.innerHTML = '';
     const caja = document.createElement('div');

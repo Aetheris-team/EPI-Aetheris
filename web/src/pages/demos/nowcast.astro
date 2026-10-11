@@ -18,7 +18,7 @@ import PanelNowcastDengue from '../../components/nowcast/PanelNowcastDengue.astr
   descripcion="Recorrido animado de la predicción del conteo nacional de dengue para las próximas 1 a 8 semanas."
   noindex
 >
-  <script is:inline>
+  <script>
     try {
       if (new URLSearchParams(location.search).has('limpio')) {
         document.documentElement.classList.add('demo-limpio');

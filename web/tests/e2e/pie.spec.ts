@@ -39,6 +39,20 @@ test.describe('pie de página', () => {
     for (const rel of rels) expect(rel).toBe('noopener noreferrer');
   });
 
+  test('ningún enlace del pie lleva a /docs ni /redoc de la API', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    const hrefs = await page
+      .locator('footer a')
+      .evaluateAll((as) => as.map((a) => (a as HTMLAnchorElement).pathname));
+    expect(hrefs.length).toBeGreaterThan(10);
+    for (const ruta of hrefs) expect(ruta).not.toMatch(/^\/(docs|redoc)\/?$/);
+    await expect(
+      page.locator('footer').getByText('API pública (Swagger)'),
+    ).toHaveCount(0);
+  });
+
   test('el interruptor de animaciones persiste y cambia aria-checked', async ({
     page,
   }) => {
