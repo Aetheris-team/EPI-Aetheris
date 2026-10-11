@@ -20,7 +20,7 @@ from urllib.parse import urlparse
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, Response
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from . import auditoria, correo, csrf, llaves, permisos, servicio, sesiones
+from . import auditoria, contrasenas, correo, csrf, llaves, permisos, servicio, sesiones
 from .config import COOKIE_SESION, ConfigCuentas
 from .servicio import CorreoPendiente, ErrorCuentas
 from .sesiones import Sesion
@@ -152,6 +152,18 @@ def _http(exc: ErrorCuentas) -> HTTPException:
     )
 
 
+def _http_saturado(exc: contrasenas.Saturado) -> HTTPException:
+    return HTTPException(
+        status_code=503,
+        detail={
+            "codigo": "servidor_ocupado",
+            "mensaje": "Hay muchas verificaciones en curso. Vuelve a intentarlo en unos segundos.",
+            "espera_s": exc.espera_s,
+        },
+        headers={"Retry-After": str(exc.espera_s)},
+    )
+
+
 def crear_router(
     *,
     limiter,
@@ -174,6 +186,10 @@ def crear_router(
             except ErrorCuentas as exc:
                 conn.commit()
                 raise _http(exc) from exc
+            except contrasenas.Saturado as exc:
+                # No es un intento fallido: no se registra nada.
+                conn.rollback()
+                raise _http_saturado(exc) from exc
             except BaseException:
                 conn.rollback()
                 raise
@@ -304,6 +320,10 @@ def crear_router(
     @limiter.limit(limite_auth)
     def ingresar(request: Request, response: Response, datos: IngresoIn, config: ConfigCuentas = Depends(_config)):
         response.headers["Cache-Control"] = "no-store"
+        try:
+            contrasenas.comprobar_cupo()
+        except contrasenas.Saturado as exc:
+            raise _http_saturado(exc) from exc
         with tx() as conn:
             token, _ = servicio.ingresar(
                 conn, config, correo=datos.correo, contrasena=datos.contrasena,
