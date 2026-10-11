@@ -6,10 +6,6 @@ interface Props {
 }
 const evento = Astro.props.evento ?? 'ira';
 const etiqueta = evento === 'neumonias' ? 'neumonías' : 'IRA';
-const endpoint =
-  evento === 'neumonias'
-    ? '/api/neumonias/departamental'
-    : '/api/ira/departamental';
 ---
 
 <PanelWorkspace
@@ -17,7 +13,6 @@ const endpoint =
   titulo={`Mapa departamental de ${etiqueta}`}
   descripcion="Volumen acumulado de casos notificados por departamento (MINSAL, 2018-2023, sin 2020). Unidad: conteo notificado."
   data-mapa-evento={evento}
-  data-mapa-endpoint={endpoint}
 >
   <div
     class="mt-4 flex gap-2 rounded-lg border border-dashed border-border bg-bg p-3"
@@ -144,6 +139,8 @@ const endpoint =
     suscribirFiltrosRespiratorio,
   } from '../lib/respiratorio-state';
   import { esNoDisponible, motivoNoDisponible } from './estado-async';
+  import { obtenerResumenDepartamentalRespiratorio } from '../lib/analisis-api';
+  import type { EventoRespiratorio } from '../lib/tipos-analisis';
   import { protegerScrollMapa } from '../lib/mapa-scroll';
 
   function cargarCssLeaflet() {
@@ -154,7 +151,6 @@ const endpoint =
     document.head.appendChild(link);
   }
 
-  const API_BASE = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8000';
   const SIN_DATO = '#e4e4e7';
   // Mismo family de la marca que la capa de volumen MINSAL de dengue, para
   // que "más oscuro = más casos" se lea igual en ambos mapas.
@@ -261,7 +257,7 @@ const endpoint =
       '[data-mapa-vacio]',
     ) as HTMLElement | null;
     const tablaCuerpo = seccion.querySelector('[data-mapa-tabla-cuerpo]');
-    const endpoint = seccion.dataset.mapaEndpoint ?? '/api/ira/departamental';
+    const evento = (seccion.dataset.mapaEvento ?? 'ira') as EventoRespiratorio;
     if (!contenedorMapa || !contenedorLeyenda || !contenedorNoDisponible)
       return;
 
@@ -385,10 +381,8 @@ const endpoint =
     let valores: Map<string, number | undefined> | null = null;
 
     try {
-      const resp = await fetch(`${API_BASE}${endpoint}`);
-      if (!resp.ok) throw new Error('respuesta no OK');
       const datos: { departamentos: DatoDepartamentoIra[] } | unknown =
-        await resp.json();
+        await obtenerResumenDepartamentalRespiratorio(evento);
       if (esNoDisponible(datos)) {
         const texto = contenedorNoDisponible.querySelector(
           '[data-mapa-vacio-texto]',
