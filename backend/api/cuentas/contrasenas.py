@@ -10,9 +10,12 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import os
 import threading
+import time
 import unicodedata
 import urllib.request
+from contextlib import contextmanager
 from typing import Callable
 
 from argon2 import PasswordHasher, Type
@@ -29,8 +32,92 @@ _hasher = PasswordHasher(
 )
 
 # Con 19 MiB por hash, un grupo de peticiones de ingreso simultáneas agota la
-# memoria del servicio. Se atienden de dos en dos y el resto espera.
-_semaforo = threading.BoundedSemaphore(2)
+# memoria del servicio. Se calculan de dos en dos.
+PARALELAS = 2
+_semaforo = threading.BoundedSemaphore(PARALELAS)
+
+
+def _entero_env(nombre: str, defecto: int) -> int:
+    try:
+        return max(0, int(os.getenv(nombre, str(defecto))))
+    except ValueError:
+        return defecto
+
+
+# Cada petición que espera su turno ocupa un hilo del grupo compartido con el
+# resto de la API y una conexión del pool de Postgres. Sin tope, quien reparta
+# intentos entre muchas IP llena ambos y deja sin servicio las lecturas
+# públicas. Por eso la espera es corta y la cola, pequeña: lo que no cabe se
+# rechaza al instante con 503 y Retry-After (ADR 0024).
+COLA_MAX = _entero_env("AUTH_HASH_COLA", 2)
+ESPERA_MAX_S = float(_entero_env("AUTH_HASH_ESPERA_S", 2))
+# Tope global de hashes por minuto en este proceso, sea cual sea la IP de
+# origen, con una ráfaga corta. Acota la CPU que puede consumir el ingreso:
+# el límite por IP y el de cuenta no lo hacen cuando los intentos vienen de
+# muchas IP y correos. La ráfaga es corta para que el cupo no se gaste de
+# golpe y deje al proceso sin CPU para el resto de la API.
+POR_MINUTO_MAX = _entero_env("AUTH_HASH_POR_MINUTO", 120)
+RAFAGA_MAX = _entero_env("AUTH_HASH_RAFAGA", 10)
+
+_cerrojo = threading.Lock()
+_en_curso = 0
+_fichas = float(RAFAGA_MAX)
+_ultima_recarga = time.monotonic()
+
+
+class Saturado(RuntimeError):
+    """No hay cupo para calcular otro hash ahora. No cuenta como intento fallido."""
+
+    def __init__(self, espera_s: float):
+        super().__init__("Verificación de contraseñas saturada")
+        self.espera_s = max(1, int(espera_s))
+
+
+def _recargar(ahora: float) -> None:
+    global _fichas, _ultima_recarga
+    if POR_MINUTO_MAX:
+        _fichas = min(float(RAFAGA_MAX), _fichas + (ahora - _ultima_recarga) * POR_MINUTO_MAX / 60)
+    _ultima_recarga = ahora
+
+
+def _comprobar_hueco(ahora: float) -> None:
+    """Lanza Saturado si el tope de cola o el presupuesto de hashes están
+    agotados. Se llama con el cerrojo tomado."""
+    _recargar(ahora)
+    if _en_curso >= PARALELAS + COLA_MAX:
+        raise Saturado(ESPERA_MAX_S)
+    if POR_MINUTO_MAX and _fichas < 1:
+        raise Saturado((1 - _fichas) * 60 / POR_MINUTO_MAX + 1)
+
+
+def comprobar_cupo() -> None:
+    """Rechazo barato antes de abrir conexión ni consultar nada. No reserva
+    nada: la reserva real ocurre al calcular el hash."""
+    with _cerrojo:
+        _comprobar_hueco(time.monotonic())
+
+
+@contextmanager
+def _turno():
+    """Reserva un turno de cálculo o lanza Saturado sin esperar más de
+    ESPERA_MAX_S."""
+    global _en_curso, _fichas
+    with _cerrojo:
+        _comprobar_hueco(time.monotonic())
+        _en_curso += 1
+    try:
+        if not _semaforo.acquire(timeout=ESPERA_MAX_S):
+            raise Saturado(ESPERA_MAX_S)
+        try:
+            with _cerrojo:
+                _fichas -= 1
+            yield
+        finally:
+            _semaforo.release()
+    finally:
+        with _cerrojo:
+            _en_curso -= 1
+
 
 # Hash de una contraseña que nadie conoce. Se verifica contra él cuando la
 # cuenta no existe, para que el tiempo de respuesta no delate qué correos
@@ -73,7 +160,7 @@ def _prehash(normal: str, pimienta: bytes) -> str:
 def hashear(config: ConfigCuentas, contrasena: str) -> tuple[str, int]:
     """Devuelve (hash, versión de pimienta)."""
     normal = normalizar(contrasena)
-    with _semaforo:
+    with _turno():
         return _hasher.hash(_prehash(normal, config.pimienta_vigente)), config.version_pimienta
 
 
@@ -81,7 +168,7 @@ def verificar(config: ConfigCuentas, contrasena: str, hash_guardado: str | None,
     """Compara en tiempo comparable exista o no la cuenta."""
     normal = normalizar(contrasena)
     pimienta = config.pimientas.get(version) if version is not None else None
-    with _semaforo:
+    with _turno():
         if hash_guardado is None or pimienta is None:
             try:
                 _hasher.verify(_HASH_FICTICIO, _prehash(normal, config.pimienta_vigente))

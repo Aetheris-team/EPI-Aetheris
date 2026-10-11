@@ -8,7 +8,7 @@ from fastapi.routing import APIRoute
 from pydantic import ValidationError
 from starlette.testclient import TestClient
 
-from api.cuentas import permisos, rutas, servicio, sesiones
+from api.cuentas import contrasenas, intentos, permisos, rutas, servicio, sesiones
 from api.cuentas.rutas import InstitucionIn
 
 from .conftest_http import crear_app
@@ -126,6 +126,45 @@ def test_cuerpo_con_campos_de_mas_se_rechaza(web):
 def test_cuerpo_que_no_es_json_se_rechaza(web):
     r = web.post("/api/cuenta/ingresar", headers={**ORIGEN, "content-type": "text/plain"}, content='{"correo":"a@b.org","contrasena":"x"}')
     assert r.status_code == 422
+
+
+# --- ingreso con el límite de verificaciones saturado ----------------------------------------
+
+def _fallos_registrados(conn, config, correo):
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT count(*) FROM intentos_ingreso WHERE clave = %s",
+            (intentos.clave(config, "correo", correo),),
+        )
+        return cur.fetchone()[0]
+
+
+def test_ingreso_saturado_responde_503_con_reintento_y_sin_consultar(web, monkeypatch):
+    monkeypatch.setattr(contrasenas, "_en_curso", contrasenas.PARALELAS + contrasenas.COLA_MAX)
+
+    def no_debe_llamarse(*_a, **_k):
+        raise AssertionError("se consultó la base con el cupo lleno")
+
+    monkeypatch.setattr(servicio, "ingresar", no_debe_llamarse)
+    r = web.post("/api/cuenta/ingresar", headers=ORIGEN, json={"correo": "nadie@ejemplo.org", "contrasena": "una clave bastante larga"})
+    assert r.status_code == 503
+    assert int(r.headers["retry-after"]) >= 1
+    assert r.json()["detail"]["codigo"] == "servidor_ocupado"
+    assert "set-cookie" not in r.headers
+
+
+def test_ingreso_sin_turno_no_cuenta_como_intento_fallido(conn, config, crear_usuario, web, monkeypatch):
+    crear_usuario()
+    antes = _fallos_registrados(conn, config, "persona1@ejemplo.org")
+
+    def sin_turno(*_a, **_k):
+        raise contrasenas.Saturado(3)
+
+    monkeypatch.setattr(contrasenas, "verificar", sin_turno)
+    r = web.post("/api/cuenta/ingresar", headers=ORIGEN, json={"correo": "persona1@ejemplo.org", "contrasena": "una clave bastante larga"})
+    assert r.status_code == 503
+    assert r.headers["retry-after"] == "3"
+    assert _fallos_registrados(conn, config, "persona1@ejemplo.org") == antes == 0
 
 
 # --- olvidé mi contraseña ---------------------------------------------------------------------
