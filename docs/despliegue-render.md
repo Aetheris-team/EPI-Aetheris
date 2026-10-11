@@ -28,7 +28,7 @@ no a la infraestructura de hosting.
 
 ## Qué declara `render.yaml`
 
-Blueprint con tres servicios, todos en la región `oregon` (misma región =
+Blueprint con dos recursos (base y backend), en la región `oregon` (misma región =
 red privada entre backend y base):
 
 - `epi-aetheris-db` -- Postgres 15 gestionado, plan `basic-256mb`.
@@ -36,14 +36,15 @@ red privada entre backend y base):
   contexto = raíz del repo para incluir `db/aplicar_migraciones.py` y
   `db/migrations/`). `preDeployCommand` corre `python db/aplicar_migraciones.py`
   antes de conmutar tráfico. CMD de producción sin `--reload`.
-- `epi-aetheris-web` -- sitio estático Astro (`pnpm build`, publica `dist/`).
 
 Las variables de Postgres (`POSTGRES_HOST/PORT/DB/USER/PASSWORD`) se
 inyectan automáticamente al backend vía `fromDatabase`. `CORS_ALLOWED_ORIGINS`
-y `PUBLIC_API_URL` están fijas a los dominios propios: el sitio canónico
-`https://epi-aetheris.dev` y la API `https://api.epi-aetheris.dev`. Los
-valores que rigen en producción son los del panel de Render; `render.yaml`
-solo los documenta, así que un cambio aquí hay que repetirlo allí.
+está fija a los dominios propios: el sitio canónico `https://epi-aetheris.dev`
+y su variante con `www`. El sitio se publica como sitio estático
+`aetheris-nitor` desde el repo aetheris-nitor, fuera de este blueprint, con
+`PUBLIC_API_URL=https://api.epi-aetheris.dev`. Los valores que rigen en
+producción son los del panel de Render; `render.yaml` solo los documenta, así
+que un cambio aquí hay que repetirlo allí.
 
 ## Primer despliegue (pasos manuales, una sola vez)
 
