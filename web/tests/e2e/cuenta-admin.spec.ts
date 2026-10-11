@@ -59,11 +59,41 @@ const INSTITUCIONES = [
   },
 ];
 
-function rutasBase() {
+const OTRO_ADMIN = {
+  id: 'u-3',
+  correo: 'marta@salud.gob.sv',
+  nombre: 'Marta Admin',
+  estado: 'activo',
+  institucion: 'MINSAL',
+  ultimo_ingreso_en: null,
+  roles: ['administrador'],
+};
+
+function aprobacion(extra: Record<string, unknown> = {}) {
+  return {
+    id: 'a-1',
+    accion: 'restablecer_factores',
+    objetivo: {
+      id: 'u-3',
+      nombre: 'Marta Admin',
+      correo: 'marta@salud.gob.sv',
+    },
+    solicitante: { id: 'u-9', nombre: 'Jorge Admin' },
+    motivo: 'Perdió el teléfono y las llaves.',
+    creada_en: '2026-10-11T10:00:00+00:00',
+    caduca_en: '2026-10-12T10:00:00+00:00',
+    es_propia: false,
+    puede_confirmar: true,
+    ...extra,
+  };
+}
+
+function rutasBase(aprobaciones: unknown[] = []) {
   return {
     'GET /api/cuenta/sesion': { json: ADMIN },
     'GET /api/admin/usuarios': { json: { usuarios: USUARIOS } },
     'GET /api/admin/instituciones': { json: { instituciones: INSTITUCIONES } },
+    'GET /api/admin/aprobaciones': { json: { aprobaciones } },
   };
 }
 
@@ -290,6 +320,142 @@ test.describe('cuentas: administración', () => {
         (l) => l.clave === 'POST /api/admin/usuarios/u-2/restablecer-factores',
       )?.cuerpo,
     ).toEqual({ motivo: 'Perdió el teléfono y las llaves.' });
+  });
+
+  test('restablecer a un administrador crea una solicitud y lo dice', async ({
+    page,
+  }) => {
+    const llamadas = await simularApi(page, {
+      ...rutasBase(),
+      'GET /api/admin/usuarios': {
+        json: { usuarios: [...USUARIOS, OTRO_ADMIN] },
+      },
+      'POST /api/admin/usuarios/u-3/restablecer-factores': {
+        status: 202,
+        json: {
+          mensaje: 'Solicitud creada.',
+          aprobacion: { id: 'a-1', caduca_en: '2026-10-12T10:00:00+00:00' },
+        },
+      },
+    });
+    await page.goto('/admin/usuarios');
+    await page
+      .getByRole('button', {
+        name: 'Restablecer los factores de Marta Admin',
+      })
+      .click();
+    const dialogo = page.getByRole('dialog', {
+      name: 'Pedir restablecer factores',
+    });
+    await expect(dialogo).toContainText('otro administrador debe confirmar');
+    await dialogo.getByLabel('Motivo').fill('Perdió el teléfono y las llaves.');
+    await dialogo.getByRole('button', { name: 'Pedir' }).click();
+    await expect(
+      page.getByText(
+        'Otro administrador debe confirmarla antes de que caduque',
+      ),
+    ).toBeVisible();
+    expect(
+      llamadas.find(
+        (l) => l.clave === 'POST /api/admin/usuarios/u-3/restablecer-factores',
+      )?.cuerpo,
+    ).toEqual({ motivo: 'Perdió el teléfono y las llaves.' });
+  });
+
+  test('solicitudes pendientes: otro administrador confirma', async ({
+    page,
+  }) => {
+    let pendientes = [aprobacion()];
+    const llamadas = await simularApi(page, {
+      ...rutasBase(),
+      'GET /api/admin/aprobaciones': () => ({
+        json: { aprobaciones: pendientes },
+      }),
+      'POST /api/admin/aprobaciones/a-1/confirmar': () => {
+        pendientes = [];
+        return { json: { mensaje: 'Factores restablecidos.' } };
+      },
+    });
+    await page.goto('/admin/usuarios');
+    const tabla = page.getByRole('table', {
+      name: 'Solicitudes pendientes de aprobación',
+    });
+    await expect(tabla).toContainText('Marta Admin');
+    await expect(tabla).toContainText('Jorge Admin');
+    await expect(tabla).toContainText('Perdió el teléfono y las llaves.');
+    await sinViolacionesAxe(page);
+    await page
+      .getByRole('button', {
+        name: 'Confirmar el restablecimiento de factores de Marta Admin',
+      })
+      .click();
+    const dialogo = page.getByRole('dialog', {
+      name: 'Confirmar restablecimiento',
+    });
+    await dialogo.getByRole('button', { name: 'Confirmar' }).click();
+    await expect(page.getByText('Factores restablecidos.')).toBeVisible();
+    await expect(
+      page.getByText('No hay solicitudes pendientes.'),
+    ).toBeVisible();
+    expect(
+      llamadas.some(
+        (l) => l.clave === 'POST /api/admin/aprobaciones/a-1/confirmar',
+      ),
+    ).toBe(true);
+  });
+
+  test('solicitudes pendientes: quien la pidió o es la cuenta afectada no puede confirmar', async ({
+    page,
+  }) => {
+    await simularApi(
+      page,
+      rutasBase([
+        aprobacion({ es_propia: true, puede_confirmar: false }),
+        aprobacion({
+          id: 'a-2',
+          objetivo: {
+            id: 'u-admin',
+            nombre: 'Rosa Admin',
+            correo: 'admin@salud.gob.sv',
+          },
+          puede_confirmar: false,
+        }),
+      ]),
+    );
+    await page.goto('/admin/usuarios');
+    await expect(
+      page.getByRole('button', { name: /^Confirmar el restablecimiento/ }),
+    ).toHaveCount(0);
+    await expect(
+      page.getByText('La pediste tú: la confirma otro administrador.'),
+    ).toBeVisible();
+    await expect(
+      page.getByText('Es tu cuenta: la confirma otro administrador.'),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', {
+        name: 'Cancelar la solicitud de restablecer los factores de Marta Admin',
+      }),
+    ).toBeVisible();
+  });
+
+  test('si la lista de solicitudes falla, el resto de la página sigue', async ({
+    page,
+  }) => {
+    await simularApi(page, {
+      ...rutasBase(),
+      'GET /api/admin/aprobaciones': {
+        status: 404,
+        json: { detail: 'No existe' },
+      },
+    });
+    await page.goto('/admin/usuarios');
+    await expect(
+      page.getByRole('table', { name: 'Personas con cuenta' }),
+    ).toBeVisible();
+    await expect(
+      page.getByText('No se pudieron cargar las solicitudes pendientes.'),
+    ).toBeVisible();
   });
 
   test('instituciones: agregar y verificar', async ({ page }) => {

@@ -19,8 +19,6 @@
  *    (src/lib/animaciones.ts), `epi:departamento`
  *    (src/lib/departamento-recordado.ts), `epi:toolbar-fija`
  *    (ToolbarAnalisis.astro) y las cachés de public/sw.js.
- *  - Swagger: FastAPI sirve /docs con los recursos por defecto, que el
- *    navegador descarga de jsDelivr.
  *
  * Personas con cuenta (ADR 0024). Fuente de cada dato, en el monorepo:
  *  - Tablas: db/migrations/0014_cuentas_identidad.sql (usuarios,
@@ -612,14 +610,6 @@ import { navegacionLegal } from '../../lib/navegacion-documentos';
         </td>
         <td>Sirve las imágenes de fondo de los mapas</td>
         <td>IP, user-agent y dirección del sitio al cargar un mapa</td>
-      </tr>
-      <tr>
-        <td>jsDelivr</td>
-        <td>
-          Sirve los archivos de la página de documentación de la API (Swagger),
-          enlazada en el pie
-        </td>
-        <td>IP y user-agent, solo si se abre esa página</td>
       </tr>
       <tr>
         <td>

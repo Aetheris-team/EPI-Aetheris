@@ -15,7 +15,7 @@ import {
     /* Modo presentación para grabar el video de la demo (?demo=1, ?demo=lento).
      Se activa lo antes posible para minimizar el parpadeo del header. */
   }
-  <script is:inline>
+  <script>
     try {
       const params = new URLSearchParams(location.search);
       if (params.get('t') === 'prediccion') {

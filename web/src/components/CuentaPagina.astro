@@ -70,3 +70,14 @@ const { titulo, descripcion, ancho = 'max-w-xl' } = Astro.props;
     }
   </main>
 </Layout>
+
+<script>
+  // Al volver con "Atrás" el navegador puede restaurar la página tal como
+  // estaba, sin ejecutar nada de nuevo: tras salir de la sesión seguirían a la
+  // vista el correo, las sesiones y los códigos de recuperación, o la
+  // contraseña escrita en un formulario. Recargar obliga a consultar la
+  // sesión otra vez.
+  window.addEventListener('pageshow', (evento) => {
+    if (evento.persisted) location.reload();
+  });
+</script>

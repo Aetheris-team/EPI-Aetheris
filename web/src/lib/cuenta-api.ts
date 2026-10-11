@@ -13,6 +13,7 @@
 import {
   ROLES_CUENTA,
   TIPOS_INSTITUCION,
+  type AprobacionPendiente,
   type DatosInstitucion,
   type DatosInvitacion,
   type EstadoSesion,
@@ -534,12 +535,63 @@ export async function cambiarEstado(
   mensajeDe(await pedir('POST', ruta, { estado, motivo }), ruta);
 }
 
+/**
+ * Sobre una cuenta de administrador el servidor no restablece nada: crea una
+ * solicitud que otro administrador debe confirmar (`pendiente: true`).
+ */
 export async function restablecerFactores(
   usuarioId: string,
   motivo: string,
-): Promise<void> {
+): Promise<{ pendiente: boolean; mensaje: string }> {
   const ruta = `/api/admin/usuarios/${encodeURIComponent(usuarioId)}/restablecer-factores`;
-  mensajeDe(await pedir('POST', ruta, { motivo }), ruta);
+  const dato = await pedir('POST', ruta, { motivo });
+  return {
+    mensaje: mensajeDe(dato, ruta),
+    pendiente: esObjeto(dato) && 'aprobacion' in dato,
+  };
+}
+
+function esAprobacion(valor: unknown): valor is AprobacionPendiente {
+  return (
+    esObjeto(valor) &&
+    typeof valor.id === 'string' &&
+    valor.accion === 'restablecer_factores' &&
+    esObjeto(valor.objetivo) &&
+    typeof valor.objetivo.id === 'string' &&
+    typeof valor.objetivo.nombre === 'string' &&
+    typeof valor.objetivo.correo === 'string' &&
+    esObjeto(valor.solicitante) &&
+    typeof valor.solicitante.id === 'string' &&
+    typeof valor.solicitante.nombre === 'string' &&
+    typeof valor.motivo === 'string' &&
+    typeof valor.creada_en === 'string' &&
+    typeof valor.caduca_en === 'string' &&
+    typeof valor.es_propia === 'boolean' &&
+    typeof valor.puede_confirmar === 'boolean'
+  );
+}
+
+export async function listarAprobaciones(): Promise<AprobacionPendiente[]> {
+  const ruta = '/api/admin/aprobaciones';
+  const dato = await pedir('GET', ruta);
+  if (
+    !esObjeto(dato) ||
+    !Array.isArray(dato.aprobaciones) ||
+    !dato.aprobaciones.every(esAprobacion)
+  ) {
+    throw formaInvalida(ruta);
+  }
+  return dato.aprobaciones;
+}
+
+export async function confirmarAprobacion(id: string): Promise<void> {
+  const ruta = `/api/admin/aprobaciones/${encodeURIComponent(id)}/confirmar`;
+  mensajeDe(await pedir('POST', ruta), ruta);
+}
+
+export async function rechazarAprobacion(id: string): Promise<void> {
+  const ruta = `/api/admin/aprobaciones/${encodeURIComponent(id)}/rechazar`;
+  mensajeDe(await pedir('POST', ruta), ruta);
 }
 
 function esInstitucion(valor: unknown): valor is InstitucionAdmin {

@@ -137,7 +137,7 @@ anunciaría. */
                   data-alerta-recordar-token
                   class="rounded-sm border-border text-accent focus:ring-accent"
                 />
-                <span>Recordar token en este navegador</span>
+                <span>Recordar token hasta cerrar la pestaña</span>
               </label>
               <button
                 type="button"
@@ -617,7 +617,11 @@ anunciaría. */
 </Layout>
 
 <script>
+  import { escapeHtml } from '../../utils/security';
+
   const API_BASE = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8000';
+  // El token de escritura da acceso a publicar: solo se recuerda en la pestaña
+  // (sessionStorage), no entre sesiones del navegador como hacía localStorage.
   const CLAVE_TOKEN = 'epi-aetheris:alertas-token';
   const form = document.querySelector<HTMLFormElement>('[data-form-alerta]');
   const inputToken = document.querySelector<HTMLInputElement>(
@@ -738,7 +742,7 @@ anunciaría. */
       if (indicaciones) {
         prevIndicaciones.innerHTML = indicaciones
           .split('\n')
-          .map((line) => `<p>${line.replace(/^-\s*/, '• ')}</p>`)
+          .map((line) => `<p>${escapeHtml(line.replace(/^-\s*/, '• '))}</p>`)
           .join('');
       } else {
         prevIndicaciones.innerHTML =
@@ -753,7 +757,15 @@ anunciaría. */
   form?.addEventListener('change', actualizarPreview);
 
   try {
-    const guardado = window.localStorage.getItem(CLAVE_TOKEN);
+    // Versiones anteriores lo guardaban en localStorage, donde sobrevivía al
+    // cierre del navegador: se borra la copia que haya quedado.
+    window.localStorage.removeItem(CLAVE_TOKEN);
+  } catch {
+    /* ignore */
+  }
+
+  try {
+    const guardado = window.sessionStorage.getItem(CLAVE_TOKEN);
     if (guardado && inputToken) {
       inputToken.value = guardado;
       if (recordar) recordar.checked = true;
@@ -764,13 +776,13 @@ anunciaría. */
 
   cerrar?.addEventListener('click', () => {
     try {
-      window.localStorage.removeItem(CLAVE_TOKEN);
+      window.sessionStorage.removeItem(CLAVE_TOKEN);
     } catch {
       /* ignore */
     }
     if (inputToken) inputToken.value = '';
     if (recordar) recordar.checked = false;
-    if (estado) estado.textContent = 'Token olvidado en este navegador.';
+    if (estado) estado.textContent = 'Token olvidado.';
   });
 
   class ErrorPublicacion extends Error {
@@ -858,13 +870,13 @@ anunciaría. */
 
     if (recordar?.checked) {
       try {
-        window.localStorage.setItem(CLAVE_TOKEN, token);
+        window.sessionStorage.setItem(CLAVE_TOKEN, token);
       } catch {
         /* ignore */
       }
     } else {
       try {
-        window.localStorage.removeItem(CLAVE_TOKEN);
+        window.sessionStorage.removeItem(CLAVE_TOKEN);
       } catch {
         /* ignore */
       }

@@ -16,7 +16,7 @@ import { RUTA_SENSIBILIDAD } from '../lib/enlaces';
      pestaña de /dengue. El panel lee ?demo por su cuenta; aquí solo se
      despeja la página. */
   }
-  <script is:inline>
+  <script>
     try {
       if (new URLSearchParams(location.search).has('demo')) {
         document.documentElement.classList.add('demo-presentacion');
