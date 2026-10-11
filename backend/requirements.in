@@ -20,7 +20,7 @@ pdfplumber==0.11.10
 epiweeks==2.4.0
 requests==2.33.0
 scikit-learn==1.5.1
-joblib==1.4.2
+joblib==1.6.0
 pytest==9.1.1
 
 # Cuentas de usuario (ADR 0024)
