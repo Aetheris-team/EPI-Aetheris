@@ -312,128 +312,64 @@ def cargar_boletin_semana(conn, anio: int, semana: int) -> dict | None:
     }
 
 
-def _ultima_se(conn, sql: str, params: tuple = ()) -> tuple[int, int] | None:
-    with conn.cursor() as cur:
-        cur.execute(sql, params)
-        fila = cur.fetchone()
-    if fila is None or fila[0] is None or fila[1] is None:
-        return None
-    return int(fila[0]), int(fila[1])
+# Una sola consulta en vez de una por serie (antes eran nueve viajes a
+# Postgres por request). anio * 100 + semana_epi ordena igual que
+# (anio, semana_epi) porque semana_epi <= 53, así que su max es la misma fila
+# que daba ORDER BY anio DESC, semana_epi DESC LIMIT 1. Los JOIN internos no
+# descartan filas: region_id, tipo_evento_id y fuente_id son NOT NULL con FK.
+# Cada serie conserva los filtros que tenía: solo la departamental exige
+# nivel_admin = 1 y la de OpenDengue no filtra por tipo de evento.
+_SQL_ULTIMAS_SE = """
+    WITH casos AS (
+        SELECT t.codigo AS evento,
+               f.codigo AS fuente,
+               r.nivel_admin,
+               max(c.anio * 100 + c.semana_epi) AS ultima
+        FROM casos_epidemiologicos c
+        JOIN regiones r ON r.id = c.region_id
+        JOIN tipos_evento t ON t.id = c.tipo_evento_id
+        JOIN fuentes_datos f ON f.id = c.fuente_id
+        WHERE f.codigo IN ('minsal_pdf', 'opendengue_v1_3', 'minsal_tablero')
+        GROUP BY t.codigo, f.codigo, r.nivel_admin
+    )
+    SELECT 'dengue_minsal_departamental', max(ultima) FROM casos
+        WHERE evento = 'dengue' AND fuente = 'minsal_pdf' AND nivel_admin = 1
+    UNION ALL
+    SELECT 'dengue_opendengue_nacional', max(ultima) FROM casos
+        WHERE fuente = 'opendengue_v1_3'
+    UNION ALL
+    SELECT 'dengue_tablero_nacional', max(ultima) FROM casos
+        WHERE evento = 'dengue' AND fuente = 'minsal_tablero'
+    UNION ALL
+    SELECT 'ira', max(ultima) FROM casos
+        WHERE evento = 'ira' AND fuente = 'minsal_pdf'
+    UNION ALL
+    SELECT 'neumonias', max(ultima) FROM casos
+        WHERE evento = 'neumonia' AND fuente = 'minsal_pdf'
+    UNION ALL
+    SELECT 'ira_tablero_nacional', max(ultima) FROM casos
+        WHERE evento = 'ira' AND fuente = 'minsal_tablero'
+    UNION ALL
+    SELECT 'neumonias_tablero_nacional', max(ultima) FROM casos
+        WHERE evento = 'neumonia' AND fuente = 'minsal_tablero'
+    UNION ALL
+    SELECT 'clima', max(anio * 100 + semana_epi) FROM variables_ambientales
+    UNION ALL
+    SELECT 'virus_respiratorios', max(anio * 100 + semana_epi)
+        FROM vigilancia_virus_respiratorios
+"""
 
 
 def cargar_ultimas_se(conn) -> dict[str, tuple[int, int] | None]:
-    """Ultima (anio, semana_epi) con dato, por serie de antiguedad."""
-    return {
-        "dengue_minsal_departamental": _ultima_se(
-            conn,
-            """
-            SELECT c.anio, c.semana_epi
-            FROM casos_epidemiologicos c
-            JOIN regiones r ON r.id = c.region_id
-            JOIN tipos_evento t ON t.id = c.tipo_evento_id
-            JOIN fuentes_datos f ON f.id = c.fuente_id
-            WHERE r.nivel_admin = 1
-              AND t.codigo = 'dengue'
-              AND f.codigo = 'minsal_pdf'
-            ORDER BY c.anio DESC, c.semana_epi DESC
-            LIMIT 1
-            """,
-        ),
-        "dengue_opendengue_nacional": _ultima_se(
-            conn,
-            """
-            SELECT c.anio, c.semana_epi
-            FROM casos_epidemiologicos c
-            JOIN fuentes_datos f ON f.id = c.fuente_id
-            WHERE f.codigo = 'opendengue_v1_3'
-            ORDER BY c.anio DESC, c.semana_epi DESC
-            LIMIT 1
-            """,
-        ),
-        "dengue_tablero_nacional": _ultima_se(
-            conn,
-            """
-            SELECT c.anio, c.semana_epi
-            FROM casos_epidemiologicos c
-            JOIN tipos_evento t ON t.id = c.tipo_evento_id
-            JOIN fuentes_datos f ON f.id = c.fuente_id
-            WHERE t.codigo = 'dengue'
-              AND f.codigo = 'minsal_tablero'
-            ORDER BY c.anio DESC, c.semana_epi DESC
-            LIMIT 1
-            """,
-        ),
-        "clima": _ultima_se(
-            conn,
-            """
-            SELECT anio, semana_epi
-            FROM variables_ambientales
-            ORDER BY anio DESC, semana_epi DESC
-            LIMIT 1
-            """,
-        ),
-        "ira": _ultima_se(
-            conn,
-            """
-            SELECT c.anio, c.semana_epi
-            FROM casos_epidemiologicos c
-            JOIN tipos_evento t ON t.id = c.tipo_evento_id
-            JOIN fuentes_datos f ON f.id = c.fuente_id
-            WHERE t.codigo = 'ira'
-              AND f.codigo = 'minsal_pdf'
-            ORDER BY c.anio DESC, c.semana_epi DESC
-            LIMIT 1
-            """,
-        ),
-        "neumonias": _ultima_se(
-            conn,
-            """
-            SELECT c.anio, c.semana_epi
-            FROM casos_epidemiologicos c
-            JOIN tipos_evento t ON t.id = c.tipo_evento_id
-            JOIN fuentes_datos f ON f.id = c.fuente_id
-            WHERE t.codigo = 'neumonia'
-              AND f.codigo = 'minsal_pdf'
-            ORDER BY c.anio DESC, c.semana_epi DESC
-            LIMIT 1
-            """,
-        ),
-        "ira_tablero_nacional": _ultima_se(
-            conn,
-            """
-            SELECT c.anio, c.semana_epi
-            FROM casos_epidemiologicos c
-            JOIN tipos_evento t ON t.id = c.tipo_evento_id
-            JOIN fuentes_datos f ON f.id = c.fuente_id
-            WHERE t.codigo = 'ira'
-              AND f.codigo = 'minsal_tablero'
-            ORDER BY c.anio DESC, c.semana_epi DESC
-            LIMIT 1
-            """,
-        ),
-        "neumonias_tablero_nacional": _ultima_se(
-            conn,
-            """
-            SELECT c.anio, c.semana_epi
-            FROM casos_epidemiologicos c
-            JOIN tipos_evento t ON t.id = c.tipo_evento_id
-            JOIN fuentes_datos f ON f.id = c.fuente_id
-            WHERE t.codigo = 'neumonia'
-              AND f.codigo = 'minsal_tablero'
-            ORDER BY c.anio DESC, c.semana_epi DESC
-            LIMIT 1
-            """,
-        ),
-        "virus_respiratorios": _ultima_se(
-            conn,
-            """
-            SELECT anio, semana_epi
-            FROM vigilancia_virus_respiratorios
-            ORDER BY anio DESC, semana_epi DESC
-            LIMIT 1
-            """,
-        ),
-    }
+    """Ultima (anio, semana_epi) con dato, por serie de antiguedad. None
+    si la serie no tiene ninguna fila."""
+    with conn.cursor() as cur:
+        cur.execute(_SQL_ULTIMAS_SE)
+        filas = cur.fetchall()
+    ultimas: dict[str, tuple[int, int] | None] = {}
+    for serie, ultima in filas:
+        ultimas[serie] = None if ultima is None else divmod(int(ultima), 100)
+    return {serie: ultimas.get(serie) for serie in SERIES_ANTIGUEDAD}
 
 
 def construir_integridad(

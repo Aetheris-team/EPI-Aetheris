@@ -58,6 +58,7 @@ from .tablero import (
     MOTIVO_TABLERO_AUSENTE,
     cargar_serie_tablero_nacional,
 )
+from .cache_respuestas import CACHE as CACHE_RESPUESTAS, serializar_json
 from .cobertura import AVISO_COBERTURA, cargar_cobertura
 from .conexion_db import parametros_conexion
 from .vigilancia import construir_integridad
@@ -213,7 +214,13 @@ app.add_middleware(
 # Las respuestas grandes de esta API son series históricas completas en JSON
 # sin paginar (p.ej. /api/casos-departamentales) -- muy compresibles. FastAPI
 # no comprime nada por defecto.
-app.add_middleware(GZipMiddleware, minimum_size=1000)
+#
+# compresslevel=5 y no el 9 que Starlette trae por defecto: con
+# /api/nowcast-dengue/retrospectivo (~220 KB) el 9 tarda unos 39 ms por
+# request y el 5 unos 10 ms, para un cuerpo comprimido solo un 2 % mayor
+# (70,3 KB frente a 72,0 KB). El gzip se rehace en cada respuesta, también
+# en las que salen del cache del servidor.
+app.add_middleware(GZipMiddleware, minimum_size=1000, compresslevel=5)
 
 
 # --- Pool de conexiones a Postgres (informe de rendimiento externo) --------
@@ -291,10 +298,11 @@ def _conexion():
 
 
 # --- Cache-Control (informe de rendimiento externo) -------------------------
-# Cabeceras HTTP estándar, nada server-side: el navegador reutiliza la
-# respuesta sin volver a pedirla. Dos TTL segun que tan seguido cambia el
-# dato real -- ninguno de los dos endpoints escribe en caliente, todo se
-# recalcula/relee on-request:
+# Cabeceras HTTP estándar: el navegador reutiliza la respuesta sin volver a
+# pedirla. Los mismos TTL gobiernan el cache del servidor (más abajo), así
+# que ninguna respuesta sale más vieja de lo que su max-age ya admitía. TTL
+# segun que tan seguido cambia el dato real -- ninguno de estos endpoints
+# escribe en caliente:
 #   - CACHE_TTL_HISTORICO: series ya cargadas en Postgres que solo cambian
 #     con una corrida nueva de ingesta (cargar_ira.py, etc.).
 #   - CACHE_TTL_COMPUTO: capas espaciales/de cómputo (idoneidad, presión,
@@ -311,6 +319,36 @@ CACHE_TTL_ALERTAS = 60
 
 def _cache_control(response: Response, max_age: int) -> None:
     response.headers["Cache-Control"] = f"public, max-age={max_age}"
+
+
+# --- Cache de respuestas en el servidor (backend/api/cache_respuestas.py) ----
+# Lo de arriba solo evita que el MISMO navegador repita la petición; cada
+# visitante nuevo volvía a pagar la consulta y el cálculo. Los endpoints de
+# solo lectura consultan aquí primero con una clave armada con sus parámetros
+# ya validados (no con la URL cruda: un parámetro basura no debe crear otra
+# entrada) y guardan el cuerpo serializado con el mismo TTL de su
+# Cache-Control. Las respuestas de error y las degradadas
+# (disponible=false) no se guardan.
+def _json_cacheable(cuerpo: bytes, max_age: int) -> Response:
+    return Response(
+        content=cuerpo,
+        media_type="application/json",
+        headers={"Cache-Control": f"public, max-age={max_age}"},
+    )
+
+
+def _desde_cache(clave) -> Response | None:
+    acierto = CACHE_RESPUESTAS.obtener(clave)
+    if acierto is None:
+        return None
+    cuerpo, restante = acierto
+    return _json_cacheable(cuerpo, restante)
+
+
+def _cachear(clave, ttl: int, cuerpo) -> Response:
+    serializado = serializar_json(cuerpo)
+    CACHE_RESPUESTAS.guardar(clave, serializado, ttl)
+    return _json_cacheable(serializado, ttl)
 
 
 # Degradación elegante (issue #84): tabla ausente / sin filas no es un
@@ -426,7 +464,9 @@ def casos_nacional(response: Response):
     de varias. Cada fila lleva su `fuente` para que la UI distinga los dos
     tramos. La semana 53 de 2025, que el tablero no publica, no tiene fila.
     No es clasificacion de riesgo -- para eso ver /api/riesgo-nacional."""
-    _cache_control(response, CACHE_TTL_HISTORICO)
+    clave = ("casos-nacional",)
+    if (cacheada := _desde_cache(clave)) is not None:
+        return cacheada
     try:
         with _conexion() as conn:
             with conn.cursor() as cursor:
@@ -472,7 +512,7 @@ def casos_nacional(response: Response):
             detail="Error de conexión a la base de datos"
         )
 
-    return [
+    return _cachear(clave, CACHE_TTL_HISTORICO, [
         {
             "semana_inicio": fecha_inicio.isoformat(),
             "anio": anio,
@@ -481,7 +521,7 @@ def casos_nacional(response: Response):
             "fuente": fuente,
         }
         for fecha_inicio, anio, semana_epi, conteo, fuente in filas
-    ]
+    ])
 
 
 # Artefactos derivados del clasificador historico (dataset CSV + joblib +
@@ -600,6 +640,19 @@ def riesgo_nacional(
 
 NOWCAST_DENGUE_PATH = Path(__file__).parent / "datos" / "nowcast_dengue.json"
 
+
+def _servir_artefacto(ruta: Path, aviso: str) -> Response:
+    """Cuerpo de los artefactos versionados de backend/api/datos/: el JSON
+    tal cual con `disponible` y `aviso` delante. Leerlo, parsearlo y volver a
+    serializarlo costaba decenas de ms por request en los de 200-300 KB; la
+    clave lleva el mtime para que un artefacto regenerado no se sirva viejo.
+    Quien llama ya comprobó que el archivo existe."""
+    clave = ("artefacto", str(ruta), ruta.stat().st_mtime_ns)
+    if (cacheada := _desde_cache(clave)) is not None:
+        return cacheada
+    datos = json.loads(ruta.read_text(encoding="utf-8"))
+    return _cachear(clave, CACHE_TTL_HISTORICO, {"disponible": True, "aviso": aviso, **datos})
+
 AVISO_HONESTIDAD_NOWCAST_DENGUE = (
     "Prediccion estadistica de horizonte corto sobre la serie nacional de "
     "dengue: OpenDengue hasta 2024 y sospechosos del tablero de MINSAL desde "
@@ -626,9 +679,7 @@ def nowcast_dengue(request: Request, response: Response):
             "motivo": "El artefacto de prediccion de horizonte corto no esta generado en este despliegue.",
             "aviso": AVISO_HONESTIDAD_NOWCAST_DENGUE,
         }
-    datos = json.loads(NOWCAST_DENGUE_PATH.read_text(encoding="utf-8"))
-    _cache_control(response, CACHE_TTL_HISTORICO)
-    return {"disponible": True, "aviso": AVISO_HONESTIDAD_NOWCAST_DENGUE, **datos}
+    return _servir_artefacto(NOWCAST_DENGUE_PATH, AVISO_HONESTIDAD_NOWCAST_DENGUE)
 
 
 NOWCAST_DENGUE_RETRO_PATH = NOWCAST_DENGUE_PATH.with_name("nowcast_dengue_retrospectivo.json")
@@ -651,9 +702,7 @@ def nowcast_dengue_retrospectivo(request: Request, response: Response):
             "motivo": "El artefacto retrospectivo de la prediccion no esta generado en este despliegue.",
             "aviso": AVISO_HONESTIDAD_NOWCAST_DENGUE,
         }
-    datos = json.loads(NOWCAST_DENGUE_RETRO_PATH.read_text(encoding="utf-8"))
-    _cache_control(response, CACHE_TTL_HISTORICO)
-    return {"disponible": True, "aviso": AVISO_HONESTIDAD_NOWCAST_DENGUE, **datos}
+    return _servir_artefacto(NOWCAST_DENGUE_RETRO_PATH, AVISO_HONESTIDAD_NOWCAST_DENGUE)
 
 
 # Analisis descriptivo de clima y dengue (ADR 0023). Dos artefactos
@@ -669,15 +718,13 @@ AVISO_HONESTIDAD_CLIMA_DENGUE = (
 )
 
 
-def _servir_clima_dengue(response: Response, ruta: Path, motivo: str) -> dict:
+def _servir_clima_dengue(response: Response, ruta: Path, motivo: str) -> dict | Response:
     """Contrato de los artefactos versionados: sin el archivo responde 200 con
     disponible=false (mismo patron que /api/nowcast-dengue)."""
     if not ruta.exists():
         _cache_control(response, CACHE_TTL_COMPUTO)
         return {"disponible": False, "motivo": motivo, "aviso": AVISO_HONESTIDAD_CLIMA_DENGUE}
-    datos = json.loads(ruta.read_text(encoding="utf-8"))
-    _cache_control(response, CACHE_TTL_HISTORICO)
-    return {"disponible": True, "aviso": AVISO_HONESTIDAD_CLIMA_DENGUE, **datos}
+    return _servir_artefacto(ruta, AVISO_HONESTIDAD_CLIMA_DENGUE)
 
 
 @app.get("/api/clima-dengue/por-anio")
@@ -731,6 +778,9 @@ def casos_departamentales(request: Request, response: Response):
     RATE_LIMIT_HEAVY (no el limite global): agrega con GROUP BY + JOIN sobre
     toda la ventana cargada en cada request, igual de pesado que los
     endpoints /api/v1/* que ya tenian este umbral desde el PR #61."""
+    clave = ("casos-departamentales",)
+    if (cacheada := _desde_cache(clave)) is not None:
+        return cacheada
     try:
         with _conexion() as conn:
             with conn.cursor() as cursor:
@@ -760,8 +810,7 @@ def casos_departamentales(request: Request, response: Response):
             detail="Error de conexión a la base de datos"
         )
 
-    _cache_control(response, CACHE_TTL_HISTORICO)
-    return {
+    return _cachear(clave, CACHE_TTL_HISTORICO, {
         "departamentos": [
             {
                 "nombre": nombre,
@@ -775,7 +824,7 @@ def casos_departamentales(request: Request, response: Response):
             for nombre, codigo, probable_total, confirmado_total, semanas_con_dato, primer_anio, ultimo_anio in filas
         ],
         "aviso": AVISO_HONESTIDAD_CASOS_DEPARTAMENTALES,
-    }
+    })
 
 
 # ---------------------------------------------------------------------------
@@ -818,6 +867,10 @@ def idoneidad_espacial_actual(request: Request, response: Response, week: int, y
     if not (1 <= week <= 53):
         raise HTTPException(status_code=422, detail="El parámetro 'week' debe estar entre 1 y 53.")
 
+    clave = ("spatial-current", week, year)
+    if (cacheada := _desde_cache(clave)) is not None:
+        return cacheada
+
     semanas_necesarias = [week] if week == 1 else [week - 1, week]
 
     try:
@@ -854,13 +907,12 @@ def idoneidad_espacial_actual(request: Request, response: Response, week: int, y
             "anomaly_sigma": round(sigma, 4) if sigma is not None else None,
         })
 
-    _cache_control(response, CACHE_TTL_COMPUTO)
-    return {
+    return _cachear(clave, CACHE_TTL_COMPUTO, {
         "semana_epi": week,
         "anio": year,
         "departamentos": resultado,
         "aviso": AVISO_HONESTIDAD_IDONEIDAD,
-    }
+    })
 
 
 # ---------------------------------------------------------------------------
@@ -895,6 +947,10 @@ def dataset_analitico_dengue(request: Request, response: Response, year: int):
             detail=f"El parametro 'year' debe ser uno de: {disponibles}.",
         )
 
+    clave = ("analisis-dengue", year)
+    if (cacheada := _desde_cache(clave)) is not None:
+        return cacheada
+
     try:
         with _conexion() as conn:
             respuesta = construir_dataset_dengue(conn, anio=year)
@@ -905,8 +961,7 @@ def dataset_analitico_dengue(request: Request, response: Response, year: int):
         "idoneidad": AVISO_HONESTIDAD_IDONEIDAD,
         "presion": AVISO_HONESTIDAD_PRESION,
     }
-    _cache_control(response, CACHE_TTL_HISTORICO)
-    return respuesta
+    return _cachear(clave, CACHE_TTL_HISTORICO, respuesta)
 
 
 @app.get("/api/v1/analisis/dengue/procedencia")
@@ -967,6 +1022,10 @@ def presion_espacial_actual(request: Request, response: Response, week: int, yea
     if not (1 <= week <= 53):
         raise HTTPException(status_code=422, detail="El parámetro 'week' debe estar entre 1 y 53.")
 
+    clave = ("presion-current", week, year)
+    if (cacheada := _desde_cache(clave)) is not None:
+        return cacheada
+
     # Solo la ventana ±1 de la semana pedida; el baseline necesita los años
     # base completos más el año descrito (si no es uno de ellos).
     semanas_necesarias = [w for w in (week - 1, week, week + 1) if w >= 1]
@@ -988,13 +1047,12 @@ def presion_espacial_actual(request: Request, response: Response, week: int, yea
             fila[serie] = calcular_presion(casos.get(codigo, {}).get(serie, {}), anio=year, semana=week)
         resultado.append(fila)
 
-    _cache_control(response, CACHE_TTL_COMPUTO)
-    return {
+    return _cachear(clave, CACHE_TTL_COMPUTO, {
         "semana_epi": week,
         "anio": year,
         "departamentos": resultado,
         "aviso": AVISO_HONESTIDAD_PRESION,
-    }
+    })
 
 
 @app.get("/api/v1/presion/temporal/{departamento_id}")
@@ -1003,6 +1061,10 @@ def presion_temporal_departamento(departamento_id: str, anio: int, response: Res
     departamento para `anio`, en las dos series separadas. Espejo de
     /api/v1/temporal/{departamento_id}. `departamento_id` es el `codigo`
     de `regiones` (ISO 3166-2:SV, ej. 'SV-SS')."""
+    clave = ("presion-temporal", departamento_id, anio)
+    if (cacheada := _desde_cache(clave)) is not None:
+        return cacheada
+
     anios_necesarios = sorted(set(ANIOS_BASE_PRESION) | {anio})
 
     try:
@@ -1042,14 +1104,13 @@ def presion_temporal_departamento(departamento_id: str, anio: int, response: Res
             fila[serie] = calcular_presion(casos_depto.get(serie, {}), anio=anio, semana=semana)
         semanas_salida.append(fila)
 
-    _cache_control(response, CACHE_TTL_HISTORICO)
-    return {
+    return _cachear(clave, CACHE_TTL_HISTORICO, {
         "departamento_codigo": codigo,
         "departamento_nombre": nombre,
         "anio": anio,
         "semanas": semanas_salida,
         "aviso": AVISO_HONESTIDAD_PRESION,
-    }
+    })
 
 
 @app.get("/api/v1/temporal/{departamento_id}")
@@ -1063,6 +1124,10 @@ def idoneidad_temporal_departamento(departamento_id: str, anio: int, response: R
 
     Capa DESCRIPTIVA -- no hay `estimated_transmission_window_start` ni
     `season_shift_alert` (retirados, ver AVISO_HONESTIDAD_IDONEIDAD)."""
+    clave = ("idoneidad-temporal", departamento_id, anio)
+    if (cacheada := _desde_cache(clave)) is not None:
+        return cacheada
+
     try:
         with _conexion() as conn:
             with conn.cursor() as cursor:
@@ -1107,14 +1172,13 @@ def idoneidad_temporal_departamento(departamento_id: str, anio: int, response: R
             "anomaly_sigma": round(sigma, 4) if sigma is not None else None,
         })
 
-    _cache_control(response, CACHE_TTL_HISTORICO)
-    return {
+    return _cachear(clave, CACHE_TTL_HISTORICO, {
         "departamento_codigo": codigo,
         "departamento_nombre": nombre,
         "anio": anio,
         "semanas": semanas_salida,
         "aviso": AVISO_HONESTIDAD_IDONEIDAD,
-    }
+    })
 
 
 # ---------------------------------------------------------------------------
@@ -1138,17 +1202,19 @@ def ira_departamental(request: Request, response: Response):
     la ventana cargada en cada request, el endpoint mas lento reportado por
     el informe de rendimiento externo -- mismo criterio que
     /api/casos-departamentales."""
+    clave = ("ira-departamental",)
+    if (cacheada := _desde_cache(clave)) is not None:
+        return cacheada
     try:
         with _conexion() as conn:
             departamentos = cargar_ira_departamental(conn)
     except Exception:
         raise HTTPException(status_code=500, detail="Error de conexión a la base de datos")
 
-    _cache_control(response, CACHE_TTL_HISTORICO)
-    return {
+    return _cachear(clave, CACHE_TTL_HISTORICO, {
         "departamentos": departamentos,
         "aviso": AVISO_HONESTIDAD_IRA,
-    }
+    })
 
 
 @app.get("/api/ira/temporal/{departamento_id}")
@@ -1159,29 +1225,23 @@ def ira_temporal_departamento(departamento_id: str, response: Response):
     la fuente MINSAL (boletín de vacaciones, tabla como imagen, corrección
     retroactiva excluida) -- se devuelven como ausentes, nunca como cero ni
     valor interpolado."""
+    clave = ("ira-temporal", departamento_id)
+    if (cacheada := _desde_cache(clave)) is not None:
+        return cacheada
     try:
         with _conexion() as conn:
-            serie = cargar_ira_departamento_temporal(conn, codigo=departamento_id)
-            if serie is None:
-                raise HTTPException(
-                    status_code=404,
-                    detail=f"No existe un departamento con código '{departamento_id}'.",
-                )
-            cur = conn.cursor()
-            cur.execute(
-                "SELECT nombre FROM regiones WHERE nivel_admin = 1 AND codigo = %s",
-                (departamento_id,),
-            )
-            (nombre,) = cur.fetchone()
-            cur.close()
-    except HTTPException:
-        raise
+            resultado = cargar_ira_departamento_temporal(conn, codigo=departamento_id)
     except Exception:
         raise HTTPException(status_code=500, detail="Error de conexión a la base de datos")
+    if resultado is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No existe un departamento con código '{departamento_id}'.",
+        )
+    nombre, serie = resultado
 
     anios = sorted(serie.keys())
-    _cache_control(response, CACHE_TTL_HISTORICO)
-    return {
+    return _cachear(clave, CACHE_TTL_HISTORICO, {
         "departamento_codigo": departamento_id,
         "departamento_nombre": nombre,
         "anios": anios,
@@ -1190,13 +1250,16 @@ def ira_temporal_departamento(departamento_id: str, response: Response):
             for anio, semanas in serie.items()
         },
         "aviso": AVISO_HONESTIDAD_IRA,
-    }
+    })
 
 
-def _serie_respiratoria_nacional(evento: str, response: Response) -> dict:
+def _serie_respiratoria_nacional(evento: str, response: Response) -> dict | Response:
     """Serie nacional del tablero de MINSAL (ADR 0021) para IRA o neumonías.
     Sin capturas cargadas responde 200 disponible=false: el seed del
     repositorio no trae el tablero."""
+    clave = ("tablero-nacional", evento)
+    if (cacheada := _desde_cache(clave)) is not None:
+        return cacheada
     try:
         with _conexion() as conn:
             semanas = cargar_serie_tablero_nacional(conn, EVENTOS_TABLERO[evento])
@@ -1210,15 +1273,14 @@ def _serie_respiratoria_nacional(evento: str, response: Response) -> dict:
             response, MOTIVO_TABLERO_AUSENTE, AVISO_TABLERO_RESPIRATORIO
         )
 
-    _cache_control(response, CACHE_TTL_HISTORICO)
-    return {
+    return _cachear(clave, CACHE_TTL_HISTORICO, {
         "disponible": True,
         "evento": evento,
         "fuente": "minsal_tablero",
         "unidad": "conteo_notificado",
         "semanas": semanas,
         "aviso": AVISO_TABLERO_RESPIRATORIO,
-    }
+    })
 
 
 @app.get("/api/ira/nacional")
@@ -1238,6 +1300,9 @@ def neumonias_nacional(response: Response):
 @app.get("/api/neumonias/departamental")
 def neumonias_departamental(response: Response):
     """Resumen departamental de Neumonías notificadas. Capa descriptiva."""
+    clave = ("neumonias-departamental",)
+    if (cacheada := _desde_cache(clave)) is not None:
+        return cacheada
     try:
         with _conexion() as conn:
             departamentos = cargar_neumonias_departamental(conn)
@@ -1246,40 +1311,33 @@ def neumonias_departamental(response: Response):
             exc, response, MOTIVO_NEUMONIAS_AUSENTE, AVISO_HONESTIDAD_NEUMONIAS
         )
 
-    _cache_control(response, CACHE_TTL_HISTORICO)
-    return {
+    return _cachear(clave, CACHE_TTL_HISTORICO, {
         "disponible": True,
         "departamentos": departamentos,
         "aviso": AVISO_HONESTIDAD_NEUMONIAS,
-    }
+    })
 
 
 @app.get("/api/neumonias/temporal/{departamento_id}")
 def neumonias_temporal_departamento(departamento_id: str, response: Response):
+    clave = ("neumonias-temporal", departamento_id)
+    if (cacheada := _desde_cache(clave)) is not None:
+        return cacheada
     try:
         with _conexion() as conn:
-            serie = cargar_neumonias_departamento_temporal(conn, codigo=departamento_id)
-            if serie is None:
-                raise HTTPException(
-                    status_code=404,
-                    detail=f"No existe un departamento con código '{departamento_id}'.",
-                )
-            cur = conn.cursor()
-            cur.execute(
-                "SELECT nombre FROM regiones WHERE nivel_admin = 1 AND codigo = %s",
-                (departamento_id,),
-            )
-            (nombre,) = cur.fetchone()
-            cur.close()
-    except HTTPException:
-        raise
+            resultado = cargar_neumonias_departamento_temporal(conn, codigo=departamento_id)
     except Exception as exc:
         return _degradar_consulta(
             exc, response, MOTIVO_NEUMONIAS_AUSENTE, AVISO_HONESTIDAD_NEUMONIAS
         )
+    if resultado is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No existe un departamento con código '{departamento_id}'.",
+        )
+    nombre, serie = resultado
 
-    _cache_control(response, CACHE_TTL_HISTORICO)
-    return {
+    return _cachear(clave, CACHE_TTL_HISTORICO, {
         "disponible": True,
         "departamento_codigo": departamento_id,
         "departamento_nombre": nombre,
@@ -1290,7 +1348,7 @@ def neumonias_temporal_departamento(departamento_id: str, response: Response):
         },
         "aviso": AVISO_HONESTIDAD_NEUMONIAS,
         "unidad": "conteo_notificado",
-    }
+    })
 
 
 @app.get("/api/neumonias/heatmap/{anio}")
@@ -1301,6 +1359,9 @@ def neumonias_heatmap(anio: int, response: Response):
             status_code=400,
             detail=f"año {anio} fuera de la ventana cargada {ANIOS_NEUMONIAS}",
         )
+    clave = ("neumonias-heatmap", anio)
+    if (cacheada := _desde_cache(clave)) is not None:
+        return cacheada
     try:
         with _conexion() as conn:
             departamentos = cargar_heatmap_neumonias(conn, anio)
@@ -1309,19 +1370,21 @@ def neumonias_heatmap(anio: int, response: Response):
             exc, response, MOTIVO_NEUMONIAS_AUSENTE, AVISO_HONESTIDAD_NEUMONIAS
         )
 
-    _cache_control(response, CACHE_TTL_HISTORICO)
-    return {
+    return _cachear(clave, CACHE_TTL_HISTORICO, {
         "disponible": True,
         "anio": anio,
         "unidad": "conteo_notificado",
         "departamentos": departamentos,
         "aviso": AVISO_HONESTIDAD_NEUMONIAS,
-    }
+    })
 
 
 @app.get("/api/respiratorios/virus")
 def respiratorios_virus(response: Response):
     """Catálogo de series disponibles (virus × métrica × unidad). Nacional."""
+    clave = ("virus-catalogo",)
+    if (cacheada := _desde_cache(clave)) is not None:
+        return cacheada
     try:
         with _conexion() as conn:
             series = listar_virus(conn)
@@ -1335,13 +1398,12 @@ def respiratorios_virus(response: Response):
             response, MOTIVO_VIRUS_AUSENTE, AVISO_HONESTIDAD_VIRUS
         )
 
-    _cache_control(response, CACHE_TTL_HISTORICO)
-    return {
+    return _cachear(clave, CACHE_TTL_HISTORICO, {
         "disponible": True,
         "series": series,
         "aviso": AVISO_HONESTIDAD_VIRUS,
         "granularidad": "nacional",
-    }
+    })
 
 
 @app.get("/api/respiratorios/temporal")
@@ -1350,6 +1412,9 @@ def respiratorios_temporal(response: Response, virus: str, metrica: str = "detec
     permitidas = {"detecciones", "positividad", "muestras_analizadas", "muestras_positivas"}
     if metrica not in permitidas:
         raise HTTPException(status_code=400, detail=f"metrica debe ser una de {sorted(permitidas)}")
+    clave = ("virus-temporal", virus, metrica)
+    if (cacheada := _desde_cache(clave)) is not None:
+        return cacheada
     try:
         with _conexion() as conn:
             serie, unidad = serie_virus(conn, virus=virus, metrica=metrica)
@@ -1366,8 +1431,7 @@ def respiratorios_temporal(response: Response, virus: str, metrica: str = "detec
             ),
         )
 
-    _cache_control(response, CACHE_TTL_HISTORICO)
-    return {
+    return _cachear(clave, CACHE_TTL_HISTORICO, {
         "disponible": True,
         "virus": virus,
         "metrica": metrica,
@@ -1379,13 +1443,16 @@ def respiratorios_temporal(response: Response, virus: str, metrica: str = "detec
             for anio, semanas in serie.items()
         },
         "aviso": AVISO_HONESTIDAD_VIRUS,
-    }
+    })
 
 
 @app.get("/api/respiratorios/semana/{anio}/{semana}")
 def respiratorios_semana(anio: int, semana: int, response: Response):
     if semana < 1 or semana > 53:
         raise HTTPException(status_code=400, detail="semana epidemiológica fuera de 1-53")
+    clave = ("virus-semana", anio, semana)
+    if (cacheada := _desde_cache(clave)) is not None:
+        return cacheada
     try:
         with _conexion() as conn:
             filas = semana_virus(conn, anio=anio, semana=semana)
@@ -1394,15 +1461,14 @@ def respiratorios_semana(anio: int, semana: int, response: Response):
             exc, response, MOTIVO_VIRUS_AUSENTE, AVISO_HONESTIDAD_VIRUS
         )
 
-    _cache_control(response, CACHE_TTL_HISTORICO)
-    return {
+    return _cachear(clave, CACHE_TTL_HISTORICO, {
         "disponible": True,
         "anio": anio,
         "semana": semana,
         "observaciones": filas,
         "aviso": AVISO_HONESTIDAD_VIRUS,
         "granularidad": "nacional",
-    }
+    })
 
 
 @app.get("/api/v1/vigilancia/integridad")
@@ -1432,19 +1498,27 @@ def vigilancia_integridad(
             detail="El parámetro 'week' debe estar entre 1 y 53.",
         )
 
+    # `antiguedad` depende de date.today(): el cache de 15 minutos puede
+    # desfasarla en el borde de una SE, lo mismo que ADR 0019 ya acepta para
+    # el Cache-Control de este endpoint.
+    clave = ("vigilancia-integridad", week, year)
+    if (cacheada := _desde_cache(clave)) is not None:
+        return cacheada
     try:
         with _conexion() as conn:
             cuerpo = construir_integridad(conn, week=week, year=year)
     except Exception:
         raise HTTPException(status_code=500, detail="Error de conexión a la base de datos")
 
-    _cache_control(response, CACHE_TTL_COMPUTO)
-    return cuerpo
+    return _cachear(clave, CACHE_TTL_COMPUTO, cuerpo)
 
 
 @app.get("/api/respiratorios/cobertura")
 def respiratorios_cobertura(response: Response):
     """Semanas con dato en Postgres + notas de la exploración. Distinto de M4."""
+    clave = ("respiratorios-cobertura",)
+    if (cacheada := _desde_cache(clave)) is not None:
+        return cacheada
     try:
         with _conexion() as conn:
             cobertura = cargar_cobertura(conn)
@@ -1453,9 +1527,8 @@ def respiratorios_cobertura(response: Response):
             exc, response, MOTIVO_COBERTURA_AUSENTE, AVISO_COBERTURA
         )
 
-    _cache_control(response, CACHE_TTL_HISTORICO)
     cobertura["disponible"] = True
-    return cobertura
+    return _cachear(clave, CACHE_TTL_HISTORICO, cobertura)
 
 
 # ---------------------------------------------------------------------------

@@ -15,3 +15,23 @@ import os
 # misma IP) fallarian de forma intermitente con 429. test_rate_limiting.py lo
 # reactiva explicitamente via monkeypatch + reload cuando lo necesita.
 os.environ["RATE_LIMIT_ENABLED"] = "false"
+
+import sys
+from pathlib import Path
+
+import pytest
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+
+
+@pytest.fixture(autouse=True)
+def _cache_de_respuestas_vacio():
+    """El cache de respuestas del servidor (api/cache_respuestas.py) es por
+    proceso y sobrevive entre tests: sin vaciarlo, un test que parchea
+    _conexion para simular un fallo recibiría la respuesta que otro test ya
+    dejó guardada para la misma URL."""
+    from api.cache_respuestas import CACHE
+
+    CACHE.limpiar()
+    yield
+    CACHE.limpiar()
