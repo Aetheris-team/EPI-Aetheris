@@ -235,13 +235,18 @@ import PanelWorkspace from './analisis/PanelWorkspace.astro';
       > = {};
       const anios = new Set<number>();
       try {
-        const vistos = new Set<string>();
-        for (const virus of virusConsulta) {
-          if (vistos.has(virus)) continue;
-          vistos.add(virus);
-          const datos = await jsonOk(
-            `${API_BASE}/api/respiratorios/temporal?virus=${encodeURIComponent(virus)}&metrica=${encodeURIComponent(metrica)}`,
-          );
+        // Las series se piden a la vez, no una tras otra: en serie, cada
+        // virus marcado sumaba un viaje completo a la API antes de pintar.
+        const unicos = [...new Set(virusConsulta)];
+        const respuestas = await Promise.all(
+          unicos.map((virus) =>
+            jsonOk(
+              `${API_BASE}/api/respiratorios/temporal?virus=${encodeURIComponent(virus)}&metrica=${encodeURIComponent(metrica)}`,
+            ),
+          ),
+        );
+        for (const [i, virus] of unicos.entries()) {
+          const datos = respuestas[i];
           if (esNoDisponible(datos)) {
             error.classList.add('hidden');
             renderSinDato(heatmap, motivoNoDisponible(datos));
