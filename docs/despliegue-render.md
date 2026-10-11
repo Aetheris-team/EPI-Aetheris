@@ -116,6 +116,12 @@ antes de escribirlo) y mergear a `main`. El `preDeployCommand` del backend
 del servicio, antes de conmutar tráfico. Si la migración falla, el deploy
 no avanza y sigue viva la versión anterior.
 
+Con los roles de base separados (ADR 0024, punto E), el runner lee
+`DATABASE_URL_MIGRACIONES` (rol propietario) y, si falta, `DATABASE_URL` y
+luego `POSTGRES_*`; la API usa `DATABASE_URL` (rol `epi_app`, sin permiso para
+alterar el esquema ni la auditoría) y, si falta, `POSTGRES_*`. Los pasos para
+activarlo en Render están en `docs/seguridad/roles-de-base-de-datos.md`.
+
 No hace falta exportar `MIGRACIONES_POSTGRES_HOST`: el runner lee
 `POSTGRES_HOST` (y el resto de `POSTGRES_*`). Desde el host, contra
 docker-compose, `POSTGRES_HOST=db` se trata como `localhost` porque ese

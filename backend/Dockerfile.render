@@ -17,6 +17,7 @@ RUN pip install --no-cache-dir --require-hashes -r requirements.txt
 
 COPY backend/ .
 COPY db/aplicar_migraciones.py db/aplicar_migraciones.py
+COPY db/crear_rol_aplicacion.py db/crear_rol_aplicacion.py
 COPY db/migrations/ db/migrations/
 
 RUN useradd --create-home --shell /bin/bash appuser \

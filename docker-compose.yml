@@ -45,6 +45,9 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Debe definirse POSTGRES_PASSWORD en el archivo .env (ver .env.example)}
       POSTGRES_DB: ${POSTGRES_DB:?Debe definirse POSTGRES_DB en el archivo .env (ver .env.example)}
       POSTGRES_PORT: 5432
+      # Vacia por defecto: la API usa POSTGRES_* (rol propietario). Definirla en
+      # .env para probar el rol de aplicacion (ADR 0024, punto E).
+      DATABASE_URL: ${DATABASE_URL:-}
       # Los limites de backend/api/main.py se leian solo del entorno del
       # proceso, y compose no reenviaba ninguna variable RATE_LIMIT_*: el
       # contenedor siempre usaba los defaults de produccion, sin importar

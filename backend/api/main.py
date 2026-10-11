@@ -59,6 +59,7 @@ from .tablero import (
     cargar_serie_tablero_nacional,
 )
 from .cobertura import AVISO_COBERTURA, cargar_cobertura
+from .conexion_db import parametros_conexion
 from .vigilancia import construir_integridad
 from .respiratorios import (
     AVISO_HONESTIDAD_VIRUS,
@@ -255,11 +256,7 @@ def _obtener_pool() -> ThreadedConnectionPool:
                 _pool = ThreadedConnectionPool(
                     POSTGRES_POOL_MIN,
                     POSTGRES_POOL_MAX,
-                    host=os.getenv("POSTGRES_HOST", "db"),
-                    database=os.getenv("POSTGRES_DB"),
-                    user=os.getenv("POSTGRES_USER"),
-                    password=os.getenv("POSTGRES_PASSWORD"),
-                    port=os.getenv("POSTGRES_PORT", "5432"),
+                    **parametros_conexion(),
                     connect_timeout=POSTGRES_CONNECT_TIMEOUT,
                 )
     return _pool
