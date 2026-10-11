@@ -123,19 +123,35 @@ app = FastAPI(
 # esto, todos los clientes compartirian un unico bucket y el limite global
 # estrangularia a todos los usuarios a la vez.
 #
-# Tomamos el ULTIMO salto de X-Forwarded-For, no el primero (issue #67): el
-# edge de Render ANEXA la IP real del cliente al final de la cabecera, asi
-# que el ultimo valor es el unico que el cliente no puede falsificar. Con el
-# primer valor, un cliente que mande "X-Forwarded-For: 1.2.3.4" ya seteado
-# se bucketiza como una IP distinta en cada request y evade el rate limiter
-# por completo. Caemos a la IP del socket solo en local/tests donde esa
-# cabecera no existe.
+# Tomamos el salto de X-Forwarded-For que anexo el ultimo proxy de confianza
+# contando desde la derecha, no el primero (issue #67): un cliente puede mandar
+# la cabecera ya seteada, pero no puede quitar los saltos que anexan nuestros
+# proxies. Con el primer valor, quien mande "X-Forwarded-For: 1.2.3.4" se
+# bucketiza como una IP distinta en cada request y evade el rate limiter.
+#
+# TRUSTED_PROXY_DEPTH es cuantos proxies de confianza hay entre el cliente y
+# Uvicorn. Por defecto 1 (el balanceador de Render anexa la IP de quien le
+# llama). En produccion la API esta ademas detras del Cloudflare de Render, y
+# con 1 la IP que se toma es la del servidor de Cloudflare, no la del cliente
+# (se vio en la auditoria de cuentas: la red guardada era 172.71.146.0/24):
+# todos los visitantes de un mismo servidor comparten contador y la auditoria
+# no sirve. Con 2 se toma el salto anterior al de Cloudflare. Si hay menos
+# saltos de los esperados, los proxies no anexaron nada y se toma el primero.
+# Caemos a la IP del socket solo en local/tests donde la cabecera no existe.
+def _profundidad_proxy() -> int:
+    try:
+        return max(1, int(os.getenv("TRUSTED_PROXY_DEPTH", "1")))
+    except ValueError:
+        return 1
+
+
 def _client_ip(request: Request) -> str:
     forwarded = request.headers.get("x-forwarded-for")
     if forwarded:
         saltos = [salto.strip() for salto in forwarded.split(",") if salto.strip()]
         if saltos:
-            return saltos[-1]
+            profundidad = _profundidad_proxy()
+            return saltos[-profundidad] if len(saltos) >= profundidad else saltos[0]
     return get_remote_address(request)
 
 
