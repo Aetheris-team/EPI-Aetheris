@@ -40,11 +40,10 @@ red privada entre backend y base):
 
 Las variables de Postgres (`POSTGRES_HOST/PORT/DB/USER/PASSWORD`) se
 inyectan automáticamente al backend vía `fromDatabase`. `CORS_ALLOWED_ORIGINS`
-y `PUBLIC_API_URL` están hardcodeadas al patrón predecible
-`https://<nombre-del-servicio>.onrender.com` -- Render usa ese subdominio
-exacto salvo colisión de nombre (namespace global), así que **hay que
-verificar las URLs reales en el dashboard tras el primer deploy y corregir
-`render.yaml` si no coinciden**, luego redeployar.
+y `PUBLIC_API_URL` están fijas a los dominios propios: el sitio canónico
+`https://epi-aetheris.dev` y la API `https://api.epi-aetheris.dev`. Los
+valores que rigen en producción son los del panel de Render; `render.yaml`
+solo los documenta, así que un cambio aquí hay que repetirlo allí.
 
 ## Primer despliegue (pasos manuales, una sola vez)
 
@@ -100,13 +99,11 @@ primer deploy del backend fallará ese paso hasta terminar lo siguiente.
    corrieron (ver ADR 0009). A partir de aquí el `preDeployCommand` puede
    aplicar lo nuevo. Forzar un Manual Deploy del backend para que pase el
    healthcheck.
-4. Verificar en el dashboard las URLs reales asignadas a
-   `epi-aetheris-backend` y `epi-aetheris-web`. Si Render agregó un sufijo
-   por colisión de nombre, actualizar `CORS_ALLOWED_ORIGINS` (env var del
-   backend) y `PUBLIC_API_URL` (env var del frontend) en el dashboard --o
-   en `render.yaml` y volver a sincronizar el Blueprint-- y forzar un
-   redeploy del frontend (`PUBLIC_API_URL` se embebe en build-time, un
-   cambio de env var sin rebuild no tiene efecto).
+4. Verificar en el dashboard que `CORS_ALLOWED_ORIGINS` (env var del
+   backend) incluya el origen del sitio y que `PUBLIC_API_URL` (env var del
+   frontend) apunte a la API. Tras cambiar `PUBLIC_API_URL` hay que
+   redesplegar el frontend: se embebe en build-time y un cambio de env var
+   sin rebuild no tiene efecto.
 5. Confirmar `GET /health` del backend y que `/dengue` cargue el mapa con
    datos reales -- si el mapa muestra "sin dato" en todo, lo más probable
    es el paso 4 (frontend compilado apuntando al `PUBLIC_API_URL` viejo).

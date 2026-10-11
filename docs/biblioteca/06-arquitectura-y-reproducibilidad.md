@@ -14,7 +14,7 @@ EPI-Aetheris se replica con el repositorio y Docker. No hay API de datos de pago
 | Servicio | Qué es | Puerto |
 |---|---|---|
 | `db` | PostgreSQL 15 | 5432 |
-| `backend` | FastAPI + `psycopg2` (sin ORM). Entrada: `backend/api/main.py` | 8000 (`/health`, `/docs`) |
+| `backend` | FastAPI + `psycopg2` (sin ORM). Entrada: `backend/api/main.py` | 8000 (`/health`; `/docs` solo en local) |
 | `web` | Astro + TypeScript + Leaflet + Tailwind | 4321 |
 
 El esquema se carga desde `db/migrations/*.sql` **una sola vez**, sobre volumen vacío (`docker-entrypoint-initdb.d`). En el mismo arranque se monta `db/seed/seed_datos_reales.sql`: un volcado `pg_dump --data-only` de las tablas de hechos (ADR 0010). Quien clona obtiene el sistema **con datos reales**, no un cascarón vacío.

@@ -67,17 +67,15 @@ services:
         fromDatabase:
           name: epi-aetheris-db
           property: password
-      # Predicho como https://<name del static site>.onrender.com -- Render
-      # asigna ese subdominio exacto salvo colisión de nombre (namespace
-      # global de .onrender.com), en cuyo caso agrega un sufijo. Verificar
-      # la URL real del servicio "epi-aetheris-web" en el dashboard tras el
-      # primer deploy y corregir aquí si no coincide.
-      #
-      # Incluye también el segundo Static Site "Aetheris Nitor" (fork-vitrina
-      # de web/, ver ADR/decisión del fork), tanto su dominio propio
-      # epi-aetheris.dev como su URL directa de onrender.com.
+      # Orígenes desde los que el navegador puede llamar a la API: el sitio
+      # canónico (servicio estático "aetheris-nitor", que sincroniza web/) y su
+      # www, que Render redirige al dominio sin www. Las direcciones
+      # onrender.com del sitio ya no van aquí: el Layout las redirige al
+      # dominio canónico antes de que haga ninguna petición (ADR 0024, punto
+      # B). El control de Origin de las rutas de cuenta (AUTH_ORIGEN_CANONICO)
+      # solo acepta el dominio canónico.
       - key: CORS_ALLOWED_ORIGINS
-        value: https://epi-aetheris-web.onrender.com,https://epi-aetheris.dev,https://www.epi-aetheris.dev,https://aetheris-nitor.onrender.com
+        value: https://epi-aetheris.dev,https://www.epi-aetheris.dev
       # /docs, /redoc y /openapi.json apagados en producción (ADR 0024).
       - key: API_DOCS_ENABLED
         value: "false"
@@ -137,7 +135,9 @@ services:
       # Se embebe en el bundle del cliente en build-time (variable PUBLIC_*
       # de Astro) -- por eso va como valor fijo, no como fromService: Astro
       # ya generó el HTML/JS antes de que ese lookup pudiera resolverse.
-      # Mismo aviso que arriba: verificar contra la URL real de
-      # "epi-aetheris-backend" tras el primer deploy.
+      # Este sitio (epi-aetheris-web.onrender.com) redirige en el navegador al
+      # dominio canónico, así que su API es la misma que la del canónico. Las
+      # cookies de sesión __Host- y el control de Origin de las cuentas solo
+      # funcionan desde epi-aetheris.dev contra api.epi-aetheris.dev.
       - key: PUBLIC_API_URL
-        value: https://epi-aetheris-backend.onrender.com
+        value: https://api.epi-aetheris.dev
