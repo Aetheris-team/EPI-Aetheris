@@ -18,7 +18,7 @@ pydantic==2.13.5
 python-dotenv==1.2.4
 pdfplumber==0.11.10
 epiweeks==2.4.0
-requests==2.33.0
+requests==2.34.2
 scikit-learn==1.5.1
 joblib==1.6.0
 pytest==9.1.1
