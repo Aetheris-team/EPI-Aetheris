@@ -17,6 +17,19 @@ En Render, el mismo comando (sin --bootstrap) corre como preDeployCommand
 dentro de la imagen del backend, con las env vars POSTGRES_* que ya inyecta
 el servicio (fromDatabase).
 
+Conexion (ADR 0024, punto E). El runner necesita un rol que sea propietario
+del esquema; la API usa otro, sin permiso para alterarlo. Orden de resolucion:
+
+    1. DATABASE_URL_MIGRACIONES  (rol propietario; lo usa solo este script)
+    2. DATABASE_URL              (si la anterior falta; retrocompatibilidad)
+    3. POSTGRES_HOST/PORT/DB/USER/PASSWORD
+
+Las variables vacias cuentan como no definidas. Despues de aplicar las
+migraciones pendientes, y aunque no haya ninguna, el runner llama a
+aplicar_privilegios_roles() (migracion 0018): concede al rol de la API sus
+privilegios si el rol ya existe, de modo que crear el rol y desplegar en
+cualquier orden converge al mismo estado.
+
 Requiere psycopg2 y python-dotenv (ya en backend/requirements.txt; usar
 backend/.venv o instalar ambos en el entorno desde el que se corra).
 """
@@ -40,8 +53,16 @@ _MIGRATIONS_DIR = Path(__file__).parent / "migrations"
 _NOMBRE_MIGRACION = re.compile(r"^\d{4}_.+\.sql$")
 
 
-def _conectar() -> psycopg2.extensions.connection:
-    load_dotenv(_REPO_ROOT / ".env")
+def _valor(nombre: str) -> str | None:
+    valor = (os.getenv(nombre) or "").strip()
+    return valor or None
+
+
+def _parametros_conexion() -> dict[str, str]:
+    """Argumentos de psycopg2.connect segun el orden del docstring del modulo."""
+    url = _valor("DATABASE_URL_MIGRACIONES") or _valor("DATABASE_URL")
+    if url:
+        return {"dsn": url}
     host = os.getenv("POSTGRES_HOST", "localhost")
     if host == "db":
         # Nombre de servicio de docker-compose: solo resuelve dentro de
@@ -49,13 +70,18 @@ def _conectar() -> psycopg2.extensions.connection:
         # el preDeploy de Render, donde POSTGRES_HOST ya es el hostname
         # gestionado. No usar MIGRACIONES_POSTGRES_HOST.
         host = "localhost"
-    return psycopg2.connect(
-        host=host,
-        database=os.getenv("POSTGRES_DB"),
-        user=os.getenv("POSTGRES_USER"),
-        password=os.getenv("POSTGRES_PASSWORD"),
-        port=os.getenv("POSTGRES_PORT", "5432"),
-    )
+    return {
+        "host": host,
+        "database": os.getenv("POSTGRES_DB"),
+        "user": os.getenv("POSTGRES_USER"),
+        "password": os.getenv("POSTGRES_PASSWORD"),
+        "port": os.getenv("POSTGRES_PORT", "5432"),
+    }
+
+
+def _conectar() -> psycopg2.extensions.connection:
+    load_dotenv(_REPO_ROOT / ".env")
+    return psycopg2.connect(**_parametros_conexion())
 
 
 def _tabla_existe(cur, nombre: str) -> bool:
@@ -129,6 +155,7 @@ def aplicar_pendientes(conn) -> None:
 
     if not pendientes:
         print("Nada pendiente. La base ya tiene todas las migraciones de db/migrations/.")
+        aplicar_privilegios(conn)
         return
 
     for ruta in pendientes:
@@ -146,6 +173,38 @@ def aplicar_pendientes(conn) -> None:
             else:
                 conn.commit()
         print(f"aplicada: {ruta.name}")
+    aplicar_privilegios(conn)
+
+
+def aplicar_privilegios(conn) -> None:
+    """Concede al rol de la API sus privilegios (migracion 0018), si el rol existe.
+
+    Nunca interrumpe el despliegue: las migraciones ya quedaron aplicadas y un
+    fallo aqui solo deja al rol de la API sin los permisos nuevos, lo que se
+    ve como errores de permiso en sus consultas, no como un esquema roto.
+    """
+    with conn.cursor() as cur:
+        cur.execute("SELECT current_user, to_regproc('aplicar_privilegios_roles') IS NOT NULL")
+        usuario, existe = cur.fetchone()
+        if not existe:
+            conn.rollback()
+            return
+        try:
+            cur.execute("SELECT aplicar_privilegios_roles()")
+            concedidos = cur.fetchone()[0]
+        except psycopg2.Error as exc:
+            conn.rollback()
+            print(
+                f"AVISO: no se pudieron aplicar los privilegios de roles como {usuario}: "
+                f"{exc.pgerror or exc}. Revisar que DATABASE_URL_MIGRACIONES use el "
+                "rol propietario del esquema."
+            )
+            return
+        conn.commit()
+    if concedidos:
+        print("privilegios del rol de aplicacion aplicados (aplicar_privilegios_roles).")
+    else:
+        print("el rol de aplicacion no existe todavia: no se concedio nada (ver docs/seguridad/roles-de-base-de-datos.md).")
 
 
 def main() -> None:

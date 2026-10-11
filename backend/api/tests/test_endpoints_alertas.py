@@ -10,6 +10,7 @@ import os
 import re
 import sys
 import unittest
+from contextlib import contextmanager
 from datetime import date
 from pathlib import Path
 from unittest.mock import patch
@@ -35,7 +36,7 @@ from api.alertas import (  # noqa: E402
 
 TOKEN_DUMMY = "dummy-alertas-token-test-no-secreto"
 PREFIJO_FIXTURE = "TEST-ALERTAS-OPERABLES-"
-from api.main import _conexion, app  # noqa: E402
+from api.main import app  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
 CAMPOS_ALERTA = (
@@ -92,6 +93,30 @@ CATALOGO_INDICACIONES = {
         "Notificar al SIBASI el incremento de consultas por IRA para valoración.",
     ),
 }
+
+
+@contextmanager
+def _conexion():
+    """Conexión directa de las pruebas para preparar y limpiar filas.
+
+    No usa el pool de la API a propósito: la API puede correr con el rol de
+    aplicación (DATABASE_URL, ADR 0024 punto E), que no borra alertas, y la
+    limpieza de fixtures necesita DELETE. Aquí siempre valen POSTGRES_*."""
+    import psycopg2
+
+    conn = psycopg2.connect(
+        host=os.getenv("POSTGRES_HOST", "localhost"),
+        database=os.getenv("POSTGRES_DB"),
+        user=os.getenv("POSTGRES_USER"),
+        password=os.getenv("POSTGRES_PASSWORD"),
+        port=os.getenv("POSTGRES_PORT", "5432"),
+        connect_timeout=3,
+    )
+    try:
+        yield conn
+    finally:
+        conn.rollback()
+        conn.close()
 
 
 def _db_disponible() -> bool:

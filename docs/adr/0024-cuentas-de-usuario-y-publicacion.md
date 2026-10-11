@@ -64,3 +64,7 @@ Esta decisión contradice cuatro reglas y se registran como excepciones acotadas
 - Revisión externa antes de abrir cuentas reales.
 - Política de privacidad y términos publicados antes de la primera invitación.
 - Entregas en orden: preparación, identidad, administración, revisión externa, alertas con identidad, noticias, reportes e imágenes. Cada una cierra antes de que abra la siguiente.
+
+## Enmienda 2026-10-11: roles de base de datos (punto E)
+
+Se concreta el punto E con dos roles. El propietario del esquema (el usuario primario de Render) queda reservado a las migraciones, que lee de `DATABASE_URL_MIGRACIONES`. La API usa el rol `epi_app`, que llega en `DATABASE_URL`, con SELECT sobre los datos epidemiológicos, SELECT, INSERT y UPDATE sobre las tablas de cuentas y alertas, DELETE solo en `factores_autenticacion` e `intentos_ingreso` (las únicas donde el código borra filas), SELECT e INSERT en `auditoria`, y sin CREATE sobre el esquema. Si una de las variables falta, se usa la otra y, en último lugar, las `POSTGRES_*` actuales, de modo que nada cambia hasta que se configure. La migración `0018` define `aplicar_privilegios_roles()`, que el runner vuelve a llamar en cada despliegue, porque la creación del rol con su clave no puede vivir en una migración y se hace una vez a mano (`db/crear_rol_aplicacion.py`). No se crea un tercer rol de solo lectura por ahora: exigiría un segundo grupo de conexiones y la elección del grupo en cada ruta. Los límites y el procedimiento están en `docs/seguridad/roles-de-base-de-datos.md`.

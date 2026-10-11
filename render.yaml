@@ -47,6 +47,21 @@ services:
     preDeployCommand: python db/aplicar_migraciones.py
     healthCheckPath: /health
     envVars:
+      # Roles de base de datos (ADR 0024, punto E; guia paso a paso en
+      # docs/seguridad/roles-de-base-de-datos.md). Los valores los pone una
+      # persona en el panel de Render; ninguno se versiona.
+      #   DATABASE_URL: rol de aplicacion (epi_app), el de la API. Sin
+      #     privilegios de esquema ni de modificacion de la auditoria.
+      #   DATABASE_URL_MIGRACIONES: rol propietario del esquema, que usa solo
+      #     el preDeployCommand. Si falta, el runner usa DATABASE_URL y, si
+      #     tampoco existe, las POSTGRES_* de abajo.
+      # Mientras DATABASE_URL no se defina, la API sigue con POSTGRES_*. Cuando
+      # el rol de aplicacion lleve un tiempo funcionando se retiran
+      # POSTGRES_USER y POSTGRES_PASSWORD de este bloque.
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_URL_MIGRACIONES
+        sync: false
       - key: POSTGRES_HOST
         fromDatabase:
           name: epi-aetheris-db
