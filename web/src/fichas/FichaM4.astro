@@ -10,6 +10,7 @@ import CuadriculaDepartamentos from '../components/CuadriculaDepartamentos.astro
 import LaboratorioIntegridad from '../components/LaboratorioIntegridad.astro';
 import MapaDepartamentoFicha from '../components/MapaDepartamentoFicha.astro';
 import PasoFicha from '../components/PasoFicha.astro';
+import SelectorSemanaEpi from '../components/SelectorSemanaEpi.astro';
 import Termino from '../components/Termino.astro';
 import { colorIntegridad } from '../lib/colores';
 import { DEPARTAMENTOS, obtenerDepartamento } from '../lib/departamentos';
@@ -347,6 +348,27 @@ const ESTADOS: EstadoIntegridad[] = ['sin_dato', 'presente', 'no_cuadra'];
         }
       </tbody>
     </table>
+    <div class="mt-4 rounded-xl border border-border bg-bg p-3">
+      <div class="flex items-center justify-between gap-2 flex-wrap">
+        <span class="font-sans text-xs font-medium text-ink">
+          Explorar semana en calendario epidemiológico:
+        </span>
+        <SelectorSemanaEpi
+          id="ficha-m4-selector-semana"
+          anio={2023}
+          semana={32}
+          etiqueta="Explorar semana en calendario epidemiológico"
+        />
+      </div>
+      <p
+        id="ficha-m4-semana-detalle"
+        class="mt-2 font-sans text-xs text-ink-muted"
+      >
+        Las semanas epidemiológicas van de domingo a sábado. Puedes abrir el
+        calendario o la cuadrícula rápida de 52/53 semanas para inspeccionar
+        cualquier fecha.
+      </p>
+    </div>
   </div>
 </PasoFicha>
 
@@ -404,3 +426,18 @@ const ESTADOS: EstadoIntegridad[] = ['sin_dato', 'presente', 'no_cuadra'];
     <LaboratorioIntegridad />
   </div>
 </PasoFicha>
+
+<script>
+  import { obtenerInfoSemanaEpi } from '../lib/calendario-epidemico';
+
+  const selector = document.getElementById('ficha-m4-selector-semana');
+  const detalle = document.getElementById('ficha-m4-semana-detalle');
+
+  selector?.addEventListener('cambio-semana', ((
+    ev: CustomEvent<{ anio: number; semana: number }>,
+  ) => {
+    if (!detalle) return;
+    const info = obtenerInfoSemanaEpi(ev.detail.anio, ev.detail.semana);
+    detalle.innerHTML = `Semana elegida: <strong class="text-ink">${info.codigo} (${info.anio})</strong> del <strong>${info.etiquetaRango}</strong> (domingo a sábado).`;
+  }) as EventListener);
+</script>

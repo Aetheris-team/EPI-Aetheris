@@ -1,14 +1,16 @@
 ---
 /**
- * Menú «Exportar» de un panel con gráfico: reúne en un solo botón la descarga
- * de datos (CSV), de la imagen (SVG y PNG) y el código para incrustar. Sigue
- * el patrón de botón de menú de la guía de prácticas de WAI-ARIA: el botón
- * abre una lista con flechas, Inicio y Fin; Escape cierra y devuelve el foco.
+ * Menú «Exportar» de un panel o vista: el único botón de descarga. Reúne los
+ * datos (CSV), la imagen (SVG y PNG), enlaces a los datos completos y el
+ * código para incrustar; cada panel pide solo las opciones que tiene. Sigue el
+ * patrón de botón de menú de la guía de prácticas de WAI-ARIA: el botón abre
+ * una lista con flechas, Inicio y Fin; Escape cierra y devuelve el foco.
  *
  * La imagen sale del primer gráfico de la sección (`section` o `article`) que
  * contiene el menú (ver exportar-acciones.ts). El CSV lo genera cada panel:
  * si se pasa `csv`, el elemento queda deshabilitado con el `id` indicado y es
- * el panel quien lo habilita y le añade su `click` cuando tiene datos.
+ * el panel quien lo habilita (habilitarCsv, en exportar-csv.ts) cuando tiene
+ * datos.
  */
 import Icono from './Icono.astro';
 
@@ -19,6 +21,13 @@ interface Props {
   filtros?: string;
   /** `id` del elemento de descarga de CSV; sin él no hay opción de CSV. */
   csv?: string;
+  /** false si la vista no tiene gráfico: sin las opciones de imagen. */
+  imagen?: boolean;
+  /** Descargas completas servidas por la API, como enlaces del menú. */
+  enlaces?: { texto: string; href: string }[];
+  /** Lado del botón con el que se alinea la lista: "izquierda" para un botón
+   *  que va al pie de un panel, "derecha" (por omisión) para uno de la cabecera. */
+  alineacion?: 'izquierda' | 'derecha';
   /** Vista de /incrustar asociada; sin ella no hay opción de incrustar. */
   incrustar?: { ruta: string; titulo: string; alto: number };
   class?: string;
@@ -29,6 +38,9 @@ const {
   fuente,
   filtros,
   csv,
+  imagen = true,
+  enlaces = [],
+  alineacion = 'derecha',
   incrustar,
   class: clase = '',
 } = Astro.props;
@@ -41,7 +53,7 @@ const itemBase =
 ---
 
 <div
-  class:list={['relative inline-flex items-center gap-3', clase]}
+  class:list={['relative inline-flex items-center gap-3 print:hidden', clase]}
   data-menu-exportar
   data-exportar-titulo={titulo}
   data-exportar-fuente={fuente}
@@ -55,6 +67,7 @@ const itemBase =
     data-menu-exportar-boton
     aria-haspopup="menu"
     aria-expanded="false"
+    aria-label={`Exportar: ${titulo}`}
     class="flex min-h-[44px] items-center gap-2 rounded-lg border border-border bg-bg px-3 py-1.5 font-sans text-xs font-semibold text-ink transition-colors hover:border-accent/50 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
   >
     <Icono nombre="download" class="h-4 w-4" />
@@ -69,7 +82,10 @@ const itemBase =
     data-menu-exportar-lista
     role="menu"
     aria-label="Opciones de exportación"
-    class="absolute left-0 top-full z-30 mt-2 w-64 sm:left-auto sm:right-0 rounded-xl border border-border bg-surface p-1.5 shadow-lg"
+    class:list={[
+      'absolute left-0 top-full z-30 mt-2 w-64 rounded-xl border border-border bg-surface p-1.5 shadow-lg',
+      alineacion === 'derecha' && 'sm:left-auto sm:right-0',
+    ]}
     hidden
   >
     {
@@ -91,24 +107,51 @@ const itemBase =
         </button>
       )
     }
-    <button
-      type="button"
-      role="menuitem"
-      data-menu-accion="svg"
-      class={itemBase}
-    >
-      <Icono nombre="file-type-svg" class="h-[18px] w-[18px] text-ink-muted" />
-      <span>Imagen vectorial (SVG)</span>
-    </button>
-    <button
-      type="button"
-      role="menuitem"
-      data-menu-accion="png"
-      class={itemBase}
-    >
-      <Icono nombre="file-type-png" class="h-[18px] w-[18px] text-ink-muted" />
-      <span>Imagen (PNG)</span>
-    </button>
+    {
+      imagen && (
+        <>
+          <button
+            type="button"
+            role="menuitem"
+            data-menu-accion="svg"
+            class={itemBase}
+          >
+            <Icono
+              nombre="file-type-svg"
+              class="h-[18px] w-[18px] text-ink-muted"
+            />
+            <span>Imagen vectorial (SVG)</span>
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            data-menu-accion="png"
+            class={itemBase}
+          >
+            <Icono
+              nombre="file-type-png"
+              class="h-[18px] w-[18px] text-ink-muted"
+            />
+            <span>Imagen (PNG)</span>
+          </button>
+        </>
+      )
+    }
+    {
+      enlaces.map((enlace) => (
+        <a
+          role="menuitem"
+          data-menu-accion="enlace"
+          href={enlace.href}
+          target="_blank"
+          rel="noopener"
+          class={itemBase}
+        >
+          <Icono nombre="braces" class="h-[18px] w-[18px] text-ink-muted" />
+          <span>{enlace.texto}</span>
+        </a>
+      ))
+    }
     {
       incrustar && (
         <button
@@ -147,8 +190,8 @@ const itemBase =
 
     const opciones = () =>
       Array.from(
-        lista.querySelectorAll<HTMLButtonElement>('[role="menuitem"]'),
-      ).filter((opcion) => !opcion.disabled);
+        lista.querySelectorAll<HTMLElement>('[role="menuitem"]'),
+      ).filter((opcion) => !opcion.matches(':disabled'));
     let temporizador: ReturnType<typeof setTimeout> | undefined;
 
     function anunciar(mensaje: string) {
@@ -194,9 +237,7 @@ const itemBase =
 
     lista.addEventListener('keydown', (evento) => {
       const disponibles = opciones();
-      const indice = disponibles.indexOf(
-        document.activeElement as HTMLButtonElement,
-      );
+      const indice = disponibles.indexOf(document.activeElement as HTMLElement);
       if (evento.key === 'Escape') {
         evento.preventDefault();
         cerrar(true);
@@ -220,14 +261,15 @@ const itemBase =
     });
 
     lista.addEventListener('click', async (evento) => {
-      const opcion = (evento.target as HTMLElement).closest<HTMLButtonElement>(
+      const opcion = (evento.target as HTMLElement).closest<HTMLElement>(
         '[data-menu-accion]',
       );
-      if (!opcion || opcion.disabled) return;
+      if (!opcion || opcion.matches(':disabled')) return;
       const accion = opcion.dataset.menuAccion;
       cerrar(true);
-      // El CSV lo resuelve el panel con su propio `click` sobre la opción.
-      if (accion === 'csv') return;
+      // El CSV lo resuelve el panel con su propio `click` sobre la opción y
+      // el enlace lo abre el navegador.
+      if (accion === 'csv' || accion === 'enlace') return;
       if (accion === 'incrustar') {
         anunciar(
           await copiarIncrustacion({

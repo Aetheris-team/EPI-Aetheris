@@ -1,0 +1,902 @@
+---
+import CuentaPagina from '../../components/CuentaPagina.astro';
+import DialogosCuenta from '../../components/DialogosCuenta.astro';
+import { ROLES_CUENTA, TIPOS_INSTITUCION } from '../../lib/tipos-cuenta';
+import {
+  CLASE_AYUDA,
+  CLASE_BOTON_PRINCIPAL,
+  CLASE_BOTON_SECUNDARIO,
+  CLASE_CAMPO,
+  CLASE_ENLACE,
+  CLASE_ETIQUETA,
+  CLASE_TARJETA,
+} from '../../lib/cuenta-estilos';
+
+const ETIQUETAS_ROL: Record<string, string> = {
+  publicador: 'Publicador',
+  revisor: 'Revisor',
+  administrador: 'Administrador',
+};
+const ETIQUETAS_TIPO: Record<string, string> = {
+  minsal: 'MINSAL',
+  sibasi: 'SIBASI',
+  hospital: 'Hospital',
+  universidad: 'Universidad',
+  organismo: 'Organismo',
+  otro: 'Otro',
+};
+---
+
+<CuentaPagina
+  titulo="Personas e instituciones"
+  descripcion="Invita personas, cambia sus roles y administra las instituciones."
+  ancho="max-w-6xl"
+>
+  <div data-pagina-admin aria-busy="true" class="flex flex-col gap-6">
+    <p data-cargando role="status" class={CLASE_AYUDA}>Cargando…</p>
+    <div data-error-carga></div>
+
+    <div data-sin-permiso hidden class={CLASE_TARJETA}>
+      <h2 class="font-sans text-lg font-bold text-ink">Sin permiso</h2>
+      <p class="mt-2 font-sans text-sm leading-relaxed text-ink-muted">
+        Esta sección es para administradores.
+      </p>
+      <p class="mt-3">
+        <a href="/cuenta" class={CLASE_ENLACE}>Volver a mi cuenta</a>
+      </p>
+    </div>
+
+    <div data-contenido hidden class="flex flex-col gap-6">
+      <div data-aviso-general tabindex="-1" hidden></div>
+
+      <section aria-labelledby="titulo-personas" class={CLASE_TARJETA}>
+        <h2 id="titulo-personas" class="font-sans text-lg font-bold text-ink">
+          Personas
+        </h2>
+        <div class="mt-3 overflow-x-auto">
+          <table
+            class="w-full min-w-[48rem] border-collapse text-left font-sans text-sm"
+          >
+            <caption class="sr-only">Personas con cuenta</caption>
+            <thead>
+              <tr class="border-b border-border text-xs text-ink-muted">
+                <th scope="col" class="py-2 pr-4 font-semibold">Persona</th>
+                <th scope="col" class="py-2 pr-4 font-semibold">Roles</th>
+                <th scope="col" class="py-2 pr-4 font-semibold">Estado</th>
+                <th scope="col" class="py-2 pr-4 font-semibold"
+                  >Último ingreso</th
+                >
+                <th scope="col" class="py-2 font-semibold">Acciones</th>
+              </tr>
+            </thead>
+            <tbody data-lista-usuarios></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section aria-labelledby="titulo-invitar" class={CLASE_TARJETA}>
+        <h2 id="titulo-invitar" class="font-sans text-lg font-bold text-ink">
+          Invitar a una persona
+        </h2>
+        <p class={`mt-1 ${CLASE_AYUDA}`}>
+          La invitación llega por correo y caduca. Antes de enviarla, verifica a
+          la persona por un canal distinto del correo.
+        </p>
+        <form
+          data-form-invitar
+          class="mt-4 flex max-w-2xl flex-col gap-4"
+          novalidate
+        >
+          <label class="flex flex-col gap-1.5">
+            <span class={CLASE_ETIQUETA}>Correo</span>
+            <input
+              type="email"
+              name="correo"
+              autocomplete="off"
+              required
+              maxlength="254"
+              class={CLASE_CAMPO}
+            />
+          </label>
+          <fieldset class="flex flex-col gap-2">
+            <legend class={CLASE_ETIQUETA}>Roles</legend>
+            <div class="flex flex-wrap gap-x-6 gap-y-2">
+              {
+                ROLES_CUENTA.map((rol) => (
+                  <label class="flex items-center gap-2 font-sans text-sm text-ink">
+                    <input
+                      type="checkbox"
+                      name="roles"
+                      value={rol}
+                      class="h-4 w-4 accent-[var(--color-accent)]"
+                    />
+                    <span>{ETIQUETAS_ROL[rol]}</span>
+                  </label>
+                ))
+              }
+            </div>
+          </fieldset>
+          <label class="flex flex-col gap-1.5">
+            <span class={CLASE_ETIQUETA}>Institución</span>
+            <select name="institucion" class={CLASE_CAMPO}>
+              <option value="">Sin institución</option>
+            </select>
+          </label>
+          <label class="flex flex-col gap-1.5">
+            <span class={CLASE_ETIQUETA}>Cómo verificaste a la persona</span>
+            <textarea
+              name="nota"
+              rows="3"
+              required
+              minlength="10"
+              maxlength="500"
+              aria-describedby="ayuda-nota"
+              class={CLASE_CAMPO}></textarea>
+            <span id="ayuda-nota" class={CLASE_AYUDA}>
+              Al menos 10 caracteres. Queda en la auditoría.
+            </span>
+          </label>
+          <label data-grupo-dominio hidden class="flex flex-col gap-1.5">
+            <span class={CLASE_ETIQUETA}
+              >Justificación del dominio de correo</span
+            >
+            <textarea
+              name="justificacion"
+              rows="2"
+              maxlength="500"
+              aria-describedby="ayuda-dominio"
+              class={CLASE_CAMPO}></textarea>
+            <span id="ayuda-dominio" class={CLASE_AYUDA}>
+              El correo no pertenece a los dominios de la institución elegida.
+              Explica por qué se invita igualmente.
+            </span>
+          </label>
+          <div data-aviso tabindex="-1" hidden></div>
+          <div>
+            <button type="submit" class={CLASE_BOTON_PRINCIPAL}
+              >Enviar invitación</button
+            >
+          </div>
+        </form>
+      </section>
+
+      <section aria-labelledby="titulo-instituciones" class={CLASE_TARJETA}>
+        <h2
+          id="titulo-instituciones"
+          class="font-sans text-lg font-bold text-ink"
+        >
+          Instituciones
+        </h2>
+        <div class="mt-3 overflow-x-auto">
+          <table
+            class="w-full min-w-[40rem] border-collapse text-left font-sans text-sm"
+          >
+            <caption class="sr-only">Instituciones registradas</caption>
+            <thead>
+              <tr class="border-b border-border text-xs text-ink-muted">
+                <th scope="col" class="py-2 pr-4 font-semibold">Nombre</th>
+                <th scope="col" class="py-2 pr-4 font-semibold">Tipo</th>
+                <th scope="col" class="py-2 pr-4 font-semibold"
+                  >Dominios de correo</th
+                >
+                <th scope="col" class="py-2 font-semibold">Verificación</th>
+              </tr>
+            </thead>
+            <tbody data-lista-instituciones></tbody>
+          </table>
+        </div>
+
+        <h3 class="mt-6 font-sans text-base font-bold text-ink">
+          Agregar institución
+        </h3>
+        <form
+          data-form-institucion
+          class="mt-3 flex max-w-2xl flex-col gap-4"
+          novalidate
+        >
+          <label class="flex flex-col gap-1.5">
+            <span class={CLASE_ETIQUETA}>Nombre</span>
+            <input
+              type="text"
+              name="nombre"
+              required
+              minlength="2"
+              maxlength="200"
+              class={CLASE_CAMPO}
+            />
+          </label>
+          <label class="flex flex-col gap-1.5">
+            <span class={CLASE_ETIQUETA}>Tipo</span>
+            <select name="tipo" class={CLASE_CAMPO}>
+              {
+                TIPOS_INSTITUCION.map((tipo) => (
+                  <option value={tipo}>{ETIQUETAS_TIPO[tipo]}</option>
+                ))
+              }
+            </select>
+          </label>
+          <label class="flex flex-col gap-1.5">
+            <span class={CLASE_ETIQUETA}>Dominios de correo (opcional)</span>
+            <input
+              type="text"
+              name="dominios"
+              autocomplete="off"
+              aria-describedby="ayuda-dominios"
+              class={CLASE_CAMPO}
+            />
+            <span id="ayuda-dominios" class={CLASE_AYUDA}>
+              Separados por comas, por ejemplo salud.gob.sv, uca.edu.sv.
+            </span>
+          </label>
+          <label class="flex flex-col gap-1.5">
+            <span class={CLASE_ETIQUETA}>Sitio web (opcional)</span>
+            <input
+              type="url"
+              name="sitio"
+              maxlength="300"
+              class={CLASE_CAMPO}
+            />
+          </label>
+          <div data-aviso tabindex="-1" hidden></div>
+          <div>
+            <button type="submit" class={CLASE_BOTON_SECUNDARIO}
+              >Agregar institución</button
+            >
+          </div>
+        </form>
+      </section>
+    </div>
+  </div>
+
+  <dialog
+    data-dialogo-roles
+    aria-labelledby="roles-titulo"
+    class="m-auto w-[min(28rem,calc(100vw-2rem))] rounded-2xl border border-border bg-surface p-0 text-ink shadow-xl backdrop:bg-black/50"
+  >
+    <form method="dialog" novalidate class="flex flex-col gap-4 p-6">
+      <h2 id="roles-titulo" class="font-sans text-lg font-bold">
+        Cambiar roles
+      </h2>
+      <p data-persona class="font-sans text-sm text-ink-muted"></p>
+      <fieldset class="flex flex-col gap-2">
+        <legend class={CLASE_ETIQUETA}>Roles</legend>
+        {
+          ROLES_CUENTA.map((rol) => (
+            <label class="flex items-center gap-2 font-sans text-sm text-ink">
+              <input
+                type="checkbox"
+                name="roles"
+                value={rol}
+                class="h-4 w-4 accent-[var(--color-accent)]"
+              />
+              <span>{ETIQUETAS_ROL[rol]}</span>
+            </label>
+          ))
+        }
+      </fieldset>
+      <div data-aviso tabindex="-1" hidden></div>
+      <div class="flex flex-wrap justify-end gap-3">
+        <button type="button" data-cancelar class={CLASE_BOTON_SECUNDARIO}
+          >Cancelar</button
+        >
+        <button type="submit" data-confirmar class={CLASE_BOTON_PRINCIPAL}
+          >Guardar roles</button
+        >
+      </div>
+    </form>
+  </dialog>
+
+  <DialogosCuenta />
+</CuentaPagina>
+
+<script>
+  import {
+    ErrorCuenta,
+    cambiarEstado,
+    cambiarRoles,
+    crearInstitucion,
+    invitar,
+    listarInstituciones,
+    listarUsuarios,
+    restablecerFactores,
+    verificarInstitucion,
+  } from '../../lib/cuenta-api';
+  import {
+    conCarga,
+    etiquetaEstado,
+    etiquetaRol,
+    formatearFecha,
+    limpiarAviso,
+    mensajeDeError,
+    mostrarAviso,
+    pedirElemento,
+  } from '../../lib/cuenta-ui';
+  import {
+    confirmarAccion,
+    conReautenticacion,
+  } from '../../lib/dialogos-cuenta';
+  import { cargarSesion, suscribirSesion } from '../../lib/sesion-state';
+  import { renderErrorFuente } from '../../components/estado-async';
+  import {
+    ROLES_CUENTA,
+    type InstitucionAdmin,
+    type RolCuenta,
+    type SesionActiva,
+    type TipoInstitucion,
+    type UsuarioAdmin,
+  } from '../../lib/tipos-cuenta';
+
+  const ETIQUETAS_TIPO: Record<TipoInstitucion, string> = {
+    minsal: 'MINSAL',
+    sibasi: 'SIBASI',
+    hospital: 'Hospital',
+    universidad: 'Universidad',
+    organismo: 'Organismo',
+    otro: 'Otro',
+  };
+
+  const raiz = document.querySelector<HTMLElement>('[data-pagina-admin]');
+  if (raiz) void iniciar(raiz);
+
+  /** Mensaje de error con la explicación de las dos barreras de administración. */
+  function mensajeAdmin(error: unknown): string {
+    if (error instanceof ErrorCuenta && error.codigo === 'requiere_llave') {
+      return 'Esta acción exige haber ingresado con una llave de acceso. Cierra la sesión e ingresa con tu llave.';
+    }
+    if (
+      error instanceof ErrorCuenta &&
+      error.codigo === 'requiere_reautenticacion'
+    ) {
+      return 'Hace falta confirmar tu contraseña para continuar.';
+    }
+    return mensajeDeError(error);
+  }
+
+  async function iniciar(raiz: HTMLElement): Promise<void> {
+    const avisoGeneral = pedirElemento<HTMLElement>(
+      raiz,
+      '[data-aviso-general]',
+    );
+    const contenido = pedirElemento<HTMLElement>(raiz, '[data-contenido]');
+    let sesion: SesionActiva;
+    let usuarios: UsuarioAdmin[] = [];
+    let instituciones: InstitucionAdmin[] = [];
+
+    // --- Listas ------------------------------------------------------------
+
+    const celda = (
+      texto: string,
+      clase = 'py-2 pr-4 text-ink',
+    ): HTMLTableCellElement => {
+      const td = document.createElement('td');
+      td.className = clase;
+      td.textContent = texto;
+      return td;
+    };
+
+    const boton = (
+      texto: string,
+      etiquetaAria: string,
+      alPulsar: (el: HTMLButtonElement) => void,
+    ): HTMLButtonElement => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className =
+        'boton-secundario inline-flex min-h-[44px] items-center rounded-full border border-border px-4 py-1.5 font-sans text-xs font-semibold text-ink';
+      b.textContent = texto;
+      b.setAttribute('aria-label', etiquetaAria);
+      b.addEventListener('click', () => alPulsar(b));
+      return b;
+    };
+
+    const ejecutar = async (
+      tarea: () => Promise<void>,
+      exito: string,
+      alFallar?: () => void,
+    ): Promise<void> => {
+      limpiarAviso(avisoGeneral);
+      try {
+        await conReautenticacion(tarea);
+        await recargar();
+        mostrarAviso(avisoGeneral, 'ok', exito);
+      } catch (error) {
+        mostrarAviso(avisoGeneral, 'error', mensajeAdmin(error));
+        alFallar?.();
+      }
+    };
+
+    const pintarUsuarios = (): void => {
+      const cuerpo = pedirElemento<HTMLElement>(raiz, '[data-lista-usuarios]');
+      cuerpo.replaceChildren(
+        ...usuarios.map((u) => {
+          const fila = document.createElement('tr');
+          fila.className = 'border-b border-border align-top';
+          const persona = document.createElement('th');
+          persona.scope = 'row';
+          persona.className = 'py-2 pr-4 text-left font-normal text-ink';
+          const nombre = document.createElement('div');
+          nombre.className = 'font-semibold';
+          nombre.textContent = u.nombre || 'Sin nombre';
+          const correo = document.createElement('div');
+          correo.className = 'break-all text-xs text-ink-muted';
+          correo.textContent = `${u.correo}${u.institucion ? ` · ${u.institucion}` : ''}`;
+          persona.append(nombre, correo);
+
+          const acciones = document.createElement('td');
+          acciones.className = 'py-2';
+          const lista = document.createElement('div');
+          lista.className = 'flex flex-wrap gap-2';
+          const mismo = u.id === sesion.usuario.id;
+          const nombreAria = u.nombre || u.correo;
+          if (!mismo && u.estado !== 'baja') {
+            lista.append(
+              boton(
+                'Roles',
+                `Cambiar roles de ${nombreAria}`,
+                (b) => void editarRoles(u, b),
+              ),
+              u.estado === 'suspendido'
+                ? boton(
+                    'Reactivar',
+                    `Reactivar a ${nombreAria}`,
+                    (b) => void cambiarEstadoDe(u, 'activo', b),
+                  )
+                : boton(
+                    'Suspender',
+                    `Suspender a ${nombreAria}`,
+                    (b) => void cambiarEstadoDe(u, 'suspendido', b),
+                  ),
+              boton(
+                'Dar de baja',
+                `Dar de baja a ${nombreAria}`,
+                (b) => void cambiarEstadoDe(u, 'baja', b),
+              ),
+              boton(
+                'Restablecer factores',
+                `Restablecer los factores de ${nombreAria}`,
+                (b) => void restablecerDe(u, b),
+              ),
+            );
+          } else if (mismo) {
+            const nota = document.createElement('span');
+            nota.className = 'text-xs text-ink-muted';
+            nota.textContent = 'Tu cuenta';
+            lista.append(nota);
+          }
+          acciones.append(lista);
+
+          fila.append(
+            persona,
+            celda(u.roles.map(etiquetaRol).join(', ') || 'Sin roles'),
+            celda(etiquetaEstado(u.estado)),
+            celda(formatearFecha(u.ultimo_ingreso_en)),
+            acciones,
+          );
+          return fila;
+        }),
+      );
+    };
+
+    const pintarInstituciones = (): void => {
+      const cuerpo = pedirElemento<HTMLElement>(
+        raiz,
+        '[data-lista-instituciones]',
+      );
+      cuerpo.replaceChildren(
+        ...instituciones.map((i) => {
+          const fila = document.createElement('tr');
+          fila.className = 'border-b border-border align-top';
+          const verificacion = document.createElement('td');
+          verificacion.className = 'py-2 text-ink';
+          if (i.verificada) {
+            verificacion.textContent = 'Verificada';
+          } else {
+            const estado = document.createElement('span');
+            estado.className = 'mr-3';
+            estado.textContent = 'Pendiente';
+            verificacion.append(
+              estado,
+              boton(
+                'Verificar',
+                `Verificar ${i.nombre}`,
+                (b) => void verificarDe(i, b),
+              ),
+            );
+          }
+          fila.append(
+            celda(i.nombre),
+            celda(ETIQUETAS_TIPO[i.tipo]),
+            celda(i.dominios_correo.join(', ') || 'Sin dominios'),
+            verificacion,
+          );
+          return fila;
+        }),
+      );
+      const select = pedirElemento<HTMLSelectElement>(
+        raiz,
+        '[name="institucion"]',
+      );
+      const elegida = select.value;
+      select.replaceChildren(
+        new Option('Sin institución', ''),
+        ...instituciones
+          .filter((i) => i.activa)
+          .map((i) => new Option(i.nombre, String(i.id))),
+      );
+      select.value = elegida;
+      actualizarJustificacion();
+    };
+
+    const recargar = async (): Promise<void> => {
+      [usuarios, instituciones] = await Promise.all([
+        listarUsuarios(),
+        listarInstituciones(),
+      ]);
+      pintarUsuarios();
+      pintarInstituciones();
+    };
+
+    // --- Acciones sobre personas -------------------------------------------
+
+    const editarRoles = async (
+      u: UsuarioAdmin,
+      origen: HTMLButtonElement,
+    ): Promise<void> => {
+      const dialogo = pedirElemento<HTMLDialogElement>(
+        document,
+        '[data-dialogo-roles]',
+      );
+      const form = pedirElemento<HTMLFormElement>(dialogo, 'form');
+      const avisoDialogo = pedirElemento<HTMLElement>(dialogo, '[data-aviso]');
+      const confirmar = pedirElemento<HTMLButtonElement>(
+        dialogo,
+        '[data-confirmar]',
+      );
+      const cancelar = pedirElemento<HTMLButtonElement>(
+        dialogo,
+        '[data-cancelar]',
+      );
+      const casillas = Array.from(
+        dialogo.querySelectorAll<HTMLInputElement>('[name="roles"]'),
+      );
+      pedirElemento(dialogo, '[data-persona]').textContent =
+        u.nombre || u.correo;
+      for (const c of casillas)
+        c.checked = u.roles.includes(c.value as RolCuenta);
+      limpiarAviso(avisoDialogo);
+      dialogo.returnValue = '';
+
+      const alEnviar = (evento: SubmitEvent): void => {
+        evento.preventDefault();
+        const roles = casillas
+          .filter((c) => c.checked)
+          .map((c) => c.value as RolCuenta);
+        if (roles.length === 0) {
+          mostrarAviso(avisoDialogo, 'error', 'Elige al menos un rol.');
+          return;
+        }
+        confirmar.disabled = true;
+        dialogo.dataset.roles = roles.join(',');
+        dialogo.close('ok');
+        confirmar.disabled = false;
+      };
+      const alCancelar = (): void => dialogo.close('cancelar');
+      form.addEventListener('submit', alEnviar);
+      cancelar.addEventListener('click', alCancelar);
+      dialogo.showModal();
+      await new Promise<void>((resolver) =>
+        dialogo.addEventListener('close', () => resolver(), { once: true }),
+      );
+      form.removeEventListener('submit', alEnviar);
+      cancelar.removeEventListener('click', alCancelar);
+
+      if (dialogo.returnValue !== 'ok') {
+        origen.focus();
+        return;
+      }
+      const roles = (dialogo.dataset.roles ?? '')
+        .split(',')
+        .filter((r): r is RolCuenta => ROLES_CUENTA.includes(r as RolCuenta));
+      await ejecutar(() => cambiarRoles(u.id, roles), 'Roles actualizados.');
+    };
+
+    const cambiarEstadoDe = async (
+      u: UsuarioAdmin,
+      estado: 'activo' | 'suspendido' | 'baja',
+      origen: HTMLButtonElement,
+    ): Promise<void> => {
+      const nombre = u.nombre || u.correo;
+      const textos = {
+        activo: {
+          titulo: 'Reactivar cuenta',
+          texto: `${nombre} podrá volver a ingresar.`,
+          boton: 'Reactivar',
+          exito: 'Cuenta reactivada.',
+        },
+        suspendido: {
+          titulo: 'Suspender cuenta',
+          texto: `${nombre} no podrá ingresar y se cerrarán sus sesiones.`,
+          boton: 'Suspender',
+          exito: 'Cuenta suspendida.',
+        },
+        baja: {
+          titulo: 'Dar de baja',
+          texto: `${nombre} dejará de tener acceso y se cerrarán sus sesiones. Lo que publicó se conserva.`,
+          boton: 'Dar de baja',
+          exito: 'Cuenta dada de baja.',
+        },
+      }[estado];
+      const respuesta = await confirmarAccion({
+        titulo: textos.titulo,
+        texto: textos.texto,
+        etiquetaConfirmar: textos.boton,
+        pedirMotivo: true,
+      });
+      if (!respuesta) {
+        origen.focus();
+        return;
+      }
+      await ejecutar(
+        () => cambiarEstado(u.id, estado, respuesta.motivo),
+        textos.exito,
+      );
+    };
+
+    const restablecerDe = async (
+      u: UsuarioAdmin,
+      origen: HTMLButtonElement,
+    ): Promise<void> => {
+      const respuesta = await confirmarAccion({
+        titulo: 'Restablecer factores',
+        texto: `Se quitarán todos los factores de ${u.nombre || u.correo}. Tendrá que registrar otros para volver a ingresar.`,
+        etiquetaConfirmar: 'Restablecer',
+        pedirMotivo: true,
+      });
+      if (!respuesta) {
+        origen.focus();
+        return;
+      }
+      await ejecutar(
+        () => restablecerFactores(u.id, respuesta.motivo),
+        'Factores restablecidos.',
+      );
+    };
+
+    const verificarDe = async (
+      i: InstitucionAdmin,
+      origen: HTMLButtonElement,
+    ): Promise<void> => {
+      const respuesta = await confirmarAccion({
+        titulo: 'Verificar institución',
+        texto: `Registra cómo verificaste que ${i.nombre} existe y que quien la representa es quien dice.`,
+        etiquetaConfirmar: 'Marcar como verificada',
+        pedirMotivo: true,
+        etiquetaMotivo: 'Método de verificación',
+      });
+      if (!respuesta) {
+        origen.focus();
+        return;
+      }
+      await ejecutar(
+        () => verificarInstitucion(i.id, respuesta.motivo),
+        'Institución verificada.',
+      );
+    };
+
+    // --- Invitar -----------------------------------------------------------
+
+    const formInvitar = pedirElemento<HTMLFormElement>(
+      raiz,
+      '[data-form-invitar]',
+    );
+    const avisoInvitar = pedirElemento<HTMLElement>(
+      formInvitar,
+      '[data-aviso]',
+    );
+    const grupoDominio = pedirElemento<HTMLElement>(
+      formInvitar,
+      '[data-grupo-dominio]',
+    );
+    const correoInv = pedirElemento<HTMLInputElement>(
+      formInvitar,
+      '[name="correo"]',
+    );
+    const selectInst = pedirElemento<HTMLSelectElement>(
+      formInvitar,
+      '[name="institucion"]',
+    );
+    const justificacion = pedirElemento<HTMLTextAreaElement>(
+      formInvitar,
+      '[name="justificacion"]',
+    );
+
+    /** El campo de justificación aparece cuando el dominio no es de la institución. */
+    function actualizarJustificacion(forzar = false): void {
+      const institucion = instituciones.find(
+        (i) => String(i.id) === selectInst.value,
+      );
+      const dominio = correoInv.value.split('@')[1]?.trim().toLowerCase() ?? '';
+      const fuera =
+        !!institucion &&
+        institucion.dominios_correo.length > 0 &&
+        !!dominio &&
+        !institucion.dominios_correo.includes(dominio);
+      grupoDominio.hidden = !(fuera || forzar);
+      justificacion.required = !grupoDominio.hidden;
+    }
+    correoInv.addEventListener('input', () => actualizarJustificacion());
+    selectInst.addEventListener('change', () => actualizarJustificacion());
+
+    formInvitar.addEventListener('submit', (evento) => {
+      evento.preventDefault();
+      limpiarAviso(avisoInvitar);
+      const roles = Array.from(
+        formInvitar.querySelectorAll<HTMLInputElement>(
+          '[name="roles"]:checked',
+        ),
+      ).map((c) => c.value as RolCuenta);
+      const nota = pedirElemento<HTMLTextAreaElement>(
+        formInvitar,
+        '[name="nota"]',
+      );
+      const problema = !correoInv.value.trim()
+        ? 'Escribe el correo de la persona.'
+        : roles.length === 0
+          ? 'Elige al menos un rol.'
+          : nota.value.trim().length < 10
+            ? 'Cuenta cómo verificaste a la persona (al menos 10 caracteres).'
+            : !grupoDominio.hidden && !justificacion.value.trim()
+              ? 'Escribe la justificación del dominio de correo.'
+              : null;
+      if (problema) {
+        mostrarAviso(avisoInvitar, 'error', problema);
+        return;
+      }
+      const enviar = pedirElemento<HTMLButtonElement>(
+        formInvitar,
+        '[type="submit"]',
+      );
+      void conCarga(enviar, async () => {
+        try {
+          await conReautenticacion(() =>
+            invitar({
+              correo: correoInv.value.trim(),
+              roles,
+              institucion_id: selectInst.value
+                ? Number(selectInst.value)
+                : null,
+              nota_verificacion: nota.value.trim(),
+              justificacion_dominio: grupoDominio.hidden
+                ? null
+                : justificacion.value.trim() || null,
+            }),
+          );
+          formInvitar.reset();
+          actualizarJustificacion();
+          mostrarAviso(avisoInvitar, 'ok', 'Invitación enviada.');
+          await recargar();
+        } catch (error) {
+          if (
+            error instanceof ErrorCuenta &&
+            error.codigo === 'dominio_fuera_de_institucion'
+          ) {
+            actualizarJustificacion(true);
+            mostrarAviso(avisoInvitar, 'error', error.message);
+            return;
+          }
+          mostrarAviso(avisoInvitar, 'error', mensajeAdmin(error));
+        }
+      });
+    });
+
+    // --- Instituciones -----------------------------------------------------
+
+    const formInstitucion = pedirElemento<HTMLFormElement>(
+      raiz,
+      '[data-form-institucion]',
+    );
+    const avisoInstitucion = pedirElemento<HTMLElement>(
+      formInstitucion,
+      '[data-aviso]',
+    );
+    formInstitucion.addEventListener('submit', (evento) => {
+      evento.preventDefault();
+      limpiarAviso(avisoInstitucion);
+      const nombre = pedirElemento<HTMLInputElement>(
+        formInstitucion,
+        '[name="nombre"]',
+      );
+      const tipo = pedirElemento<HTMLSelectElement>(
+        formInstitucion,
+        '[name="tipo"]',
+      );
+      const dominios = pedirElemento<HTMLInputElement>(
+        formInstitucion,
+        '[name="dominios"]',
+      );
+      const sitio = pedirElemento<HTMLInputElement>(
+        formInstitucion,
+        '[name="sitio"]',
+      );
+      if (nombre.value.trim().length < 2) {
+        mostrarAviso(
+          avisoInstitucion,
+          'error',
+          'Escribe el nombre de la institución.',
+        );
+        return;
+      }
+      const enviar = pedirElemento<HTMLButtonElement>(
+        formInstitucion,
+        '[type="submit"]',
+      );
+      void conCarga(enviar, async () => {
+        try {
+          await crearInstitucion({
+            nombre: nombre.value.trim(),
+            tipo: tipo.value as TipoInstitucion,
+            dominios_correo: dominios.value
+              .split(',')
+              .map((d) => d.trim().toLowerCase())
+              .filter(Boolean),
+            sitio_web: sitio.value.trim() || null,
+          });
+          formInstitucion.reset();
+          mostrarAviso(avisoInstitucion, 'ok', 'Institución agregada.');
+          await recargar();
+        } catch (error) {
+          mostrarAviso(avisoInstitucion, 'error', mensajeAdmin(error));
+        }
+      });
+    });
+
+    // --- Arranque ----------------------------------------------------------
+
+    const arrancar = async (): Promise<void> => {
+      raiz.setAttribute('aria-busy', 'true');
+      try {
+        const estado = await cargarSesion(true);
+        if (!estado.autenticada) {
+          location.assign('/cuenta/ingresar?siguiente=/admin/usuarios');
+          return;
+        }
+        if (estado.nivel !== 'completo') {
+          location.assign(
+            estado.nivel === 'alta_pendiente'
+              ? '/cuenta/alta'
+              : '/cuenta/ingresar',
+          );
+          return;
+        }
+        sesion = estado;
+        pedirElemento(raiz, '[data-cargando]').hidden = true;
+        if (!estado.roles.includes('administrador')) {
+          pedirElemento<HTMLElement>(raiz, '[data-sin-permiso]').hidden = false;
+          return;
+        }
+        await recargar();
+        pedirElemento<HTMLElement>(
+          raiz,
+          '[data-error-carga]',
+        ).replaceChildren();
+        contenido.hidden = false;
+      } catch (error) {
+        pedirElemento(raiz, '[data-cargando]').hidden = true;
+        renderErrorFuente(
+          pedirElemento<HTMLElement>(raiz, '[data-error-carga]'),
+          () => void arrancar(),
+          mensajeAdmin(error),
+        );
+      } finally {
+        raiz.removeAttribute('aria-busy');
+      }
+    };
+
+    suscribirSesion((estado) => {
+      if (estado && !estado.autenticada) {
+        location.assign('/cuenta/ingresar?siguiente=/admin/usuarios');
+      }
+    });
+    await arrancar();
+  }
+</script>

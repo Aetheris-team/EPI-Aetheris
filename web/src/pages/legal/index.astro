@@ -3,8 +3,9 @@
  * Índice de la sección legal (/legal). Es la puerta de entrada, no un cuarto
  * documento: cada tarjeta resume lo que el documento enlazado dice de verdad,
  * y el bloque «En pocas palabras» adelanta los hechos que más preguntan
- * quienes llegan aquí. Todos se pueden comprobar en el código (sin cookies ni
- * analítica, teselas de OpenStreetMap en los mapas, licencia GPL-3.0).
+ * quienes llegan aquí. Todos se pueden comprobar en el código (sin cookies
+ * para quien solo lee, una cookie de sesión para las cuentas, sin analítica,
+ * teselas de OpenStreetMap en los mapas, licencia GPL-3.0).
  *
  * Si cambia el contenido de una de las tres legales, hay que revisar su
  * descripción aquí: una tarjeta que promete algo que el documento no dice es
@@ -23,14 +24,14 @@ const SECCIONES = [
     href: '/legal/privacidad',
     titulo: 'Política de privacidad',
     descripcion:
-      'Qué datos técnicos circulan al usar el sitio, quién los recibe (Render, OpenStreetMap), por qué no hay cookies y cómo ejercer los derechos sobre los datos personales.',
+      'Qué datos circulan al leer el sitio y qué se guarda de las personas con cuenta, quién los recibe, cuánto tiempo se conservan, la cookie de sesión y cómo ejercer los derechos sobre los datos personales.',
     icono: 'shield-check',
   },
   {
     href: '/legal/terminos',
     titulo: 'Términos de uso',
     descripcion:
-      'Qué es y qué no es la herramienta, cómo usar la API, qué está prohibido, qué licencias tienen el código y los datos, y por qué se ofrece sin garantías.',
+      'Qué es y qué no es la herramienta, cómo usar la API, qué deberes tiene quien publica con una cuenta, qué licencias tienen el código y los datos, y por qué se ofrece sin garantías.',
     icono: 'file-text',
   },
   {
@@ -114,7 +115,9 @@ const SECCIONES = [
       </h2>
       <ul class="mt-3 list-disc space-y-2 pl-5">
         <li>
-          No hay cuentas de usuario, cookies ni herramientas de analítica.
+          Quien solo lee el sitio no tiene cuenta ni recibe cookies, y no hay
+          herramientas de analítica. Solo las personas del equipo con cuenta
+          reciben una cookie de sesión.
         </li>
         <li>
           Al dibujar un mapa, el navegador pide las imágenes de fondo a

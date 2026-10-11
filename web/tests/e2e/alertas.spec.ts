@@ -310,3 +310,71 @@ test('/alertas anuncia el feed Atom en la cabecera y con un enlace visible', asy
   await expect(cabecera).toHaveAttribute('href', /\/api\/alertas\/feed\.xml$/);
   await expect(page.locator('[data-enlace-feed]')).toBeVisible();
 });
+
+test('filtrado por síndrome en el cliente actualiza URL y lista sin recarga de página', async ({
+  page,
+}) => {
+  await page.goto('/alertas');
+  await expect(page.locator('[data-alertas]')).toHaveAttribute(
+    'data-cargado',
+    '1',
+    { timeout: 15_000 },
+  );
+
+  await expect(page.locator('[data-alerta][data-tipo="dengue"]')).toBeVisible();
+  await expect(
+    page.locator('[data-alerta][data-tipo="respiratorio"]'),
+  ).toBeVisible();
+
+  // Marcamos un atributo en la cabecera (zona estática) para comprobar que la página NO se recarga
+  await page.evaluate(() => {
+    document
+      .querySelector('[data-zona="cabecera"]')
+      ?.setAttribute('data-prueba-sin-recarga', '1');
+  });
+
+  // Clic en Dengue
+  await page.locator('[data-filtro-tipo="dengue"]').click();
+  await expect(page).toHaveURL(/tipo=dengue/);
+  await expect(page.locator('[data-alerta][data-tipo="dengue"]')).toBeVisible();
+  await expect(
+    page.locator('[data-alerta][data-tipo="respiratorio"]'),
+  ).toHaveCount(0);
+  await expect(page.locator('[data-filtro-tipo="dengue"]')).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+
+  // La cabecera conserva la marca (no hubo navegación dura ni recarga de página)
+  const marca = await page
+    .locator('[data-zona="cabecera"]')
+    .getAttribute('data-prueba-sin-recarga');
+  expect(marca).toBe('1');
+
+  // Clic en Respiratorio
+  await page.locator('[data-filtro-tipo="respiratorio"]').click();
+  await expect(page).toHaveURL(/tipo=respiratorio/);
+  await expect(
+    page.locator('[data-alerta][data-tipo="respiratorio"]'),
+  ).toBeVisible();
+  await expect(page.locator('[data-alerta][data-tipo="dengue"]')).toHaveCount(
+    0,
+  );
+
+  // Volver a Todas
+  await page.locator('[data-filtro-tipo="todas"]').click();
+  await expect(page.locator('[data-alerta][data-tipo="dengue"]')).toBeVisible();
+  await expect(
+    page.locator('[data-alerta][data-tipo="respiratorio"]'),
+  ).toBeVisible();
+
+  // Historial del navegador (Back)
+  await page.goBack();
+  await expect(page).toHaveURL(/tipo=respiratorio/);
+  await expect(
+    page.locator('[data-alerta][data-tipo="respiratorio"]'),
+  ).toBeVisible();
+  await expect(page.locator('[data-alerta][data-tipo="dengue"]')).toHaveCount(
+    0,
+  );
+});

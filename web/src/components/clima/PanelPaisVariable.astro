@@ -1,6 +1,7 @@
 ---
 import PanelWorkspace from '../analisis/PanelWorkspace.astro';
-import BotonExportarGrafico from '../BotonExportarGrafico.astro';
+import { URL_CLIMA_MULTIPAIS } from '../../lib/analisis-api';
+import MenuExportar from '../MenuExportar.astro';
 // La misma asociación semanal entre clima y crecimiento de los casos, medida
 // en cada país (P3 de GET /api/clima-dengue/multipais): correlación agrupada
 // de los años evaluables de cada país, con intervalo del 95 % por bootstrap
@@ -50,10 +51,14 @@ import BotonExportarGrafico from '../BotonExportarGrafico.astro';
       UU.) no tienen años evaluables, y un país necesita al menos 5.
     </p>
 
-    <BotonExportarGrafico
+    <MenuExportar
       class="mt-3"
+      alineacion="izquierda"
       titulo="Clima y crecimiento de los casos de dengue en 18 países"
       fuente="EPI-Aetheris · OpenDengue (OPS) y Open-Meteo, 2014 a 2023"
+      enlaces={[
+        { texto: '18 países, completo (JSON)', href: URL_CLIMA_MULTIPAIS },
+      ]}
     />
 
     <details class="mt-3 rounded-xl border border-border bg-bg p-3">

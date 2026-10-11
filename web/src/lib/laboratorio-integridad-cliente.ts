@@ -274,6 +274,16 @@ export function iniciarLaboratorioIntegridad(raiz: HTMLElement): void {
     actualizar();
     anunciar(resumen(), 500);
   };
+  const selectorSemana = raiz.querySelector<HTMLElement>(
+    '#lab-integridad-selector-semana',
+  );
+  selectorSemana?.addEventListener('cambio-semana', ((
+    ev: CustomEvent<{ anio: number; semana: number }>,
+  ) => {
+    entradaSemana.value = String(ev.detail.semana);
+    alCambiar();
+  }) as EventListener);
+
   for (const campo of [entradaSemana, entradaSuma, entradaPublicado]) {
     campo.addEventListener('input', alCambiar);
   }

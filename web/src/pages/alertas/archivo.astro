@@ -9,120 +9,281 @@ const filtroDengue = tipoPedido === 'dengue';
 const filtroRespiratorio = tipoPedido === 'respiratorio';
 ---
 
-<Layout title="EPI-Aetheris — Archivo de alertas">
+<Layout
+  title="EPI-Aetheris — Archivo de alertas"
+  descripcion="Consulta histórica y trazabilidad de alertas epidemiológicas emitidas por el equipo de vigilancia en El Salvador."
+>
   <main
     id="contenido-principal"
     class="mx-auto max-w-[1600px] px-4 py-8 sm:px-8 sm:py-10 lg:px-12"
   >
-    <header class="mb-8 max-w-3xl">
+    {/* Cabecera y migas de pan */}
+    <header class="max-w-4xl">
+      <nav aria-label="Migas de pan" class="mb-3">
+        <ol class="flex items-center gap-2 font-sans text-xs text-ink-muted">
+          <li>
+            <a
+              href="/alertas"
+              class="inline-flex items-center gap-1 font-medium text-accent hover:underline underline-offset-2"
+            >
+              <Icono nombre="arrow-left" class="h-3.5 w-3.5" />
+              <span>Volver a alertas vigentes</span>
+            </a>
+          </li>
+          <li aria-hidden="true" class="text-border">/</li>
+          <li class="font-semibold text-ink" aria-current="page">
+            Archivo histórico
+          </li>
+        </ol>
+      </nav>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <span
+          class="inline-flex items-center gap-1.5 rounded-full border border-accent/25 bg-accent/5 px-3 py-1 font-mono text-xs font-semibold text-accent shadow-2xs"
+        >
+          <Icono nombre="history" class="h-3.5 w-3.5" />
+          <span>Registro histórico · 2023–2026</span>
+        </span>
+        <span
+          class="rounded-full bg-secondary/80 px-2.5 py-0.5 font-mono text-[11px] font-medium text-secondary-ink"
+        >
+          Trazabilidad y auditoría
+        </span>
+      </div>
+
+      <h1 class="titular-hero mt-3 text-ink">Archivo de alertas</h1>
+
       <p
-        class="font-sans text-xs font-semibold uppercase tracking-wider text-accent"
+        class="mt-3 font-sans text-base leading-relaxed text-ink-muted sm:text-lg max-w-3xl"
       >
-        Archivo · lo emitido, no solo lo vigente
-      </p>
-      <h1
-        class="mt-1 font-display text-2xl font-semibold tracking-tight text-ink sm:text-[1.75rem]"
-      >
-        Archivo de alertas
-      </h1>
-      <p class="mt-3 font-sans text-sm leading-relaxed text-ink-muted">
         Consulta qué se emitió y cuándo. Una alerta vencida o apagada no se ve
-        igual que una vigente: lleva el texto
-        <strong>NO VIGENTE</strong>. Esta página no se usa como material para
-        decisiones tomadas sin conexión.
+        igual que una vigente: lleva el texto <strong>NO VIGENTE</strong>. Esta
+        página no se usa como material para decisiones tomadas sin conexión.
       </p>
-      <p class="mt-2 font-sans text-sm">
+
+      {/* Accesos rápidos */}
+      <div
+        class="mt-6 flex flex-wrap items-center gap-2 border-y border-border/80 py-3 font-sans text-xs print:hidden"
+      >
+        <span class="text-ink-muted font-medium mr-1"
+          >Acciones de consulta:</span
+        >
         <a
           href="/alertas"
-          class="font-medium text-accent underline underline-offset-2"
-          >Volver a alertas vigentes</a
+          class="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 font-medium text-ink transition-colors hover:border-accent hover:bg-bg shadow-2xs"
         >
-      </p>
+          <Icono nombre="bell" class="h-3.5 w-3.5 text-accent" />
+          <span>Ver alertas activas</span>
+        </a>
+        <a
+          href="/alertas/nueva"
+          class="inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent/10 px-3 py-1.5 font-semibold text-accent transition-colors hover:bg-accent hover:text-accent-ink shadow-2xs"
+        >
+          <Icono nombre="send" class="h-3.5 w-3.5" />
+          <span>Nueva alerta</span>
+        </a>
+      </div>
     </header>
 
-    <form
-      method="get"
-      action="/alertas/archivo"
-      aria-label="Filtrar archivo de alertas"
-      class="mb-6 flex flex-wrap items-end gap-3 font-sans text-sm"
-      data-archivo-filtros
-    >
-      <label class="flex flex-col gap-1">
-        <span class="font-semibold text-ink">Tipo</span>
-        <select
-          name="tipo"
-          class="rounded-lg border border-border bg-surface px-3 py-1.5"
-        >
-          <option value="" selected={!tipoPedido}>Todos</option>
-          <option value="dengue" selected={filtroDengue}>Dengue</option>
-          <option value="respiratorio" selected={filtroRespiratorio}
-            >Respiratorio</option
+    {/* Formulario de filtrado temporal y temático */}
+    <section class="mt-8 max-w-4xl" aria-label="Filtros del archivo histórico">
+      <form
+        method="get"
+        action="/alertas/archivo"
+        aria-label="Filtrar archivo de alertas"
+        class="card-elevated rounded-2xl border border-border bg-surface p-5 sm:p-6"
+        data-archivo-filtros
+      >
+        <div class="flex items-center gap-2 text-accent">
+          <Icono nombre="filter" class="h-5 w-5" />
+          <h2
+            class="font-sans text-sm font-bold uppercase tracking-wider text-ink"
           >
-        </select>
-      </label>
-      <label class="flex flex-col gap-1">
-        <span class="font-semibold text-ink">Desde</span>
-        <input
-          type="date"
-          name="desde"
-          data-archivo-desde
-          value={desdePedido}
-          class="rounded-lg border border-border bg-surface px-3 py-1.5"
-        />
-      </label>
-      <label class="flex flex-col gap-1">
-        <span class="font-semibold text-ink">Hasta</span>
-        <input
-          type="date"
-          name="hasta"
-          data-archivo-hasta
-          value={hastaPedido}
-          class="rounded-lg border border-border bg-surface px-3 py-1.5"
-        />
-      </label>
-      <button
-        type="submit"
-        class="inline-flex items-center gap-2 rounded-full border border-accent bg-accent px-4 py-1.5 font-medium text-accent-ink"
-      >
-        <Icono nombre="filter" class="h-4 w-4" />
-        Filtrar
-      </button>
-      <p
-        data-archivo-rango-error
-        role="alert"
-        hidden
-        class="w-full font-sans text-sm text-red-700"
-      >
-        La fecha "Desde" no puede ser posterior a "Hasta".
-      </p>
-    </form>
+            Filtrar registro histórico
+          </h2>
+        </div>
 
-    <div data-alertas data-archivo>
-      <p
-        data-alertas-carga
-        class="font-sans text-sm text-ink-muted"
-        role="status"
-      >
-        Cargando archivo…
-      </p>
-      <p
+        <div
+          class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3 sm:items-end font-sans text-sm"
+        >
+          {/* Selector de Síndrome */}
+          <label class="flex flex-col gap-1.5">
+            <span
+              class="font-semibold text-xs text-ink flex items-center gap-1"
+            >
+              <span>Tipo de evento</span>
+            </span>
+            <select
+              name="tipo"
+              class="rounded-xl border border-border bg-bg px-3.5 py-2 font-sans text-xs sm:text-sm text-ink focus:border-accent focus:outline-hidden"
+            >
+              <option value="" selected={!tipoPedido}>Todos los tipos</option>
+              <option value="dengue" selected={filtroDengue}>Dengue</option>
+              <option value="respiratorio" selected={filtroRespiratorio}
+                >Respiratorio</option
+              >
+            </select>
+          </label>
+
+          {/* Fecha Desde */}
+          <label class="flex flex-col gap-1.5">
+            <span
+              class="font-semibold text-xs text-ink flex items-center gap-1"
+            >
+              <Icono nombre="calendar" class="h-3.5 w-3.5 text-accent" />
+              <span>Desde</span>
+            </span>
+            <input
+              type="date"
+              name="desde"
+              data-archivo-desde
+              value={desdePedido}
+              class="rounded-xl border border-border bg-bg px-3.5 py-2 font-sans text-xs sm:text-sm text-ink focus:border-accent focus:outline-hidden"
+            />
+          </label>
+
+          {/* Fecha Hasta */}
+          <label class="flex flex-col gap-1.5">
+            <span
+              class="font-semibold text-xs text-ink flex items-center gap-1"
+            >
+              <Icono nombre="calendar" class="h-3.5 w-3.5 text-accent" />
+              <span>Hasta</span>
+            </span>
+            <input
+              type="date"
+              name="hasta"
+              data-archivo-hasta
+              value={hastaPedido}
+              class="rounded-xl border border-border bg-bg px-3.5 py-2 font-sans text-xs sm:text-sm text-ink focus:border-accent focus:outline-hidden"
+            />
+          </label>
+        </div>
+
+        {/* Botones de acción y filtros rápidos */}
+        <div
+          class="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-border/70 pt-4"
+        >
+          <div class="flex flex-wrap items-center gap-1.5 text-xs">
+            <span class="text-ink-muted mr-1 font-medium">Rangos rápidos:</span>
+            <button
+              type="button"
+              data-rango-preset="30d"
+              class="rounded-full border border-border/80 bg-bg px-2.5 py-1 text-ink-muted hover:border-accent hover:text-ink transition-colors"
+            >
+              Últimos 30 días
+            </button>
+            <button
+              type="button"
+              data-rango-preset="90d"
+              class="rounded-full border border-border/80 bg-bg px-2.5 py-1 text-ink-muted hover:border-accent hover:text-ink transition-colors"
+            >
+              Últimos 90 días
+            </button>
+            <button
+              type="button"
+              data-rango-preset="2026"
+              class="rounded-full border border-border/80 bg-bg px-2.5 py-1 text-ink-muted hover:border-accent hover:text-ink transition-colors"
+            >
+              Año 2026
+            </button>
+            <button
+              type="button"
+              data-rango-preset="limpiar"
+              class="rounded-full border border-border/80 bg-bg px-2.5 py-1 text-ink-muted hover:border-accent hover:text-ink transition-colors"
+            >
+              Todo
+            </button>
+          </div>
+
+          <button
+            type="submit"
+            class="inline-flex items-center gap-2 rounded-full border border-accent bg-accent px-5 py-2 font-sans text-xs sm:text-sm font-semibold text-accent-ink transition-all hover:opacity-90 hover:-translate-y-0.5 active:translate-y-0 shadow-xs"
+          >
+            <Icono nombre="filter" class="h-4 w-4" />
+            <span>Filtrar</span>
+          </button>
+        </div>
+
+        {/* Mensaje de error de validación de rango */}
+        <p
+          data-archivo-rango-error
+          role="alert"
+          hidden
+          class="mt-3 flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 p-3 font-sans text-xs sm:text-sm text-red-700 dark:text-red-300"
+        >
+          <Icono
+            nombre="alert-triangle"
+            class="h-4 w-4 text-red-600 shrink-0"
+          />
+          <span>La fecha "Desde" no puede ser posterior a "Hasta".</span>
+        </p>
+      </form>
+    </section>
+
+    {/* Contenedor reactivo de resultados históricos */}
+    <div data-alertas data-archivo class="mt-8 max-w-4xl space-y-4">
+      {/* Estado de carga con esqueletos */}
+      <div data-alertas-carga class="space-y-4" role="status">
+        <p class="font-sans text-xs text-ink-muted flex items-center gap-2">
+          <span class="inline-block h-2 w-2 rounded-full bg-accent animate-ping"
+          ></span>
+          Cargando archivo…
+        </p>
+        <div
+          class="card-elevated rounded-2xl border border-border bg-surface p-6 space-y-4 animate-pulse"
+        >
+          <div class="flex gap-2">
+            <div class="h-6 w-24 rounded-full skeleton"></div>
+            <div class="h-6 w-28 rounded-full skeleton"></div>
+          </div>
+          <div class="h-7 w-3/4 rounded-lg skeleton"></div>
+          <div class="h-4 w-1/2 rounded-md skeleton"></div>
+          <div class="h-16 w-full rounded-xl skeleton"></div>
+        </div>
+      </div>
+
+      {/* Estado de error */}
+      <div
         data-alertas-error
         hidden
-        class="rounded-lg border border-secondary bg-secondary/25 p-3 font-sans text-sm text-ink"
+        class="rounded-2xl border border-secondary bg-secondary/25 p-5 font-sans text-sm text-ink flex items-start gap-3 shadow-xs"
         role="status"
       >
-        No se pudo cargar el archivo de alertas. Recarga la página para
-        reintentarlo.
-      </p>
-      <p
+        <Icono
+          nombre="alert-triangle"
+          class="h-5 w-5 text-accent shrink-0 mt-0.5"
+        />
+        <div>
+          <h3 class="font-semibold text-ink">
+            No se pudo cargar el archivo de alertas.
+          </h3>
+          <p class="mt-1 text-ink-muted text-xs leading-relaxed">
+            No se pudo cargar el archivo de alertas. Recarga la página para
+            reintentarlo.
+          </p>
+          <button
+            type="button"
+            onclick="window.location.reload()"
+            class="mt-3 inline-flex items-center gap-2 rounded-full border border-accent bg-accent px-3.5 py-1 text-xs font-semibold text-accent-ink"
+          >
+            Recargar página
+          </button>
+        </div>
+      </div>
+
+      {/* Estado vacío */}
+      <div
         data-alertas-vacio
         hidden
-        class="rounded-2xl border border-border bg-surface p-5 font-sans text-sm leading-relaxed text-ink"
+        class="card-elevated rounded-2xl border border-border bg-surface p-6 font-sans text-sm leading-relaxed text-ink shadow-xs"
         role="status"
       >
         No hay alertas en el rango seleccionado.
-      </p>
-      <div data-alertas-lista class="flex flex-col gap-4"></div>
+      </div>
+
+      {/* Lista inyectada de tarjetas */}
+      <div data-alertas-lista class="flex flex-col gap-5"></div>
     </div>
   </main>
 </Layout>
@@ -149,6 +310,39 @@ const filtroRespiratorio = tipoPedido === 'respiratorio';
   const errorRango = document.querySelector<HTMLElement>(
     '[data-archivo-rango-error]',
   );
+
+  // Manejador de botones de rangos rápidos
+  document
+    .querySelectorAll<HTMLButtonElement>('[data-rango-preset]')
+    .forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const preset = btn.dataset.rangoPreset;
+        const hoy = new Date();
+        const hoyIso = hoy.toISOString().slice(0, 10);
+
+        if (!inputDesde || !inputHasta) return;
+
+        if (preset === '30d') {
+          const antes = new Date(hoy.getTime() - 30 * 24 * 60 * 60 * 1000);
+          inputDesde.value = antes.toISOString().slice(0, 10);
+          inputHasta.value = hoyIso;
+        } else if (preset === '90d') {
+          const antes = new Date(hoy.getTime() - 90 * 24 * 60 * 60 * 1000);
+          inputDesde.value = antes.toISOString().slice(0, 10);
+          inputHasta.value = hoyIso;
+        } else if (preset === '2026') {
+          inputDesde.value = '2026-01-01';
+          inputHasta.value = '2026-12-31';
+        } else if (preset === 'limpiar') {
+          inputDesde.value = '';
+          inputHasta.value = '';
+        }
+
+        inputHasta.removeAttribute('aria-invalid');
+        if (errorRango) errorRango.hidden = true;
+      });
+    });
+
   formFiltros?.addEventListener('submit', (evento) => {
     if (!inputDesde?.value || !inputHasta?.value) return;
     if (inputDesde.value <= inputHasta.value) {

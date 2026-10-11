@@ -1,0 +1,442 @@
+---
+import CuentaPagina from '../../components/CuentaPagina.astro';
+import DialogosCuenta from '../../components/DialogosCuenta.astro';
+import {
+  CLASE_AYUDA,
+  CLASE_BOTON_PRINCIPAL,
+  CLASE_BOTON_SECUNDARIO,
+  CLASE_CAMPO,
+  CLASE_ENLACE,
+  CLASE_ETIQUETA,
+  CLASE_TARJETA,
+} from '../../lib/cuenta-estilos';
+---
+
+<CuentaPagina
+  titulo="Mi cuenta"
+  descripcion="Tus datos, tus factores de verificación y tus sesiones abiertas."
+  ancho="max-w-4xl"
+>
+  <div data-pagina-cuenta aria-busy="true" class="flex flex-col gap-6">
+    <p data-cargando role="status" class={CLASE_AYUDA}>Cargando tu cuenta…</p>
+    <div data-error-carga></div>
+
+    <div data-contenido hidden class="flex flex-col gap-6">
+      <div data-aviso-general tabindex="-1" hidden></div>
+
+      <section aria-labelledby="titulo-datos" class={CLASE_TARJETA}>
+        <h2 id="titulo-datos" class="font-sans text-lg font-bold text-ink">
+          Datos
+        </h2>
+        <dl
+          class="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 font-sans text-sm"
+        >
+          <dt class="text-ink-muted">Nombre</dt>
+          <dd data-dato="nombre" class="text-ink"></dd>
+          <dt class="text-ink-muted">Correo</dt>
+          <dd data-dato="correo" class="break-all text-ink"></dd>
+          <dt class="text-ink-muted">Roles</dt>
+          <dd data-dato="roles" class="text-ink"></dd>
+        </dl>
+        <p data-enlace-admin hidden class="mt-4">
+          <a href="/admin/usuarios" class={CLASE_ENLACE}
+            >Administrar personas e instituciones</a
+          >
+        </p>
+      </section>
+
+      <section aria-labelledby="titulo-factores" class={CLASE_TARJETA}>
+        <h2 id="titulo-factores" class="font-sans text-lg font-bold text-ink">
+          Factores de verificación
+        </h2>
+        <p class={`mt-1 ${CLASE_AYUDA}`}>
+          Siempre debe quedar al menos uno, y un administrador conserva al menos
+          una llave de acceso.
+        </p>
+        <ul data-lista-factores class="mt-3 flex flex-col gap-2"></ul>
+      </section>
+
+      <section aria-labelledby="titulo-clave" class={CLASE_TARJETA}>
+        <h2 id="titulo-clave" class="font-sans text-lg font-bold text-ink">
+          Cambiar contraseña
+        </h2>
+        <form
+          data-form-clave
+          class="mt-3 flex max-w-md flex-col gap-4"
+          novalidate
+        >
+          <label class="flex flex-col gap-1.5">
+            <span class={CLASE_ETIQUETA}>Contraseña actual</span>
+            <input
+              type="password"
+              name="actual"
+              autocomplete="current-password"
+              required
+              maxlength="256"
+              class={CLASE_CAMPO}
+            />
+          </label>
+          <label class="flex flex-col gap-1.5">
+            <span class={CLASE_ETIQUETA}>Contraseña nueva</span>
+            <input
+              type="password"
+              name="nueva"
+              autocomplete="new-password"
+              required
+              maxlength="256"
+              aria-describedby="requisitos-contrasena"
+              class={CLASE_CAMPO}
+            />
+          </label>
+          <label class="flex flex-col gap-1.5">
+            <span class={CLASE_ETIQUETA}>Repite la contraseña nueva</span>
+            <input
+              type="password"
+              name="repetir"
+              autocomplete="new-password"
+              required
+              maxlength="256"
+              class={CLASE_CAMPO}
+            />
+          </label>
+          <div>
+            <p class={CLASE_ETIQUETA} id="titulo-requisitos">
+              Requisitos de la contraseña
+            </p>
+            <ul
+              id="requisitos-contrasena"
+              data-requisitos
+              aria-labelledby="titulo-requisitos"
+              class="mt-1 space-y-0.5 font-sans text-xs"
+            >
+            </ul>
+          </div>
+          <div data-aviso tabindex="-1" hidden></div>
+          <div>
+            <button type="submit" class={CLASE_BOTON_PRINCIPAL}
+              >Cambiar contraseña</button
+            >
+          </div>
+        </form>
+        <p class={`mt-3 ${CLASE_AYUDA}`}>
+          Al cambiarla se cierran tus otras sesiones.
+        </p>
+      </section>
+
+      <section aria-labelledby="titulo-sesiones" class={CLASE_TARJETA}>
+        <h2 id="titulo-sesiones" class="font-sans text-lg font-bold text-ink">
+          Sesiones abiertas
+        </h2>
+        <div class="mt-3 overflow-x-auto">
+          <table
+            class="w-full min-w-[32rem] border-collapse text-left font-sans text-sm"
+          >
+            <caption class="sr-only">Sesiones abiertas en tu cuenta</caption>
+            <thead>
+              <tr class="border-b border-border text-xs text-ink-muted">
+                <th scope="col" class="py-2 pr-4 font-semibold">Dispositivo</th>
+                <th scope="col" class="py-2 pr-4 font-semibold">Red</th>
+                <th scope="col" class="py-2 pr-4 font-semibold">Iniciada</th>
+                <th scope="col" class="py-2 font-semibold">Última actividad</th>
+              </tr>
+            </thead>
+            <tbody data-lista-sesiones></tbody>
+          </table>
+        </div>
+        <div class="mt-4 flex flex-wrap gap-3">
+          <button type="button" data-cerrar-otras class={CLASE_BOTON_SECUNDARIO}
+            >Cerrar las otras sesiones</button
+          >
+          <button type="button" data-salir class={CLASE_BOTON_SECUNDARIO}
+            >Salir de esta sesión</button
+          >
+        </div>
+      </section>
+    </div>
+  </div>
+  <DialogosCuenta />
+</CuentaPagina>
+
+<script>
+  import {
+    cambiarClave,
+    cerrarOtrasSesiones,
+    listarSesiones,
+    revocarFactor,
+    salir,
+  } from '../../lib/cuenta-api';
+  import { contrasenaCumple } from '../../lib/contrasena-requisitos';
+  import {
+    conCarga,
+    etiquetaRol,
+    formatearFecha,
+    limpiarAviso,
+    mensajeDeError,
+    mostrarAviso,
+    pedirElemento,
+    resumirAgente,
+    vincularRequisitos,
+  } from '../../lib/cuenta-ui';
+  import {
+    confirmarAccion,
+    conReautenticacion,
+  } from '../../lib/dialogos-cuenta';
+  import {
+    cargarSesion,
+    fijarSesion,
+    olvidarSesion,
+    suscribirSesion,
+  } from '../../lib/sesion-state';
+  import { renderErrorFuente } from '../../components/estado-async';
+  import type { SesionActiva } from '../../lib/tipos-cuenta';
+
+  const raiz = document.querySelector<HTMLElement>('[data-pagina-cuenta]');
+  if (raiz) void iniciar(raiz);
+
+  async function iniciar(raiz: HTMLElement): Promise<void> {
+    const avisoGeneral = pedirElemento<HTMLElement>(
+      raiz,
+      '[data-aviso-general]',
+    );
+    let sesion: SesionActiva;
+
+    const cargar = async (): Promise<boolean> => {
+      raiz.setAttribute('aria-busy', 'true');
+      try {
+        const estado = await cargarSesion(true);
+        if (!estado.autenticada) {
+          location.assign('/cuenta/ingresar?siguiente=/cuenta');
+          return false;
+        }
+        if (estado.nivel === 'alta_pendiente') {
+          location.assign('/cuenta/alta');
+          return false;
+        }
+        if (estado.nivel === 'segundo_factor') {
+          location.assign('/cuenta/ingresar');
+          return false;
+        }
+        sesion = estado;
+        return true;
+      } catch (error) {
+        pedirElemento(raiz, '[data-cargando]').hidden = true;
+        renderErrorFuente(
+          pedirElemento<HTMLElement>(raiz, '[data-error-carga]'),
+          () => void arrancar(),
+          mensajeDeError(error),
+        );
+        return false;
+      } finally {
+        raiz.removeAttribute('aria-busy');
+      }
+    };
+
+    const pintarDatos = (): void => {
+      pedirElemento(raiz, '[data-dato="nombre"]').textContent =
+        sesion.usuario.nombre || 'Sin nombre';
+      pedirElemento(raiz, '[data-dato="correo"]').textContent =
+        sesion.usuario.correo;
+      pedirElemento(raiz, '[data-dato="roles"]').textContent = sesion.roles
+        .map(etiquetaRol)
+        .join(', ');
+      pedirElemento<HTMLElement>(raiz, '[data-enlace-admin]').hidden =
+        !sesion.roles.includes('administrador');
+    };
+
+    const pintarFactores = (): void => {
+      const lista = pedirElemento<HTMLElement>(raiz, '[data-lista-factores]');
+      lista.replaceChildren(
+        ...sesion.factores.map((factor) => {
+          const li = document.createElement('li');
+          li.className =
+            'flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border px-4 py-3';
+          const texto = document.createElement('span');
+          texto.className = 'font-sans text-sm text-ink';
+          const tipo =
+            factor.tipo === 'webauthn'
+              ? 'Llave de acceso'
+              : 'Aplicación de autenticación';
+          texto.textContent = `${tipo}: ${factor.etiqueta}`;
+          const boton = document.createElement('button');
+          boton.type = 'button';
+          boton.className =
+            'boton-secundario inline-flex min-h-[44px] items-center rounded-full border border-border px-4 py-1.5 font-sans text-sm font-semibold text-ink';
+          boton.textContent = 'Quitar';
+          boton.setAttribute(
+            'aria-label',
+            `Quitar ${tipo.toLowerCase()} ${factor.etiqueta}`,
+          );
+          boton.addEventListener(
+            'click',
+            () => void quitarFactor(factor.id, tipo, boton),
+          );
+          li.append(texto, boton);
+          return li;
+        }),
+      );
+    };
+
+    const quitarFactor = async (
+      id: string,
+      tipo: string,
+      boton: HTMLButtonElement,
+    ): Promise<void> => {
+      const confirmado = await confirmarAccion({
+        titulo: 'Quitar factor',
+        texto: `Vas a quitar: ${tipo.toLowerCase()}. Ya no podrás usarlo para ingresar.`,
+        etiquetaConfirmar: 'Quitar',
+      });
+      if (!confirmado) {
+        boton.focus();
+        return;
+      }
+      limpiarAviso(avisoGeneral);
+      try {
+        await conReautenticacion(() => revocarFactor(id));
+        await refrescarSesion();
+        mostrarAviso(avisoGeneral, 'ok', 'Factor eliminado.');
+      } catch (error) {
+        mostrarAviso(avisoGeneral, 'error', mensajeDeError(error));
+      }
+    };
+
+    const refrescarSesion = async (): Promise<void> => {
+      const estado = await cargarSesion(true);
+      if (estado.autenticada) sesion = estado;
+      pintarFactores();
+    };
+
+    const pintarSesiones = async (): Promise<void> => {
+      const cuerpo = pedirElemento<HTMLElement>(raiz, '[data-lista-sesiones]');
+      try {
+        const sesiones = await listarSesiones();
+        cuerpo.replaceChildren(
+          ...sesiones.map((s) => {
+            const fila = document.createElement('tr');
+            fila.className = 'border-b border-border align-top';
+            const celdas = [
+              `${resumirAgente(s.agente)}${s.actual ? ' (esta sesión)' : ''}`,
+              s.red ?? 'Sin dato',
+              formatearFecha(s.creada_en),
+              formatearFecha(s.ultima_actividad_en),
+            ];
+            for (const texto of celdas) {
+              const td = document.createElement('td');
+              td.className = 'py-2 pr-4 text-ink';
+              td.textContent = texto;
+              fila.append(td);
+            }
+            return fila;
+          }),
+        );
+      } catch (error) {
+        mostrarAviso(avisoGeneral, 'error', mensajeDeError(error));
+      }
+    };
+
+    const arrancar = async (): Promise<void> => {
+      if (!(await cargar())) return;
+      pedirElemento(raiz, '[data-cargando]').hidden = true;
+      pedirElemento<HTMLElement>(raiz, '[data-error-carga]').replaceChildren();
+      pedirElemento<HTMLElement>(raiz, '[data-contenido]').hidden = false;
+      pintarDatos();
+      pintarFactores();
+      await pintarSesiones();
+    };
+
+    // Cambio de contraseña.
+    const form = pedirElemento<HTMLFormElement>(raiz, '[data-form-clave]');
+    const actual = pedirElemento<HTMLInputElement>(form, '[name="actual"]');
+    const nueva = pedirElemento<HTMLInputElement>(form, '[name="nueva"]');
+    const repetir = pedirElemento<HTMLInputElement>(form, '[name="repetir"]');
+    const aviso = pedirElemento<HTMLElement>(form, '[data-aviso]');
+    const datosPersonales = () => ({
+      nombre: sesion?.usuario.nombre,
+      correo: sesion?.usuario.correo,
+    });
+    vincularRequisitos(
+      nueva,
+      pedirElemento(form, '[data-requisitos]'),
+      datosPersonales,
+    );
+    form.addEventListener('submit', (evento) => {
+      evento.preventDefault();
+      limpiarAviso(aviso);
+      const problema = !actual.value
+        ? 'Escribe tu contraseña actual.'
+        : !contrasenaCumple(nueva.value, datosPersonales())
+          ? 'La contraseña nueva no cumple los requisitos.'
+          : nueva.value !== repetir.value
+            ? 'Las contraseñas nuevas no coinciden.'
+            : null;
+      if (problema) {
+        mostrarAviso(aviso, 'error', problema);
+        return;
+      }
+      const boton = pedirElemento<HTMLButtonElement>(form, '[type="submit"]');
+      void conCarga(boton, async () => {
+        try {
+          const nuevaSesion = await conReautenticacion(() =>
+            cambiarClave(actual.value, nueva.value),
+          );
+          fijarSesion(nuevaSesion);
+          sesion = nuevaSesion;
+          form.reset();
+          nueva.dispatchEvent(new Event('input'));
+          mostrarAviso(
+            aviso,
+            'ok',
+            'Contraseña actualizada. Se cerraron tus otras sesiones.',
+          );
+          await pintarSesiones();
+        } catch (error) {
+          mostrarAviso(aviso, 'error', mensajeDeError(error));
+        }
+      });
+    });
+
+    // Sesiones.
+    const botonOtras = pedirElemento<HTMLButtonElement>(
+      raiz,
+      '[data-cerrar-otras]',
+    );
+    botonOtras.addEventListener('click', () => {
+      limpiarAviso(avisoGeneral);
+      void conCarga(botonOtras, async () => {
+        try {
+          const cerradas = await cerrarOtrasSesiones();
+          mostrarAviso(
+            avisoGeneral,
+            'ok',
+            cerradas === 1
+              ? 'Se cerró 1 sesión.'
+              : `Se cerraron ${cerradas} sesiones.`,
+          );
+          await pintarSesiones();
+        } catch (error) {
+          mostrarAviso(avisoGeneral, 'error', mensajeDeError(error));
+        }
+      });
+    });
+    const botonSalir = pedirElemento<HTMLButtonElement>(raiz, '[data-salir]');
+    botonSalir.addEventListener('click', () => {
+      void conCarga(botonSalir, async () => {
+        try {
+          await salir();
+          olvidarSesion();
+          location.assign('/cuenta/ingresar');
+        } catch (error) {
+          mostrarAviso(avisoGeneral, 'error', mensajeDeError(error));
+        }
+      });
+    });
+
+    suscribirSesion((estado) => {
+      if (estado && !estado.autenticada) {
+        location.assign('/cuenta/ingresar?siguiente=/cuenta');
+      }
+    });
+
+    await arrancar();
+  }
+</script>

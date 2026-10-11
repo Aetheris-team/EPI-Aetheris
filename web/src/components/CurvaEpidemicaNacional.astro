@@ -84,6 +84,7 @@ import MenuExportar from './MenuExportar.astro';
 
 <script>
   import { obtenerCasosNacionales } from '../lib/analisis-api';
+  import { habilitarCsv, type ArchivoCsv } from '../lib/exportar-csv';
   import type { CasoNacionalSemanal } from '../lib/tipos-analisis';
   import { renderErrorFuente, renderSinDato } from './estado-async';
 
@@ -296,29 +297,21 @@ import MenuExportar from './MenuExportar.astro';
   // Exporta exactamente lo mismo que dibuja el SVG -- mismo endpoint, sin
   // transformación adicional. Generado 100% en el cliente (Blob + URL de
   // objeto), no hay endpoint de exportación nuevo en el backend.
-  function descargarCsv(datos: CasoNacionalSemanal[]) {
+  function archivoCsv(datos: CasoNacionalSemanal[]): ArchivoCsv {
     const encabezado = 'semana_inicio,anio,semana_epi,conteo,fuente';
     const filas = datos.map(
       (d) =>
         `${d.semana_inicio},${d.anio},${d.semana_epi},${d.conteo},${d.fuente ?? ''}`,
     );
-    const csv = [encabezado, ...filas].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const enlace = document.createElement('a');
-    enlace.href = url;
-    enlace.download = `epi-aetheris-dengue-nacional-${datos[0].anio}-${datos[datos.length - 1].anio}.csv`;
-    document.body.appendChild(enlace);
-    enlace.click();
-    enlace.remove();
-    URL.revokeObjectURL(url);
+    return {
+      nombre: `epi-aetheris-dengue-nacional-${datos[0].anio}-${datos[datos.length - 1].anio}.csv`,
+      contenido: [encabezado, ...filas].join('\n'),
+    };
   }
 
   async function iniciar() {
     const contenedor = document.getElementById('curva-epidemica');
-    const botonDescarga = document.getElementById(
-      'curva-descargar-csv',
-    ) as HTMLButtonElement | null;
+    const opcionCsv = document.getElementById('curva-descargar-csv');
     if (!contenedor) return;
 
     try {
@@ -327,11 +320,7 @@ import MenuExportar from './MenuExportar.astro';
       datosActuales = datos;
       dibujar(contenedor, datos);
       contenedor.removeAttribute('aria-busy');
-      if (botonDescarga && datos.length > 0) {
-        botonDescarga.disabled = false;
-        botonDescarga.removeAttribute('title');
-        botonDescarga.addEventListener('click', () => descargarCsv(datos));
-      }
+      if (datos.length > 0) habilitarCsv(opcionCsv, () => archivoCsv(datos));
     } catch {
       renderErrorFuente(contenedor, () => void iniciar());
     }

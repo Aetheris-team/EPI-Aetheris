@@ -70,9 +70,10 @@ test.describe('observatorio respiratorio', () => {
     await page.goto('/respiratorio#neumonias');
     const curva = page.locator('#neumonias [data-curva-evento="neumonias"]');
     // Neumonías sí está cargada en esta base; IRA puede estar vacía.
-    await expect(curva.locator('svg')).toBeVisible({ timeout: 20_000 });
+    const grafico = curva.locator('svg[role="img"]');
+    await expect(grafico).toBeVisible({ timeout: 20_000 });
     await curva.locator('[data-curva-anio]').selectOption('2023');
-    await expect(curva.locator('svg')).toBeVisible();
+    await expect(grafico).toBeVisible();
     await curva.locator('[data-curva-desde]').fill('10');
     await curva.locator('[data-curva-hasta]').fill('20');
     await expect(curva.locator('[data-curva-rango]')).toHaveText(/SE10–SE20/);
@@ -236,9 +237,10 @@ test.describe('observatorio respiratorio', () => {
       'sin publicar',
     );
 
+    await panel.getByRole('button', { name: /Exportar/ }).click();
     const [descarga] = await Promise.all([
       page.waitForEvent('download'),
-      panel.getByRole('button', { name: /Exportar.*CSV/i }).click(),
+      panel.getByRole('menuitem', { name: 'Datos (CSV)' }).click(),
     ]);
     const tmp = test.info().outputPath('neumonias-nacional.csv');
     await descarga.saveAs(tmp);
@@ -274,8 +276,10 @@ test.describe('observatorio respiratorio', () => {
       0,
     );
     await expect(panel.locator('[data-nac-detalle]')).toBeHidden();
+    // Sin serie no hay datos que exportar: la opción de CSV queda inactiva.
+    await panel.getByRole('button', { name: /Exportar/ }).click();
     await expect(
-      panel.getByRole('button', { name: /Exportar.*CSV/i }),
+      panel.getByRole('menuitem', { name: 'Datos (CSV)' }),
     ).toBeDisabled();
   });
 });

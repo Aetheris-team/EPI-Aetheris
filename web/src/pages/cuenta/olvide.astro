@@ -1,0 +1,84 @@
+---
+import CuentaPagina from '../../components/CuentaPagina.astro';
+import {
+  CLASE_AYUDA,
+  CLASE_BOTON_PRINCIPAL,
+  CLASE_CAMPO,
+  CLASE_ENLACE,
+  CLASE_ETIQUETA,
+  CLASE_TARJETA,
+} from '../../lib/cuenta-estilos';
+---
+
+<CuentaPagina
+  titulo="Restablecer contraseña"
+  descripcion="Escribe el correo de tu cuenta y te enviaremos un enlace para elegir una contraseña nueva."
+>
+  <div data-pagina-olvide class={CLASE_TARJETA}>
+    <form data-form-olvide class="flex flex-col gap-4" novalidate>
+      <label class="flex flex-col gap-1.5">
+        <span class={CLASE_ETIQUETA}>Correo</span>
+        <input
+          type="email"
+          name="correo"
+          autocomplete="username"
+          required
+          maxlength="254"
+          class={CLASE_CAMPO}
+        />
+      </label>
+      <div data-aviso tabindex="-1" hidden></div>
+      <div class="flex flex-wrap items-center gap-4">
+        <button type="submit" class={CLASE_BOTON_PRINCIPAL}
+          >Enviar enlace</button
+        >
+        <a href="/cuenta/ingresar" class={`${CLASE_ENLACE} text-sm`}
+          >Volver a ingresar</a
+        >
+      </div>
+    </form>
+    <p class={`mt-4 ${CLASE_AYUDA}`}>
+      El enlace caduca pronto y sirve una sola vez. Revisa también la carpeta de
+      correo no deseado.
+    </p>
+  </div>
+</CuentaPagina>
+
+<script>
+  import { solicitarRestablecimiento } from '../../lib/cuenta-api';
+  import {
+    conCarga,
+    limpiarAviso,
+    mensajeDeError,
+    mostrarAviso,
+    pedirElemento,
+  } from '../../lib/cuenta-ui';
+
+  const raiz = document.querySelector<HTMLElement>('[data-pagina-olvide]');
+  if (raiz) {
+    const form = pedirElemento<HTMLFormElement>(raiz, '[data-form-olvide]');
+    const aviso = pedirElemento<HTMLElement>(form, '[data-aviso]');
+    form.addEventListener('submit', (evento) => {
+      evento.preventDefault();
+      const correo = pedirElemento<HTMLInputElement>(form, '[name="correo"]');
+      if (!correo.value.trim()) {
+        mostrarAviso(aviso, 'error', 'Escribe el correo de tu cuenta.');
+        return;
+      }
+      limpiarAviso(aviso);
+      const boton = pedirElemento<HTMLButtonElement>(form, '[type="submit"]');
+      void conCarga(boton, async () => {
+        try {
+          // La respuesta es la misma exista o no la cuenta; se muestra tal cual.
+          mostrarAviso(
+            aviso,
+            'ok',
+            await solicitarRestablecimiento(correo.value.trim()),
+          );
+        } catch (error) {
+          mostrarAviso(aviso, 'error', mensajeDeError(error));
+        }
+      });
+    });
+  }
+</script>

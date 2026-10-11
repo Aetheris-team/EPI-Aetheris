@@ -9,26 +9,63 @@ import { DEPARTAMENTOS } from '../../lib/departamentos';
 al sitemap (filtro en astro.config.mjs) ni se lista en robots.txt, que la
 anunciaría. */
 }
-<Layout title="EPI-Aetheris — Nueva alerta" noindex>
+<Layout title="EPI-Aetheris — Emitir alerta" noindex>
   <main
     id="contenido-principal"
-    class="mx-auto max-w-3xl px-4 py-8 sm:px-8 sm:py-10"
+    class="mx-auto max-w-[1600px] px-4 py-8 sm:px-8 sm:py-10 lg:px-12"
   >
-    <header class="mb-6">
+    {/* Cabecera y contexto del operador */}
+    <header class="max-w-4xl mb-8">
+      <nav aria-label="Migas de pan" class="mb-3">
+        <ol class="flex items-center gap-2 font-sans text-xs text-ink-muted">
+          <li>
+            <a
+              href="/alertas"
+              class="inline-flex items-center gap-1 font-medium text-accent hover:underline underline-offset-2"
+            >
+              <Icono nombre="arrow-left" class="h-3.5 w-3.5" />
+              <span>Volver a alertas de campo</span>
+            </a>
+          </li>
+          <li aria-hidden="true" class="text-border">/</li>
+          <li class="font-semibold text-ink" aria-current="page">
+            Emitir alerta
+          </li>
+        </ol>
+      </nav>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <span
+          class="inline-flex items-center gap-1.5 rounded-full border border-accent/25 bg-accent/5 px-3 py-1 font-mono text-xs font-semibold text-accent shadow-2xs"
+        >
+          <Icono nombre="lock" class="h-3.5 w-3.5" />
+          <span>Consola de operadores · Vigilancia activa</span>
+        </span>
+        <span
+          class="rounded-full bg-secondary/80 px-2.5 py-0.5 font-mono text-[11px] font-medium text-secondary-ink"
+        >
+          No enlazado públicamente
+        </span>
+      </div>
+
+      <h1 class="titular-hero mt-3 text-ink">Emitir alerta de campo</h1>
+
       <p
-        class="font-sans text-xs font-semibold uppercase tracking-wider text-accent"
+        class="mt-3 font-sans text-base leading-relaxed text-ink-muted sm:text-lg max-w-3xl"
       >
-        Operadores · no enlazado en la navegación
+        Publicación oficial de avisos sindrómicos para personal de salud en
+        terreno. El formulario valida la información antes de incorporarla al
+        feed y a la vista pública.
       </p>
-      <h1
-        class="mt-1 font-display text-2xl font-semibold tracking-tight text-ink"
-      >
-        Emitir alerta de campo
-      </h1>
+
       <aside
         data-aviso-formulario
-        class="mt-4 rounded-2xl border-2 border-secondary bg-secondary/20 p-4 font-sans text-sm leading-relaxed text-ink"
+        class="mt-5 rounded-2xl border-2 border-secondary bg-secondary/20 p-4 font-sans text-sm leading-relaxed text-ink flex items-start gap-3 shadow-xs"
       >
+        <Icono
+          nombre="alert-triangle"
+          class="h-5 w-5 text-accent shrink-0 mt-0.5"
+        />
         <p>
           <strong
             >Lo que se escriba aquí lo va a leer un médico en terreno.</strong
@@ -40,237 +77,542 @@ anunciaría. */
       </aside>
     </header>
 
-    <p class="mb-2 font-sans text-xs text-ink-muted">
-      Los campos marcados con <span aria-hidden="true">*</span><span
-        class="sr-only"
+    {
+      /* Distribución en 2 Columnas: Formulario de Emisión y Vista Previa en Vivo */
+    }
+    <div class="grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
+      {/* Columna Izquierda: Formulario (7 columnas) */}
+      <section
+        class="lg:col-span-7 flex flex-col gap-6"
+        aria-label="Formulario de emisión de alerta"
       >
-        (obligatorio)</span
-      > son obligatorios.
-    </p>
-    <form data-form-alerta class="flex flex-col gap-4 font-sans text-sm">
-      <fieldset class="rounded-2xl border border-border bg-surface p-4">
-        <legend class="px-1 font-semibold">Autenticación</legend>
-        <label class="mt-2 flex flex-col gap-1">
-          <span
-            >Token de escritura (ALERTAS_TOKEN) <span aria-hidden="true">*</span
-            ></span
-          >
-          <input
-            type="password"
-            name="token"
-            data-alerta-token
-            autocomplete="off"
-            required
-            aria-required="true"
-            class="rounded-lg border border-border bg-bg px-3 py-2"
-          />
-        </label>
-        <label class="mt-3 flex items-start gap-2">
-          <input type="checkbox" data-alerta-recordar-token class="mt-1" />
-          <span
-            >Recordar el token en este navegador. Sin esta casilla no se guarda.
-            Podés cerrar sesión después.</span
-          >
-        </label>
-        <button
-          type="button"
-          data-alerta-cerrar-sesion
-          class="mt-3 inline-flex items-center gap-2 rounded-full border border-border px-3 py-1.5"
-        >
-          <Icono nombre="logout" class="h-4 w-4" />
-          Cerrar sesión (olvidar token)
-        </button>
-      </fieldset>
-
-      <label class="flex flex-col gap-1">
-        <span class="font-semibold">Tipo <span aria-hidden="true">*</span></span
-        >
-        <select
-          name="tipo"
-          required
-          aria-required="true"
-          class="rounded-lg border border-border bg-surface px-3 py-2"
-        >
-          <option value="dengue">dengue</option>
-          <option value="respiratorio">respiratorio</option>
-        </select>
-      </label>
-      <label class="flex flex-col gap-1">
-        <span class="font-semibold"
-          >Nivel <span aria-hidden="true">*</span></span
-        >
-        <select
-          name="nivel"
-          required
-          aria-required="true"
-          class="rounded-lg border border-border bg-surface px-3 py-2"
-        >
-          <option value="informativo">informativo</option>
-          <option value="atencion">atencion</option>
-          <option value="intensificacion">intensificacion</option>
-        </select>
-      </label>
-      <label class="flex flex-col gap-1">
-        <span class="font-semibold">Etiqueta (vacío = producción)</span>
-        <select
-          name="etiqueta"
-          class="rounded-lg border border-border bg-surface px-3 py-2"
-        >
-          <option value="">ninguna</option>
-          <option value="test">test</option>
-          <option value="simulacro">simulacro</option>
-          <option value="historica">historica</option>
-        </select>
-      </label>
-      <fieldset class="rounded-2xl border border-border bg-surface p-4">
-        <legend class="px-1 font-semibold">Alcance (departamentos)</legend>
-        <p class="text-xs text-ink-muted">
-          Sin marcar ninguno, la alerta es nacional.
+        <p class="font-sans text-xs text-ink-muted">
+          Los campos marcados con <span
+            aria-hidden="true"
+            class="text-accent font-bold">*</span
+          ><span class="sr-only">(obligatorio)</span> son obligatorios.
         </p>
-        <div class="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 sm:grid-cols-3">
-          {
-            DEPARTAMENTOS.map((d) => (
-              <label class="inline-flex min-h-[32px] items-center gap-2">
-                <input type="checkbox" name="departamentos" value={d.codigo} />
-                <span>{d.nombre}</span>
-              </label>
-            ))
-          }
-        </div>
-      </fieldset>
-      <label class="flex flex-col gap-1">
-        <span class="font-semibold"
-          >Título <span aria-hidden="true">*</span></span
-        >
-        <input
-          name="titulo"
-          required
-          aria-required="true"
-          class="rounded-lg border border-border bg-surface px-3 py-2"
-        />
-      </label>
-      <label class="flex flex-col gap-1">
-        <span class="font-semibold"
-          >Contexto <span aria-hidden="true">*</span></span
-        >
-        <textarea
-          name="contexto"
-          required
-          aria-required="true"
-          rows="4"
-          class="rounded-lg border border-border bg-surface px-3 py-2"
-        ></textarea>
-      </label>
-      <label class="flex flex-col gap-1">
-        <span class="font-semibold"
-          >Indicaciones <span aria-hidden="true">*</span></span
-        >
-        <textarea
-          name="indicaciones"
-          required
-          aria-required="true"
-          rows="5"
-          class="rounded-lg border border-border bg-surface px-3 py-2"
-        ></textarea>
-      </label>
-      <label class="flex flex-col gap-1">
-        <span class="font-semibold"
-          >Fuente (obligatoria) <span aria-hidden="true">*</span></span
-        >
-        <input
-          name="fuente"
-          required
-          aria-required="true"
-          class="rounded-lg border border-border bg-surface px-3 py-2"
-        />
-      </label>
-      <label class="flex flex-col gap-1">
-        <span class="font-semibold"
-          >Autor <span aria-hidden="true">*</span></span
-        >
-        <input
-          name="autor"
-          required
-          aria-required="true"
-          class="rounded-lg border border-border bg-surface px-3 py-2"
-        />
-      </label>
-      <label class="flex flex-col gap-1">
-        <span class="font-semibold"
-          >Vigente desde <span aria-hidden="true">*</span></span
-        >
-        <input
-          type="date"
-          name="vigente_desde"
-          required
-          aria-required="true"
-          class="rounded-lg border border-border bg-surface px-3 py-2"
-        />
-      </label>
-      <label class="flex flex-col gap-1">
-        <span class="font-semibold">Vigente hasta (opcional)</span>
-        <input
-          type="date"
-          name="vigente_hasta"
-          class="rounded-lg border border-border bg-surface px-3 py-2"
-        />
-      </label>
-      <label class="flex flex-col gap-1">
-        <span class="font-semibold">Definición de caso (opcional)</span>
-        <textarea
-          name="definicion_caso"
-          rows="3"
-          class="rounded-lg border border-border bg-surface px-3 py-2"
-        ></textarea>
-      </label>
-      <label class="flex flex-col gap-1">
-        <span class="font-semibold">Signos de alarma (opcional)</span>
-        <textarea
-          name="signos_alarma"
-          rows="3"
-          class="rounded-lg border border-border bg-surface px-3 py-2"
-        ></textarea>
-      </label>
-      <label class="flex flex-col gap-1">
-        <span class="font-semibold">Criterios de referencia (opcional)</span>
-        <textarea
-          name="criterios_referencia"
-          rows="3"
-          class="rounded-lg border border-border bg-surface px-3 py-2"
-        ></textarea>
-      </label>
-      <label class="flex flex-col gap-1">
-        <span class="font-semibold">Qué notificar (opcional)</span>
-        <textarea
-          name="que_notificar"
-          rows="3"
-          class="rounded-lg border border-border bg-surface px-3 py-2"
-        ></textarea>
-      </label>
-      <label class="flex flex-col gap-1">
-        <span class="font-semibold">Contacto de vigilancia (opcional)</span>
-        <textarea
-          name="contacto_vigilancia"
-          rows="3"
-          class="rounded-lg border border-border bg-surface px-3 py-2"
-        ></textarea>
-      </label>
 
-      <button
-        type="submit"
-        class="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2 font-semibold text-accent-ink"
+        <form
+          data-form-alerta
+          class="flex flex-col gap-6 font-sans text-sm"
+          novalidate={false}
+        >
+          {/* 1. Autenticación */}
+          <fieldset
+            class="card-elevated rounded-2xl border border-border bg-surface p-5 space-y-4"
+          >
+            <legend
+              class="px-2 font-bold text-xs uppercase tracking-wider text-accent flex items-center gap-1.5"
+            >
+              <Icono nombre="key" class="h-4 w-4" />
+              <span>1. Autenticación del operador</span>
+            </legend>
+            <label class="flex flex-col gap-1.5">
+              <span class="font-semibold text-xs text-ink">
+                Token de escritura (ALERTAS_TOKEN) <span
+                  aria-hidden="true"
+                  class="text-accent">*</span
+                >
+              </span>
+              <input
+                type="password"
+                name="token"
+                data-alerta-token
+                autocomplete="off"
+                required
+                aria-required="true"
+                placeholder="Ingresa tu token de autorización"
+                class="rounded-xl border border-border bg-bg px-3.5 py-2 font-mono text-xs sm:text-sm text-ink focus:border-accent focus:outline-hidden"
+              />
+            </label>
+            <div
+              class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-1"
+            >
+              <label
+                class="flex items-center gap-2 cursor-pointer text-xs text-ink-muted"
+              >
+                <input
+                  type="checkbox"
+                  data-alerta-recordar-token
+                  class="rounded-sm border-border text-accent focus:ring-accent"
+                />
+                <span>Recordar token en este navegador</span>
+              </label>
+              <button
+                type="button"
+                data-alerta-cerrar-sesion
+                class="inline-flex items-center gap-1.5 rounded-full border border-border bg-bg px-3 py-1 font-sans text-xs font-medium text-ink-muted hover:text-ink hover:border-accent transition-colors self-start sm:self-auto"
+              >
+                <Icono nombre="logout" class="h-3.5 w-3.5" />
+                <span>Olvidar token</span>
+              </button>
+            </div>
+          </fieldset>
+
+          {/* 2. Clasificación clínica */}
+          <fieldset
+            class="card-elevated rounded-2xl border border-border bg-surface p-5 space-y-4"
+          >
+            <legend
+              class="px-2 font-bold text-xs uppercase tracking-wider text-accent flex items-center gap-1.5"
+            >
+              <Icono nombre="stethoscope" class="h-4 w-4" />
+              <span>2. Clasificación del evento</span>
+            </legend>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <label class="flex flex-col gap-1.5">
+                <span class="font-semibold text-xs text-ink">
+                  Tipo <span aria-hidden="true" class="text-accent">*</span>
+                </span>
+                <select
+                  name="tipo"
+                  data-campo-preview="tipo"
+                  required
+                  aria-required="true"
+                  class="rounded-xl border border-border bg-bg px-3.5 py-2 font-sans text-xs sm:text-sm text-ink focus:border-accent focus:outline-hidden"
+                >
+                  <option value="dengue">dengue</option>
+                  <option value="respiratorio">respiratorio</option>
+                </select>
+              </label>
+
+              <label class="flex flex-col gap-1.5">
+                <span class="font-semibold text-xs text-ink">
+                  Nivel <span aria-hidden="true" class="text-accent">*</span>
+                </span>
+                <select
+                  name="nivel"
+                  data-campo-preview="nivel"
+                  required
+                  aria-required="true"
+                  class="rounded-xl border border-border bg-bg px-3.5 py-2 font-sans text-xs sm:text-sm text-ink focus:border-accent focus:outline-hidden"
+                >
+                  <option value="informativo">informativo</option>
+                  <option value="atencion">atencion</option>
+                  <option value="intensificacion">intensificacion</option>
+                </select>
+              </label>
+
+              <label class="flex flex-col gap-1.5">
+                <span class="font-semibold text-xs text-ink">
+                  Etiqueta (opcional)
+                </span>
+                <select
+                  name="etiqueta"
+                  data-campo-preview="etiqueta"
+                  class="rounded-xl border border-border bg-bg px-3.5 py-2 font-sans text-xs sm:text-sm text-ink focus:border-accent focus:outline-hidden"
+                >
+                  <option value="">ninguna (producción)</option>
+                  <option value="test">test</option>
+                  <option value="simulacro">simulacro</option>
+                  <option value="historica">historica</option>
+                </select>
+              </label>
+            </div>
+          </fieldset>
+
+          {/* 3. Alcance departamental */}
+          <fieldset
+            class="card-elevated rounded-2xl border border-border bg-surface p-5 space-y-3"
+          >
+            <legend
+              class="px-2 font-bold text-xs uppercase tracking-wider text-accent flex items-center gap-1.5"
+            >
+              <Icono nombre="map-pin" class="h-4 w-4" />
+              <span>3. Alcance (departamentos)</span>
+            </legend>
+            <p class="text-xs text-ink-muted">
+              Sin marcar ninguno, la alerta es nacional.
+            </p>
+
+            <div class="flex items-center gap-2 pt-1 text-xs">
+              <button
+                type="button"
+                data-dept-marcar-todos
+                class="rounded-md border border-border/80 bg-bg px-2.5 py-1 text-ink-muted hover:text-ink hover:border-accent transition-colors"
+              >
+                Marcar todos
+              </button>
+              <button
+                type="button"
+                data-dept-desmarcar-todos
+                class="rounded-md border border-border/80 bg-bg px-2.5 py-1 text-ink-muted hover:text-ink hover:border-accent transition-colors"
+              >
+                Limpiar selección
+              </button>
+            </div>
+
+            <div
+              class="mt-2 grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-3 pt-2 border-t border-border/60"
+            >
+              {
+                DEPARTAMENTOS.map((d) => (
+                  <label class="inline-flex min-h-[32px] items-center gap-2 text-xs text-ink cursor-pointer hover:text-accent">
+                    <input
+                      type="checkbox"
+                      name="departamentos"
+                      value={d.codigo}
+                      data-campo-preview="departamento"
+                      class="rounded-sm border-border text-accent focus:ring-accent"
+                    />
+                    <span>{d.nombre}</span>
+                  </label>
+                ))
+              }
+            </div>
+          </fieldset>
+
+          {/* 4. Contenido e indicaciones */}
+          <fieldset
+            class="card-elevated rounded-2xl border border-border bg-surface p-5 space-y-4"
+          >
+            <legend
+              class="px-2 font-bold text-xs uppercase tracking-wider text-accent flex items-center gap-1.5"
+            >
+              <Icono nombre="file-text" class="h-4 w-4" />
+              <span>4. Redacción e indicaciones</span>
+            </legend>
+
+            <label class="flex flex-col gap-1.5">
+              <span class="font-semibold text-xs text-ink">
+                Título <span aria-hidden="true" class="text-accent">*</span>
+              </span>
+              <input
+                name="titulo"
+                data-campo-preview="titulo"
+                required
+                aria-required="true"
+                placeholder="Ej. Incremento de casos sospechosos de dengue en Santa Ana"
+                class="rounded-xl border border-border bg-bg px-3.5 py-2 font-sans text-xs sm:text-sm text-ink focus:border-accent focus:outline-hidden"
+              />
+            </label>
+
+            <label class="flex flex-col gap-1.5">
+              <span class="font-semibold text-xs text-ink">
+                Contexto epidemiológico <span
+                  aria-hidden="true"
+                  class="text-accent">*</span
+                >
+              </span>
+              <textarea
+                name="contexto"
+                data-campo-preview="contexto"
+                required
+                aria-required="true"
+                rows="4"
+                placeholder="Describe brevemente la anomalía detectada, la comparación histórica y los datos observados..."
+                class="rounded-xl border border-border bg-bg px-3.5 py-2 font-sans text-xs sm:text-sm text-ink focus:border-accent focus:outline-hidden"
+              ></textarea>
+            </label>
+
+            <label class="flex flex-col gap-1.5">
+              <span class="font-semibold text-xs text-ink">
+                Indicaciones para la unidad <span
+                  aria-hidden="true"
+                  class="text-accent">*</span
+                >
+              </span>
+              <textarea
+                name="indicaciones"
+                data-campo-preview="indicaciones"
+                required
+                aria-required="true"
+                rows="5"
+                placeholder="- Usa guiones para crear viñetas accionables
+- Ej: Reforzar búsqueda activa y notificación en menos de 24 horas
+- No indicar AINEs en cuadros febriles agudos"
+                class="rounded-xl border border-border bg-bg px-3.5 py-2 font-sans text-xs sm:text-sm text-ink focus:border-accent focus:outline-hidden"
+              ></textarea>
+            </label>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <label class="flex flex-col gap-1.5">
+                <span class="font-semibold text-xs text-ink">
+                  Fuente (obligatoria) <span
+                    aria-hidden="true"
+                    class="text-accent">*</span
+                  >
+                </span>
+                <input
+                  name="fuente"
+                  data-campo-preview="fuente"
+                  required
+                  aria-required="true"
+                  placeholder="Ej. Boletín Epidemiológico MINSAL SE 36"
+                  class="rounded-xl border border-border bg-bg px-3.5 py-2 font-sans text-xs sm:text-sm text-ink focus:border-accent focus:outline-hidden"
+                />
+              </label>
+
+              <label class="flex flex-col gap-1.5">
+                <span class="font-semibold text-xs text-ink">
+                  Autor <span aria-hidden="true" class="text-accent">*</span>
+                </span>
+                <input
+                  name="autor"
+                  data-campo-preview="autor"
+                  required
+                  aria-required="true"
+                  placeholder="Ej. Equipo 4 de Vigilancia (INSAMT)"
+                  class="rounded-xl border border-border bg-bg px-3.5 py-2 font-sans text-xs sm:text-sm text-ink focus:border-accent focus:outline-hidden"
+                />
+              </label>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <label class="flex flex-col gap-1.5">
+                <span class="font-semibold text-xs text-ink">
+                  Vigente desde <span aria-hidden="true" class="text-accent"
+                    >*</span
+                  >
+                </span>
+                <input
+                  type="date"
+                  name="vigente_desde"
+                  data-campo-preview="vigente_desde"
+                  required
+                  aria-required="true"
+                  class="rounded-xl border border-border bg-bg px-3.5 py-2 font-sans text-xs sm:text-sm text-ink focus:border-accent focus:outline-hidden"
+                />
+              </label>
+
+              <label class="flex flex-col gap-1.5">
+                <span class="font-semibold text-xs text-ink">
+                  Vigente hasta (opcional)
+                </span>
+                <input
+                  type="date"
+                  name="vigente_hasta"
+                  data-campo-preview="vigente_hasta"
+                  class="rounded-xl border border-border bg-bg px-3.5 py-2 font-sans text-xs sm:text-sm text-ink focus:border-accent focus:outline-hidden"
+                />
+              </label>
+            </div>
+          </fieldset>
+
+          {/* 5. Campos clínicos opcionales (ADR 0014) */}
+          <details
+            class="card-elevated rounded-2xl border border-border bg-surface p-5 space-y-4 group"
+          >
+            <summary
+              class="cursor-pointer font-bold text-xs uppercase tracking-wider text-accent flex items-center justify-between select-none"
+            >
+              <span class="flex items-center gap-1.5">
+                <Icono nombre="clipboard-list" class="h-4 w-4" />
+                <span>5. Criterios clínicos opcionales (ADR 0014)</span>
+              </span>
+              <span
+                class="text-xs text-ink-muted font-normal group-open:rotate-180 transition-transform"
+              >
+                <Icono nombre="chevron-down" class="h-4 w-4" />
+              </span>
+            </summary>
+
+            <div class="space-y-4 pt-3 border-t border-border/60">
+              <label class="flex flex-col gap-1.5">
+                <span class="font-semibold text-xs text-ink"
+                  >Definición de caso (opcional)</span
+                >
+                <textarea
+                  name="definicion_caso"
+                  rows="3"
+                  placeholder="Criterios clínicos y de laboratorio según protocolo..."
+                  class="rounded-xl border border-border bg-bg px-3.5 py-2 font-sans text-xs sm:text-sm text-ink focus:border-accent focus:outline-hidden"
+                ></textarea>
+              </label>
+
+              <label class="flex flex-col gap-1.5">
+                <span class="font-semibold text-xs text-ink"
+                  >Signos de alarma (opcional)</span
+                >
+                <textarea
+                  name="signos_alarma"
+                  rows="3"
+                  placeholder="Manifestaciones que indican necesidad de hospitalización..."
+                  class="rounded-xl border border-border bg-bg px-3.5 py-2 font-sans text-xs sm:text-sm text-ink focus:border-accent focus:outline-hidden"
+                ></textarea>
+              </label>
+
+              <label class="flex flex-col gap-1.5">
+                <span class="font-semibold text-xs text-ink"
+                  >Criterios de referencia (opcional)</span
+                >
+                <textarea
+                  name="criterios_referencia"
+                  rows="3"
+                  placeholder="Cuándo remitir al segundo o tercer nivel de atención..."
+                  class="rounded-xl border border-border bg-bg px-3.5 py-2 font-sans text-xs sm:text-sm text-ink focus:border-accent focus:outline-hidden"
+                ></textarea>
+              </label>
+
+              <label class="flex flex-col gap-1.5">
+                <span class="font-semibold text-xs text-ink"
+                  >Qué notificar (opcional)</span
+                >
+                <textarea
+                  name="que_notificar"
+                  rows="3"
+                  placeholder="Información requerida en la ficha epidemiológica..."
+                  class="rounded-xl border border-border bg-bg px-3.5 py-2 font-sans text-xs sm:text-sm text-ink focus:border-accent focus:outline-hidden"
+                ></textarea>
+              </label>
+
+              <label class="flex flex-col gap-1.5">
+                <span class="font-semibold text-xs text-ink"
+                  >Contacto de vigilancia (opcional)</span
+                >
+                <textarea
+                  name="contacto_vigilancia"
+                  rows="3"
+                  placeholder="Coordinación regional SIBASI y teléfonos oficiales..."
+                  class="rounded-xl border border-border bg-bg px-3.5 py-2 font-sans text-xs sm:text-sm text-ink focus:border-accent focus:outline-hidden"
+                ></textarea>
+              </label>
+            </div>
+          </details>
+
+          {/* Botón de envío y estado de publicación */}
+          <div class="flex flex-col sm:flex-row sm:items-center gap-4 pt-2">
+            <button
+              type="submit"
+              class="inline-flex items-center justify-center gap-2 rounded-full bg-accent px-6 py-2.5 font-sans text-sm font-semibold text-accent-ink transition-all hover:opacity-90 hover:-translate-y-0.5 active:translate-y-0 shadow-sm"
+            >
+              <Icono nombre="send" class="h-4 w-4" />
+              <span>Publicar alerta de campo</span>
+            </button>
+            <p
+              data-form-estado
+              class="font-sans text-xs sm:text-sm text-ink-muted"
+              role="status"
+              tabindex="-1"
+            >
+            </p>
+          </div>
+        </form>
+      </section>
+
+      {/* Columna Derecha: Vista Previa en Vivo (5 columnas) */}
+      <aside
+        class="lg:col-span-5 flex flex-col gap-5 sticky top-24 print:hidden"
+        aria-label="Vista previa de la tarjeta"
       >
-        <Icono nombre="send" class="h-4 w-4" />
-        Publicar alerta
-      </button>
-      <p
-        data-form-estado
-        class="font-sans text-sm text-ink-muted"
-        role="status"
-        tabindex="-1"
-      >
-      </p>
-    </form>
+        <div class="flex items-center justify-between">
+          <span
+            class="font-mono text-xs font-semibold uppercase tracking-wider text-accent flex items-center gap-1.5"
+          >
+            <Icono nombre="eye" class="h-4 w-4" />
+            <span>Vista previa interactiva</span>
+          </span>
+          <span class="text-[11px] text-ink-muted"
+            >Se actualiza al escribir</span
+          >
+        </div>
+
+        {/* Tarjeta simulada de alerta */}
+        <article
+          id="preview-alerta-card"
+          class="card-elevated rounded-2xl border border-border border-l-4 border-l-accent bg-surface p-5 sm:p-6 shadow-sm transition-all relative"
+        >
+          <header>
+            <div class="flex flex-wrap items-center gap-2 text-xs">
+              <span
+                id="preview-tipo-pill"
+                class="inline-flex items-center gap-1 rounded-full border border-border bg-bg px-2.5 py-1 font-sans font-semibold uppercase tracking-wider text-accent"
+              >
+                dengue
+              </span>
+              <span
+                id="preview-nivel-pill"
+                class="inline-flex items-center gap-1 rounded-full border border-teal-700 bg-teal-700 px-2.5 py-1 font-sans font-semibold uppercase tracking-wider text-white shadow-2xs"
+              >
+                informativo
+              </span>
+              <span
+                id="preview-etiqueta-pill"
+                hidden
+                class="rounded-full bg-secondary px-2 py-0.5 font-mono text-[10px] font-bold text-secondary-ink"
+              >
+              </span>
+            </div>
+
+            <h2
+              id="preview-titulo"
+              class="mt-3 font-display text-lg sm:text-xl font-semibold tracking-tight text-ink"
+            >
+              Título de la alerta
+            </h2>
+
+            <p class="mt-2 font-sans text-xs text-ink-muted">
+              <span>Emisión: <time id="preview-emision">Hoy</time></span>
+              ·
+              <span id="preview-alcance">Alcance: Nacional</span>
+            </p>
+          </header>
+
+          <section
+            class="mt-4 rounded-xl border border-border/80 bg-bg/50 p-3.5 font-sans text-xs leading-relaxed text-ink"
+          >
+            <p id="preview-contexto" class="text-ink-muted italic">
+              El contexto epidemiológico aparecerá aquí conforme redactes la
+              alerta...
+            </p>
+          </section>
+
+          <section
+            class="mt-3 rounded-xl border border-accent/25 bg-accent/5 p-4 font-sans text-xs leading-relaxed text-ink"
+          >
+            <h3 class="font-semibold text-ink flex items-center gap-1.5">
+              <Icono nombre="stethoscope" class="h-3.5 w-3.5 text-accent" />
+              <span>Indicaciones para la unidad</span>
+            </h3>
+            <div
+              id="preview-indicaciones"
+              class="mt-2 space-y-1 text-ink-muted"
+            >
+              <p>Las indicaciones operativas aparecerán aquí...</p>
+            </div>
+          </section>
+
+          <div
+            class="mt-4 flex flex-wrap items-center gap-3 font-sans text-[11px] text-ink-muted border-t border-border/60 pt-3"
+          >
+            <span
+              >Fuente: <strong id="preview-fuente" class="text-ink"
+                >Por definir</strong
+              ></span
+            >
+            <span>·</span>
+            <span
+              >Autor: <strong id="preview-autor" class="text-ink"
+                >Por definir</strong
+              ></span
+            >
+          </div>
+        </article>
+
+        {/* Tarjeta de recordatorio de rigor clínico */}
+        <div
+          class="rounded-2xl border border-border bg-bg/80 p-4 font-sans text-xs text-ink-muted space-y-2"
+        >
+          <p class="font-semibold text-ink">
+            Criterios de emisión responsable:
+          </p>
+          <ul class="space-y-1 list-disc pl-4">
+            <li>
+              La alerta se publica de inmediato en el feed XML Atom y en el
+              sitio.
+            </li>
+            <li>
+              No emitir diagnósticos presuntivos sin fuente de serie oficial.
+            </li>
+            <li>
+              Si es una prueba técnica, selecciona la etiqueta <code>test</code
+              >.
+            </li>
+          </ul>
+        </div>
+      </aside>
+    </div>
   </main>
 </Layout>
 
@@ -288,6 +630,127 @@ anunciaría. */
     '[data-alerta-cerrar-sesion]',
   );
   const estado = document.querySelector<HTMLElement>('[data-form-estado]');
+
+  // Botones de marcar/desmarcar todos los departamentos
+  const btnMarcar = document.querySelector<HTMLButtonElement>(
+    '[data-dept-marcar-todos]',
+  );
+  const btnDesmarcar = document.querySelector<HTMLButtonElement>(
+    '[data-dept-desmarcar-todos]',
+  );
+  btnMarcar?.addEventListener('click', () => {
+    document
+      .querySelectorAll<HTMLInputElement>('input[name="departamentos"]')
+      .forEach((cb) => (cb.checked = true));
+    actualizarPreview();
+  });
+  btnDesmarcar?.addEventListener('click', () => {
+    document
+      .querySelectorAll<HTMLInputElement>('input[name="departamentos"]')
+      .forEach((cb) => (cb.checked = false));
+    actualizarPreview();
+  });
+
+  // Actualizador de la vista previa en vivo
+  function actualizarPreview(): void {
+    if (!form) return;
+    const datos = new FormData(form);
+
+    const prevCard = document.getElementById('preview-alerta-card');
+    const prevTipo = document.getElementById('preview-tipo-pill');
+    const prevNivel = document.getElementById('preview-nivel-pill');
+    const prevEtiqueta = document.getElementById('preview-etiqueta-pill');
+    const prevTitulo = document.getElementById('preview-titulo');
+    const prevEmision = document.getElementById('preview-emision');
+    const prevAlcance = document.getElementById('preview-alcance');
+    const prevContexto = document.getElementById('preview-contexto');
+    const prevIndicaciones = document.getElementById('preview-indicaciones');
+    const prevFuente = document.getElementById('preview-fuente');
+    const prevAutor = document.getElementById('preview-autor');
+
+    const tipo = String(datos.get('tipo') || 'dengue');
+    const nivel = String(datos.get('nivel') || 'informativo');
+    const etiqueta = String(datos.get('etiqueta') || '');
+    const titulo = String(datos.get('titulo') || '').trim();
+    const contexto = String(datos.get('contexto') || '').trim();
+    const indicaciones = String(datos.get('indicaciones') || '').trim();
+    const fuente = String(datos.get('fuente') || '').trim();
+    const autor = String(datos.get('autor') || '').trim();
+    const emision = String(datos.get('vigente_desde') || '');
+    const depts = datos.getAll('departamentos');
+
+    if (prevTipo) prevTipo.textContent = tipo;
+    if (prevNivel) {
+      prevNivel.textContent = nivel;
+      if (nivel === 'intensificacion') {
+        prevNivel.className =
+          'inline-flex items-center gap-1 rounded-full border border-red-600 bg-red-600 px-2.5 py-1 font-sans font-semibold uppercase tracking-wider text-white shadow-2xs';
+        if (prevCard) {
+          prevCard.className =
+            'card-elevated rounded-2xl border border-border border-l-4 border-l-red-500 bg-surface p-5 sm:p-6 shadow-sm transition-all relative';
+        }
+      } else if (nivel === 'atencion') {
+        prevNivel.className =
+          'inline-flex items-center gap-1 rounded-full border border-amber-700 bg-amber-700 px-2.5 py-1 font-sans font-semibold uppercase tracking-wider text-white shadow-2xs';
+        if (prevCard) {
+          prevCard.className =
+            'card-elevated rounded-2xl border border-border border-l-4 border-l-amber-500 bg-surface p-5 sm:p-6 shadow-sm transition-all relative';
+        }
+      } else {
+        prevNivel.className =
+          'inline-flex items-center gap-1 rounded-full border border-teal-700 bg-teal-700 px-2.5 py-1 font-sans font-semibold uppercase tracking-wider text-white shadow-2xs';
+        if (prevCard) {
+          prevCard.className =
+            'card-elevated rounded-2xl border border-border border-l-4 border-l-accent bg-surface p-5 sm:p-6 shadow-sm transition-all relative';
+        }
+      }
+    }
+
+    if (prevEtiqueta) {
+      if (etiqueta) {
+        prevEtiqueta.hidden = false;
+        prevEtiqueta.textContent = etiqueta.toUpperCase();
+      } else {
+        prevEtiqueta.hidden = true;
+      }
+    }
+
+    if (prevTitulo) {
+      prevTitulo.textContent = titulo || 'Título de la alerta';
+    }
+    if (prevEmision) {
+      prevEmision.textContent = emision || 'Hoy';
+    }
+    if (prevAlcance) {
+      if (depts.length === 0 || depts.length === 14) {
+        prevAlcance.textContent = 'Alcance: Nacional';
+      } else {
+        prevAlcance.textContent = `Alcance: ${depts.length} departamento(s)`;
+      }
+    }
+    if (prevContexto) {
+      prevContexto.textContent =
+        contexto ||
+        'El contexto epidemiológico aparecerá aquí conforme redactes la alerta...';
+      prevContexto.className = contexto ? 'text-ink' : 'text-ink-muted italic';
+    }
+    if (prevIndicaciones) {
+      if (indicaciones) {
+        prevIndicaciones.innerHTML = indicaciones
+          .split('\n')
+          .map((line) => `<p>${line.replace(/^-\s*/, '• ')}</p>`)
+          .join('');
+      } else {
+        prevIndicaciones.innerHTML =
+          '<p class="italic text-ink-muted">Las indicaciones operativas aparecerán aquí...</p>';
+      }
+    }
+    if (prevFuente) prevFuente.textContent = fuente || 'Por definir';
+    if (prevAutor) prevAutor.textContent = autor || 'Por definir';
+  }
+
+  form?.addEventListener('input', actualizarPreview);
+  form?.addEventListener('change', actualizarPreview);
 
   try {
     const guardado = window.localStorage.getItem(CLAVE_TOKEN);

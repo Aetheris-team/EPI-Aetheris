@@ -1,5 +1,8 @@
 ---
+import LeyendaRampa from './analisis/LeyendaRampa.astro';
 import PanelWorkspace from './analisis/PanelWorkspace.astro';
+import SelectorSemanaEpi from './SelectorSemanaEpi.astro';
+import { RAMPA_CASOS } from '../lib/colores';
 import { ANIOS_RESPIRATORIO } from '../lib/respiratorio-state';
 // Heatmap departamento × semana de Neumonías. Una métrica: conteo notificado.
 // Celda sin dato = hueco, nunca cero.
@@ -26,7 +29,15 @@ import { ANIOS_RESPIRATORIO } from '../lib/respiratorio-state';
       </select>
     </label>
     <span class="flex flex-wrap items-center gap-2">
-      SE
+      <span class="text-xs font-medium text-ink-muted">Desde:</span>
+      <SelectorSemanaEpi
+        id="hm-neu-selector-desde"
+        semana={1}
+        compacto={true}
+        mostrarRangoFechas={false}
+        etiqueta="Semana epidemiológica inicial neumonías"
+        class="hm-selector-desde"
+      />
       <input
         id="hm-neu-desde"
         data-hm-desde
@@ -36,6 +47,16 @@ import { ANIOS_RESPIRATORIO } from '../lib/respiratorio-state';
         value="1"
         aria-label="Semana epidemiológica inicial"
         aria-valuetext="Semana 1"
+        class="w-20 sm:w-28 accent-accent"
+      />
+      <span class="text-xs font-medium text-ink-muted">Hasta:</span>
+      <SelectorSemanaEpi
+        id="hm-neu-selector-hasta"
+        semana={52}
+        compacto={true}
+        mostrarRangoFechas={false}
+        etiqueta="Semana epidemiológica final neumonías"
+        class="hm-selector-hasta"
       />
       <input
         id="hm-neu-hasta"
@@ -46,6 +67,7 @@ import { ANIOS_RESPIRATORIO } from '../lib/respiratorio-state';
         value="52"
         aria-label="Semana epidemiológica final"
         aria-valuetext="Semana 52"
+        class="w-20 sm:w-28 accent-accent"
       />
       <span data-hm-rango class="font-sans tabular-nums text-xs">SE1–SE52</span>
     </span>
@@ -57,42 +79,56 @@ import { ANIOS_RESPIRATORIO } from '../lib/respiratorio-state';
       >Exportar a CSV</button
     >
   </div>
-  <div
-    data-hm-error
-    role="status"
-    class="mt-3 hidden rounded-lg border border-secondary bg-secondary/25 p-3 font-sans text-sm"
-  >
-    <p class="text-ink">
-      No se pudo contactar la fuente de datos. No se muestra ningún dato
-      sustituto.
-    </p>
-    <button
-      type="button"
-      data-hm-reintentar
-      class="mt-2 rounded-lg border border-border bg-surface px-3 py-1.5 font-sans text-xs font-semibold text-ink transition-colors hover:border-accent/50 hover:text-accent"
-    >
-      Reintentar
-    </button>
-  </div>
-  <div
-    data-hm-grid
-    role="status"
-    aria-busy="true"
-    class="mt-4 min-h-[380px] overflow-x-auto scroll-shadow-x"
-  >
+  <div class="mt-4 overflow-x-auto scroll-shadow-x" tabindex="0">
     <div
-      class="flex h-full min-h-[380px] w-full min-w-[760px] flex-col justify-between gap-2.5 p-2"
-      aria-hidden="true"
+      data-hm-grid
+      class="min-h-[420px] min-w-[760px]"
+      role="region"
+      aria-label="Mapa de calor de neumonías notificadas por departamento y semana"
+      aria-busy="true"
     >
-      <div class="skeleton h-5 w-full rounded"></div>
-      <div class="skeleton h-5 w-full rounded"></div>
-      <div class="skeleton h-5 w-full rounded"></div>
-      <div class="skeleton h-5 w-full rounded"></div>
-      <div class="skeleton h-5 w-full rounded"></div>
-      <div class="skeleton h-5 w-full rounded"></div>
-      <div class="skeleton h-5 w-full rounded"></div>
+      <div
+        class="flex h-full min-h-[420px] w-full min-w-[760px] flex-col justify-between gap-2.5 p-2"
+        aria-hidden="true"
+      >
+        <div class="skeleton h-7 w-full rounded"></div>
+        <div class="skeleton h-7 w-full rounded"></div>
+        <div class="skeleton h-7 w-full rounded"></div>
+        <div class="skeleton h-7 w-full rounded"></div>
+        <div class="skeleton h-7 w-full rounded"></div>
+        <div class="skeleton h-7 w-full rounded"></div>
+        <div class="skeleton h-7 w-full rounded"></div>
+      </div>
     </div>
   </div>
+
+  <LeyendaRampa
+    rampa={RAMPA_CASOS}
+    idRampa="hm-neu-leyenda-rampa"
+    etiquetaMin="Menor conteo"
+    etiquetaMax="Mayor conteo"
+    descripcionLectores="El color de cada celda va de un tono claro para el conteo más bajo del rango seleccionado a un tono oscuro para el conteo más alto, en una escala continua; las celdas grises indican que falta el dato."
+  />
+
+  <details
+    id="hm-neu-tabla-detalles"
+    class="mt-3 rounded-xl border border-border bg-bg p-3"
+  >
+    <summary
+      class="cursor-pointer font-sans text-xs font-medium text-ink-muted hover:text-ink"
+    >
+      Ver los datos en tabla
+    </summary>
+    <div id="hm-neu-tabla-contenedor"></div>
+  </details>
+
+  <p
+    id="hm-neu-resumen"
+    class="mt-3 font-sans text-xs text-ink-muted"
+    role="status"
+    slot="pie"
+  >
+  </p>
 </PanelWorkspace>
 
 <script>
@@ -100,19 +136,24 @@ import { ANIOS_RESPIRATORIO } from '../lib/respiratorio-state';
     ANIOS_RESPIRATORIO,
     actualizarFiltrosRespiratorio,
     obtenerFiltrosRespiratorio,
+    soloCambiaDepartamento,
     suscribirFiltrosRespiratorio,
     type FiltrosRespiratorio,
   } from '../lib/respiratorio-state';
   import {
     esNoDisponible,
     motivoNoDisponible,
+    renderErrorFuente,
     renderEsqueletoMatriz,
     renderSinDato,
   } from './estado-async';
+  import { colorCasos, gradienteCss, RAMPA_CASOS } from '../lib/colores';
+  import { moverSeleccionMatriz, montarMatriz } from '../lib/echarts-matriz';
+  import type { ConfigMatriz } from '../lib/echarts-matriz';
+  import type { GraficoMontado } from '../lib/echarts-montaje';
+  import { TablaAlternativa } from '../lib/tabla-alternativa';
 
   const API_BASE = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8000';
-  const RAMPA = ['#cde2fb', '#9ec5f4', '#5598e7', '#256abf', '#0d366b'];
-  const SIN_DATO = '#f4f4f5';
 
   interface DeptoHeat {
     nombre: string;
@@ -120,33 +161,83 @@ import { ANIOS_RESPIRATORIO } from '../lib/respiratorio-state';
     semanas: Record<string, number | null>;
   }
 
-  let ultimo: { anio: string; departamentos: DeptoHeat[] } | null = null;
+  interface CeldaNeumonias {
+    codigo: string;
+    nombre: string;
+    semana: number;
+    valor: number | null;
+  }
 
-  function rangoActivo(root: HTMLElement): { desde: number; hasta: number } {
-    const inpDesde = root.querySelector<HTMLInputElement>('[data-hm-desde]')!;
-    const inpHasta = root.querySelector<HTMLInputElement>('[data-hm-hasta]')!;
+  const root = document.querySelector<HTMLElement>('[data-heatmap-neu]');
+  const contenedor = root?.querySelector<HTMLElement>('[data-hm-grid]') ?? null;
+  const resumen = document.getElementById('hm-neu-resumen');
+  const leyenda = document.getElementById('hm-neu-leyenda-rampa');
+  if (leyenda) leyenda.style.background = gradienteCss(RAMPA_CASOS);
+
+  let ultimo: { anio: string; departamentos: DeptoHeat[] } | null = null;
+  let revision = 0;
+  let grafico: GraficoMontado | null = null;
+  let filtrosPintados: FiltrosRespiratorio | null = null;
+  /** Reaplica el departamento activo sobre la matriz vigente, con transición. */
+  let moverSeleccion: ((filtros: FiltrosRespiratorio) => void) | null = null;
+  let datosTabla: CeldaNeumonias[] = [];
+
+  const detailsTabla = document.getElementById(
+    'hm-neu-tabla-detalles',
+  ) as HTMLDetailsElement | null;
+  const contenedorTabla = document.getElementById('hm-neu-tabla-contenedor');
+
+  const tablaAlternativa =
+    detailsTabla && contenedorTabla
+      ? new TablaAlternativa({
+          details: detailsTabla,
+          contenedorTabla,
+          caption: 'Neumonías notificadas por departamento y semana',
+          columnas: [
+            { clave: 'nombre', encabezado: 'Departamento' },
+            {
+              clave: 'semana',
+              encabezado: 'Semana',
+              alineacion: 'derecha',
+              formato: (v) => `SE${String(v).padStart(2, '0')}`,
+            },
+            {
+              clave: 'valor',
+              encabezado: 'Conteo notificado',
+              alineacion: 'derecha',
+              formato: (v) => (v !== null ? String(v) : '—'),
+            },
+          ],
+          obtenerDatos: () => datosTabla,
+        })
+      : null;
+
+  function rangoActivo(r: HTMLElement): { desde: number; hasta: number } {
+    const inpDesde = r.querySelector<HTMLInputElement>('[data-hm-desde]')!;
+    const inpHasta = r.querySelector<HTMLInputElement>('[data-hm-hasta]')!;
     let desde = Number(inpDesde.value);
     let hasta = Number(inpHasta.value);
     if (desde > hasta) [desde, hasta] = [hasta, desde];
     return { desde, hasta };
   }
 
-  function color(valor: number, max: number): string {
-    if (max <= 0) return RAMPA[0];
-    const t = valor / max;
-    const i = Math.min(RAMPA.length - 1, Math.floor(t * RAMPA.length));
-    return RAMPA[i];
+  function textoCelda(celda: CeldaNeumonias, anio: string): string {
+    return (
+      `${celda.nombre} · ${anio} · SE${String(celda.semana).padStart(2, '0')}\n` +
+      (celda.valor === null
+        ? 'Sin dato notificado'
+        : `${celda.valor} notificados`)
+    );
   }
 
   async function pintar() {
-    const root = document.querySelector<HTMLElement>('[data-heatmap-neu]');
-    if (!root) return;
+    if (!root || !contenedor) return;
     const sel = root.querySelector<HTMLSelectElement>('[data-hm-anio]')!;
-    const grid = root.querySelector<HTMLElement>('[data-hm-grid]')!;
-    const error = root.querySelector<HTMLElement>('[data-hm-error]')!;
     const inpDesde = root.querySelector<HTMLInputElement>('[data-hm-desde]')!;
     const inpHasta = root.querySelector<HTMLInputElement>('[data-hm-hasta]')!;
     const txtRango = root.querySelector<HTMLElement>('[data-hm-rango]')!;
+    const selectorDesde = root.querySelector<HTMLElement>('.hm-selector-desde');
+    const selectorHasta = root.querySelector<HTMLElement>('.hm-selector-hasta');
     let desde = Number(inpDesde.value);
     let hasta = Number(inpHasta.value);
     if (desde > hasta) [desde, hasta] = [hasta, desde];
@@ -154,111 +245,129 @@ import { ANIOS_RESPIRATORIO } from '../lib/respiratorio-state';
     inpDesde.setAttribute('aria-valuetext', `Semana ${inpDesde.value}`);
     inpHasta.setAttribute('aria-valuetext', `Semana ${inpHasta.value}`);
     const anio = sel.value;
-    grid.setAttribute('aria-busy', 'true');
-    renderEsqueletoMatriz(grid, 7);
+    const anioNum = Number(anio);
+    selectorDesde?.dispatchEvent(
+      new CustomEvent('ajustar-semana', {
+        detail: { anio: anioNum, semana: desde },
+      }),
+    );
+    selectorHasta?.dispatchEvent(
+      new CustomEvent('ajustar-semana', {
+        detail: { anio: anioNum, semana: hasta },
+      }),
+    );
+
+    const filtros = obtenerFiltrosRespiratorio();
+    filtrosPintados = filtros;
+    moverSeleccion = null;
+    const idRevision = ++revision;
+    grafico?.destruir();
+    grafico = null;
+    if (resumen) resumen.textContent = `Cargando ${anio}…`;
+    contenedor.setAttribute('aria-busy', 'true');
+    renderEsqueletoMatriz(contenedor, 7);
     try {
       const resp = await fetch(`${API_BASE}/api/neumonias/heatmap/${anio}`);
       if (!resp.ok) throw new Error('no ok');
       const datos = await resp.json();
+      if (idRevision !== revision) return;
       if (esNoDisponible(datos)) {
-        error.classList.add('hidden');
         ultimo = null;
-        renderSinDato(grid, motivoNoDisponible(datos));
+        renderSinDato(contenedor, motivoNoDisponible(datos));
         return;
       }
       const departamentos: DeptoHeat[] = datos.departamentos;
       ultimo = { anio, departamentos };
-      error.classList.add('hidden');
 
-      let max = 0;
-      for (const d of departamentos) {
+      const celdas: CeldaNeumonias[] = departamentos.flatMap((d) => {
+        const filas: CeldaNeumonias[] = [];
         for (let s = desde; s <= hasta; s++) {
-          const v = d.semanas[String(s)];
-          if (v != null && v > max) max = v;
+          filas.push({
+            codigo: d.codigo,
+            nombre: d.nombre,
+            semana: s,
+            valor: d.semanas[String(s)] ?? null,
+          });
         }
+        return filas;
+      });
+      let maximo = 0;
+      for (const c of celdas) {
+        if (c.valor !== null && c.valor > maximo) maximo = c.valor;
       }
 
-      const table = document.createElement('table');
-      table.className = 'border-collapse font-sans tabular-nums text-[11px]';
-      table.setAttribute(
-        'aria-label',
+      datosTabla = celdas;
+      tablaAlternativa?.marcarCaducada();
+
+      const seleccionDe = (f: FiltrosRespiratorio) =>
+        celdas.filter((c) => c.codigo === f.departamento);
+
+      const configMatriz = (f: FiltrosRespiratorio): ConfigMatriz => {
+        const seleccion = seleccionDe(f);
+        return {
+          semanas: Array.from(
+            { length: hasta - desde + 1 },
+            (_, i) => desde + i,
+          ),
+          filas: departamentos.map((d) => d.nombre),
+          celdas: celdas.map((c) => ({
+            semana: c.semana,
+            fila: c.nombre,
+            color: colorCasos(c.valor, maximo),
+            activa: seleccion.includes(c),
+          })),
+          izquierda: 110,
+          etiquetasX: 10,
+          texto: (indice) => textoCelda(celdas[indice], anio),
+        };
+      };
+
+      contenedor.style.height = '430px';
+      const montado = await montarMatriz(
+        contenedor,
+        () => configMatriz(filtros),
         `Mapa de calor de neumonías notificadas por departamento y semana epidemiológica, año ${anio}`,
+        (indice) =>
+          actualizarFiltrosRespiratorio({
+            departamento: celdas[indice].codigo,
+          }),
       );
-      const caption = document.createElement('caption');
-      caption.className = 'sr-only';
-      caption.textContent = `Neumonías notificadas por departamento y semana epidemiológica del año ${anio}, semanas ${desde} a ${hasta}`;
-      table.appendChild(caption);
-      const thead = document.createElement('thead');
-      const trh = document.createElement('tr');
-      const th0 = document.createElement('th');
-      th0.scope = 'col';
-      th0.className =
-        'pr-2 text-left font-sans text-xs text-ink sticky left-0 bg-surface';
-      th0.textContent = 'Departamento';
-      trh.appendChild(th0);
-      for (let s = desde; s <= hasta; s++) {
-        const th = document.createElement('th');
-        th.scope = 'col';
-        th.className = 'px-0.5 font-sans text-ink-muted';
-        th.textContent = String(s);
-        trh.appendChild(th);
+      if (idRevision !== revision) {
+        montado.destruir();
+        return;
       }
-      thead.appendChild(trh);
-      table.appendChild(thead);
-      const tbody = document.createElement('tbody');
-      for (const d of departamentos) {
-        const tr = document.createElement('tr');
-        // Fila del departamento elegido en el mapa o en las curvas.
-        if (d.codigo === obtenerFiltrosRespiratorio().departamento) {
-          tr.setAttribute('data-fila-seleccionada', '');
-          tr.style.outline = '2px solid var(--color-seleccion)';
-          tr.style.outlineOffset = '-1px';
+      grafico = montado;
+
+      const pintarResumen = (f: FiltrosRespiratorio) => {
+        if (!resumen) return;
+        const activa = seleccionDe(f);
+        const base = `Conteo notificado · ${anio} · SE${desde}–SE${hasta} · MINSAL. Claro = hueco. Escala única de conteo, no positividad.`;
+        if (activa.length === 0) {
+          resumen.textContent = base;
+          return;
         }
-        const name = document.createElement('th');
-        name.scope = 'row';
-        name.className =
-          'pr-2 text-left font-sans text-xs font-medium text-ink sticky left-0 bg-surface';
-        name.textContent = d.nombre;
-        if (tr.hasAttribute('data-fila-seleccionada')) {
-          name.textContent = `${d.nombre} (seleccionado)`;
-        }
-        tr.appendChild(name);
-        for (let s = desde; s <= hasta; s++) {
-          const td = document.createElement('td');
-          const v = d.semanas[String(s)];
-          td.style.width = '14px';
-          td.style.height = '18px';
-          const etiqueta =
-            v == null
-              ? `${d.nombre} SE${s} ${anio}: sin dato`
-              : `${d.nombre} SE${s} ${anio}: ${v} notificados`;
-          td.title = etiqueta;
-          td.setAttribute('aria-label', etiqueta);
-          if (v == null) {
-            td.style.background = SIN_DATO;
-          } else {
-            td.style.background = color(v, max);
-          }
-          tr.appendChild(td);
-        }
-        tbody.appendChild(tr);
-      }
-      table.appendChild(tbody);
-      const nota = document.createElement('p');
-      nota.className = 'mt-2 font-sans text-xs text-ink-muted';
-      nota.textContent = `Conteo notificado · ${anio} · SE${desde}–SE${hasta} · MINSAL. Claro = hueco. Escala única de conteo, no positividad.`;
-      grid.replaceChildren(table, nota);
-      grid.removeAttribute('aria-busy');
+        const observados = activa.filter((c) => c.valor !== null);
+        const total = observados.reduce((acc, c) => acc + (c.valor ?? 0), 0);
+        resumen.innerHTML = `<span><span class="cifra font-semibold text-accent">${activa[0].nombre}</span> seleccionado · <span class="cifra">${total}</span> notificados en SE${desde}–SE${hasta} de <span class="cifra">${anio}</span>.</span>`;
+      };
+      pintarResumen(filtros);
+      moverSeleccion = (f) => {
+        moverSeleccionMatriz(montado, configMatriz(f));
+        pintarResumen(f);
+      };
     } catch {
-      error.classList.remove('hidden');
-      grid.textContent = '';
-      grid.removeAttribute('aria-busy');
+      if (idRevision !== revision) return;
       ultimo = null;
+      renderErrorFuente(contenedor, () => void pintar());
+      if (resumen)
+        resumen.textContent =
+          'No se pudo cargar el mapa de calor de neumonías.';
+    } finally {
+      contenedor.setAttribute('aria-busy', 'false');
     }
   }
 
   function exportar() {
-    const root = document.querySelector<HTMLElement>('[data-heatmap-neu]');
     if (!ultimo || !root) return;
     const { desde, hasta } = rangoActivo(root);
     const lineas = ['anio,departamento,codigo,semana,valor'];
@@ -286,11 +395,12 @@ import { ANIOS_RESPIRATORIO } from '../lib/respiratorio-state';
     return String(f.anio === 'todos' ? ANIOS_RESPIRATORIO[0] : f.anio);
   }
 
-  const root = document.querySelector<HTMLElement>('[data-heatmap-neu]');
-  if (root) {
+  if (root && contenedor) {
     const selAnio = root.querySelector<HTMLSelectElement>('[data-hm-anio]')!;
     const inpDesde = root.querySelector<HTMLInputElement>('[data-hm-desde]')!;
     const inpHasta = root.querySelector<HTMLInputElement>('[data-hm-hasta]')!;
+    const selectorDesde = root.querySelector<HTMLElement>('.hm-selector-desde');
+    const selectorHasta = root.querySelector<HTMLElement>('.hm-selector-hasta');
 
     const sincronizar = (f: FiltrosRespiratorio) => {
       selAnio.value = anioParaMapa(f);
@@ -306,6 +416,17 @@ import { ANIOS_RESPIRATORIO } from '../lib/respiratorio-state';
         inpDesde.value = String(f.semanaDesde);
         inpHasta.value = String(f.semanaHasta);
       }
+      const anioNum = Number(selAnio.value);
+      selectorDesde?.dispatchEvent(
+        new CustomEvent('ajustar-semana', {
+          detail: { anio: anioNum, semana: f.semanaDesde },
+        }),
+      );
+      selectorHasta?.dispatchEvent(
+        new CustomEvent('ajustar-semana', {
+          detail: { anio: anioNum, semana: f.semanaHasta },
+        }),
+      );
     };
     sincronizar(obtenerFiltrosRespiratorio());
 
@@ -319,14 +440,32 @@ import { ANIOS_RESPIRATORIO } from '../lib/respiratorio-state';
     selAnio.addEventListener('change', alCambiar);
     inpDesde.addEventListener('input', alCambiar);
     inpHasta.addEventListener('input', alCambiar);
+    selectorDesde?.addEventListener('cambio-semana', ((
+      ev: CustomEvent<{ semana: number }>,
+    ) => {
+      inpDesde.value = String(ev.detail.semana);
+      alCambiar();
+    }) as EventListener);
+    selectorHasta?.addEventListener('cambio-semana', ((
+      ev: CustomEvent<{ semana: number }>,
+    ) => {
+      inpHasta.value = String(ev.detail.semana);
+      alCambiar();
+    }) as EventListener);
     suscribirFiltrosRespiratorio((f) => {
       sincronizar(f);
+      if (
+        grafico &&
+        moverSeleccion &&
+        soloCambiaDepartamento(filtrosPintados, f)
+      ) {
+        filtrosPintados = f;
+        moverSeleccion(f);
+        return;
+      }
       void pintar();
     }, false);
     root.querySelector('[data-hm-export]')?.addEventListener('click', exportar);
-    root
-      .querySelector('[data-hm-reintentar]')
-      ?.addEventListener('click', () => void pintar());
     void pintar();
   }
 </script>

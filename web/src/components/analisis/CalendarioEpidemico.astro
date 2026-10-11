@@ -1,6 +1,7 @@
 ---
 import LeyendaRampa from './LeyendaRampa.astro';
 import PanelWorkspace from './PanelWorkspace.astro';
+import SelectorSemanaEpi from '../SelectorSemanaEpi.astro';
 import { RAMPA_CASOS } from '../../lib/colores';
 ---
 
@@ -9,6 +10,18 @@ import { RAMPA_CASOS } from '../../lib/colores';
   titulo="Calendario epidémico nacional"
   descripcion="Vista semanal de los casos nacionales: OpenDengue hasta 2024 y casos sospechosos del tablero de MINSAL desde 2025. El año 2020 se conserva en la serie nacional, aunque no se utiliza en las referencias departamentales."
 >
+  <div slot="controles" class="flex items-center gap-2">
+    <span class="hidden sm:inline font-sans text-xs text-ink-muted"
+      >Ir a semana:</span
+    >
+    <SelectorSemanaEpi
+      id="calendario-matriz-selector"
+      sincronizarAnalisis={true}
+      compacto={true}
+      mostrarRangoFechas={false}
+      etiqueta="Saltar a semana en matriz nacional"
+    />
+  </div>
   <div class="mt-4 overflow-x-auto scroll-shadow-x" tabindex="0">
     <div
       id="calendario-epidemico"

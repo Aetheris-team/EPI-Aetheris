@@ -13,6 +13,7 @@
 // La semana se elige con el año, el deslizador, los botones de semana anterior
 // y siguiente o arrastrando sobre la gráfica. La tabla es la alternativa textual
 // de la gráfica.
+import SelectorSemanaEpi from '../SelectorSemanaEpi.astro';
 ---
 
 <section
@@ -53,26 +54,41 @@
         class="rounded-lg border border-border bg-surface px-3 py-2 font-sans text-sm text-ink"
       ></select>
     </label>
-    <div class="flex items-end gap-2">
+    <div class="flex flex-wrap items-end gap-2">
       <button
         type="button"
         data-anterior
         disabled
         aria-label="Semana anterior"
-        class="rounded-lg border border-border bg-surface px-3 py-2 font-sans text-sm text-ink transition-colors hover:border-accent/50 hover:text-accent disabled:opacity-40"
+        class="rounded-lg border border-border bg-surface px-3 py-2 font-sans text-sm text-ink transition-colors hover:border-accent/50 hover:text-accent disabled:opacity-40 min-h-[44px]"
       >
         ‹
       </button>
-      <label
-        class="flex grow flex-col gap-1 font-sans text-xs font-medium text-ink-muted"
+
+      <div
+        class="flex grow flex-col gap-1 font-sans text-xs font-medium text-ink-muted min-w-[220px]"
       >
-        <span
-          >Semana de partida: <span
+        <div class="flex items-center justify-between">
+          <span>Semana de partida:</span>
+          <span
             data-semana-valor
-            class="font-sans tabular-nums text-ink">—</span
-          ></span
-        >
+            class="font-sans tabular-nums text-ink font-semibold">—</span
+          >
+        </div>
+        <div class="flex items-center gap-2">
+          <SelectorSemanaEpi
+            id="contraste-nowcast-selector-semana"
+            compacto={false}
+            mostrarRangoFechas={true}
+            etiqueta="Semana de partida de predicción"
+            class="w-full"
+          />
+        </div>
+        <label class="sr-only" for="contraste-nowcast-semana-slider">
+          Deslizador de semana de partida
+        </label>
         <input
+          id="contraste-nowcast-semana-slider"
           data-semana
           type="range"
           min="1"
@@ -81,13 +97,14 @@
           disabled
           class="w-full accent-accent"
         />
-      </label>
+      </div>
+
       <button
         type="button"
         data-siguiente
         disabled
         aria-label="Semana siguiente"
-        class="rounded-lg border border-border bg-surface px-3 py-2 font-sans text-sm text-ink transition-colors hover:border-accent/50 hover:text-accent disabled:opacity-40"
+        class="rounded-lg border border-border bg-surface px-3 py-2 font-sans text-sm text-ink transition-colors hover:border-accent/50 hover:text-accent disabled:opacity-40 min-h-[44px]"
       >
         ›
       </button>
@@ -219,7 +236,7 @@
     modelo: ModeloContraste,
   ) {
     const selAnio = sec.querySelector<HTMLSelectElement>('[data-anio]')!;
-    const rango = sec.querySelector<HTMLInputElement>('[data-semana]')!;
+    const rango = sec.querySelector<HTMLInputElement>('input[data-semana]')!;
     const salida = sec.querySelector<HTMLElement>('[data-semana-valor]')!;
     const btnAnt = sec.querySelector<HTMLButtonElement>('[data-anterior]')!;
     const btnSig = sec.querySelector<HTMLButtonElement>('[data-siguiente]')!;
@@ -307,6 +324,15 @@
         contNota.replaceChildren(notaAnio(modelo, o.anio));
         anioDibujado = o.anio;
       }
+
+      const selectorSemana = document.getElementById(
+        'contraste-nowcast-selector-semana',
+      );
+      selectorSemana?.dispatchEvent(
+        new CustomEvent('ajustar-semana', {
+          detail: { anio: o.anio, semana: o.semana },
+        }),
+      );
     };
 
     selAnio.addEventListener('change', () => {
@@ -323,6 +349,32 @@
     });
     btnAnt.addEventListener('click', () => pintar(actual.idx - 1));
     btnSig.addEventListener('click', () => pintar(actual.idx + 1));
+
+    const selectorSemana = document.getElementById(
+      'contraste-nowcast-selector-semana',
+    );
+    selectorSemana?.addEventListener('cambio-semana', ((
+      ev: CustomEvent<{ anio: number; semana: number }>,
+    ) => {
+      const { anio, semana: semElegida } = ev.detail;
+      const o = modelo.origenes.find(
+        (x) => x.anio === anio && x.semana === semElegida,
+      );
+      if (o) {
+        pintar(o.idx);
+      } else {
+        const delAnio = modelo.porAnio.get(anio);
+        if (delAnio?.length) {
+          const masCercana = delAnio.reduce((prev, curr) =>
+            Math.abs(curr.semana - semElegida) <
+            Math.abs(prev.semana - semElegida)
+              ? curr
+              : prev,
+          );
+          pintar(masCercana.idx);
+        }
+      }
+    }) as EventListener);
 
     // arrastrar sobre la gráfica: la semana de partida salta a la más cercana
     let arrastrando = false;

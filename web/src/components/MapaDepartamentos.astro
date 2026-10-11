@@ -25,81 +25,89 @@ import { rutaFicha } from '../fichas/registro';
 
 <PanelWorkspace tipo="visor" titulo="Mapa departamental" idTitulo="mapa-titulo">
   <div
-    id="mapa-departamentos"
-    role="region"
-    aria-label="Mapa interactivo de departamentos de El Salvador"
-    aria-busy="true"
-    class="h-[340px] w-full overflow-hidden shadow-inner sm:h-[460px] lg:h-[580px]"
+    class="flex flex-col border-t border-border bg-bg lg:flex-row lg:items-stretch"
   >
-    <div class="skeleton h-full w-full" aria-hidden="true"></div>
+    <div
+      id="mapa-departamentos"
+      role="region"
+      aria-label="Mapa interactivo de departamentos de El Salvador"
+      aria-busy="true"
+      class="h-[340px] w-full overflow-hidden shadow-inner sm:h-[460px] lg:h-auto lg:min-h-[520px] lg:flex-1"
+    >
+      <div class="skeleton h-full w-full" aria-hidden="true"></div>
+    </div>
+
+    <div
+      class="flex flex-col gap-3 p-4 sm:p-5 lg:w-[320px] lg:shrink-0 lg:overflow-y-auto lg:border-l lg:border-border"
+    >
+      <div
+        class="flex gap-2 rounded-lg border border-dashed border-border bg-surface p-3"
+      >
+        <Icono
+          nombre="list-details"
+          class="mt-0.5 h-4 w-4 shrink-0 text-accent"
+        />
+        <p class="font-sans text-xs leading-relaxed text-ink-muted">
+          <strong class="font-semibold text-ink">Cómo interpretar el mapa:</strong
+          > el significado del color depende de la capa seleccionada. La explicación
+          específica aparece en el aviso de la capa. El gris indica ausencia de dato.
+        </p>
+        <div class="flex shrink-0 items-start gap-2" data-ayudas-mapa>
+          <AyudaTermino clave="iv" />
+          <AyudaTermino clave="anomalia" />
+          <AyudaTermino clave="percentil-presion" />
+          <AyudaTermino clave="integridad" />
+        </div>
+      </div>
+
+      <div
+        id="mapa-selector"
+        class="flex flex-wrap gap-2"
+        role="tablist"
+        aria-label="Capas del mapa"
+      >
+      </div>
+
+      <div class="flex gap-2 rounded-lg border border-border bg-surface p-3">
+        <Icono nombre="info-circle" class="mt-0.5 h-4 w-4 shrink-0 text-accent" />
+        <div class="min-w-0 flex-1">
+          <p
+            id="mapa-aviso"
+            role="status"
+            aria-live="polite"
+            class="font-sans text-sm text-ink"
+          >
+          </p>
+        </div>
+      </div>
+
+      <div
+        id="mapa-no-disponible"
+        class="hidden rounded-lg border border-secondary bg-secondary/25 p-3"
+      >
+        <div class="flex gap-2">
+          <Icono
+            nombre="alert-triangle"
+            class="mt-0.5 h-4 w-4 shrink-0 text-secondary-ink"
+          />
+          <p class="font-sans text-sm text-ink">
+            No se pudo cargar esta capa. El mapa se muestra en gris hasta que
+            los datos vuelvan a estar disponibles.
+          </p>
+        </div>
+      </div>
+
+      <p
+        id="mapa-alertas-nacionales"
+        class="hidden font-sans text-xs text-ink-muted"
+      >
+      </p>
+
+      <div id="mapa-leyenda"></div>
+    </div>
   </div>
 
   <div class="flex flex-col gap-3 border-t border-border bg-bg p-4 sm:p-5">
-    <div
-      class="flex gap-2 rounded-lg border border-dashed border-border bg-surface p-3"
-    >
-      <Icono
-        nombre="list-details"
-        class="mt-0.5 h-4 w-4 shrink-0 text-accent"
-      />
-      <p class="font-sans text-xs leading-relaxed text-ink-muted">
-        <strong class="font-semibold text-ink">Cómo interpretar el mapa:</strong
-        > el significado del color depende de la capa seleccionada. La explicación
-        específica aparece en el aviso de la capa. El gris indica ausencia de dato.
-      </p>
-      <div class="flex shrink-0 items-start gap-2" data-ayudas-mapa>
-        <AyudaTermino clave="iv" />
-        <AyudaTermino clave="anomalia" />
-        <AyudaTermino clave="percentil-presion" />
-        <AyudaTermino clave="integridad" />
-      </div>
-    </div>
-
-    <div
-      id="mapa-selector"
-      class="flex flex-wrap gap-2"
-      role="tablist"
-      aria-label="Capas del mapa"
-    >
-    </div>
-
-    <div class="flex gap-2 rounded-lg border border-border bg-surface p-3">
-      <Icono nombre="info-circle" class="mt-0.5 h-4 w-4 shrink-0 text-accent" />
-      <div class="min-w-0 flex-1">
-        <p
-          id="mapa-aviso"
-          role="status"
-          aria-live="polite"
-          class="font-sans text-sm text-ink"
-        >
-        </p>
-      </div>
-    </div>
-
-    <div
-      id="mapa-no-disponible"
-      class="hidden rounded-lg border border-secondary bg-secondary/25 p-3"
-    >
-      <div class="flex gap-2">
-        <Icono
-          nombre="alert-triangle"
-          class="mt-0.5 h-4 w-4 shrink-0 text-secondary-ink"
-        />
-        <p class="font-sans text-sm text-ink">
-          No se pudo cargar esta capa. El mapa se muestra en gris hasta que los
-          datos vuelvan a estar disponibles.
-        </p>
-      </div>
-    </div>
-
-    <p
-      id="mapa-alertas-nacionales"
-      class="hidden font-sans text-xs text-ink-muted"
-    >
-    </p>
-
-    <div id="mapa-leyenda"></div>
-
     <details class="rounded-xl border border-border bg-surface p-3">
       <summary
         class="cursor-pointer font-sans text-xs font-medium text-ink-muted hover:text-ink"

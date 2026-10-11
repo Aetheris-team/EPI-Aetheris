@@ -1,0 +1,72 @@
+---
+/**
+ * Armazón de las pantallas de cuenta y administración. Aplica a todas:
+ *
+ * - noindex, porque no son contenido público.
+ * - El interruptor PUBLIC_CUENTAS_HABILITADAS: con las cuentas apagadas la
+ *   página responde con un aviso neutro y no renderiza el contenido, de modo
+ *   que nadie llega a un formulario que apuntaría a rutas inexistentes.
+ *
+ * Los <script> de cada página se cargan igual con las cuentas apagadas, por
+ * eso empiezan comprobando que su elemento raíz exista.
+ */
+import Layout from '../layouts/Layout.astro';
+import Icono from './Icono.astro';
+import { CUENTAS_HABILITADAS } from '../lib/cuentas-config';
+
+interface Props {
+  titulo: string;
+  descripcion?: string;
+  /** Ancho máximo del contenido (clase de Tailwind). */
+  ancho?: string;
+}
+
+const { titulo, descripcion, ancho = 'max-w-xl' } = Astro.props;
+---
+
+<Layout title={`EPI-Aetheris — ${titulo}`} noindex>
+  <main
+    id="contenido-principal"
+    class="mx-auto max-w-[1600px] px-4 py-8 sm:px-8 sm:py-12 lg:px-12"
+  >
+    {
+      CUENTAS_HABILITADAS ? (
+        <div class={`mx-auto ${ancho}`}>
+          <header class="mb-6">
+            <h1 class="titular-hero text-ink">{titulo}</h1>
+            {descripcion && (
+              <p class="mt-3 font-sans text-base leading-relaxed text-ink-muted">
+                {descripcion}
+              </p>
+            )}
+          </header>
+          <slot />
+        </div>
+      ) : (
+        <section
+          aria-labelledby="cuentas-no-disponibles"
+          class="mx-auto max-w-xl"
+          data-cuentas-no-disponibles
+        >
+          <h1 id="cuentas-no-disponibles" class="titular-hero text-ink">
+            Las cuentas no están disponibles
+          </h1>
+          <p class="mt-4 font-sans text-base leading-relaxed text-ink-muted">
+            Esta función todavía no está activa en este sitio. Consultar el
+            panel de dengue, el análisis respiratorio, las alertas y la
+            Biblioteca no requiere cuenta.
+          </p>
+          <p class="mt-6">
+            <a
+              href="/"
+              class="inline-flex items-center gap-1.5 font-sans text-sm font-medium text-accent underline underline-offset-2 hover:no-underline"
+            >
+              <Icono nombre="arrow-left" class="h-4 w-4" />
+              <span>Volver al inicio</span>
+            </a>
+          </p>
+        </section>
+      )
+    }
+  </main>
+</Layout>

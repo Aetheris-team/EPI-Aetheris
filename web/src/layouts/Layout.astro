@@ -30,6 +30,13 @@ const {
 const ruta = Astro.url.pathname;
 // URL absoluta de esta página -- Astro.site viene de astro.config.mjs.
 const urlCanonica = new URL(ruta, Astro.site);
+// Direcciones de Render que deben llevar al dominio canónico (ADR 0024). Son
+// exactas a propósito: las previews de PR (`...-pr-N.onrender.com`) no se
+// tocan, porque ahí se revisa el cambio antes de fusionarlo.
+const hostsRedirigidos = [
+  'epi-aetheris-web.onrender.com',
+  'aetheris-nitor.onrender.com',
+];
 // Misma razón para la imagen de vista previa: WhatsApp, Slack, Telegram y
 // los rastreadores de redes descartan una og:image relativa.
 const urlImagen = new URL(imagen, Astro.site);
@@ -108,6 +115,21 @@ const NAV: { href: string; etiqueta: string; rutas?: string[] }[] = [
     <Font cssVariable="--font-plex-mono" />
     <Font cssVariable="--font-fraunces" />
     <title>{title}</title>
+    <script
+      is:inline
+      define:vars={{ hostsRedirigidos, origenCanonico: Astro.site?.origin }}
+    >
+      // Render no redirige por dominio en sitios estáticos, así que el 301 no
+      // existe; esto lleva a quien llegue por la dirección de onrender.com al
+      // dominio canónico, con la misma ruta, consulta y ancla. replace para no
+      // dejar la dirección vieja en el historial. El canonical de cada página
+      // ya apunta al dominio canónico para los buscadores.
+      if (origenCanonico && hostsRedirigidos.includes(location.hostname)) {
+        location.replace(
+          origenCanonico + location.pathname + location.search + location.hash,
+        );
+      }
+    </script>
     <script is:inline>
       // Tema elegido antes del primer pintado, para no parpadear en claro.
       // Misma resolución que resolverTema en lib/preferencias.ts: sin

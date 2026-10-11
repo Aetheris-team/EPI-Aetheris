@@ -244,17 +244,22 @@
       cerrarMenu();
     }
   });
+  // No se usa el relatedTarget del evento: al tocar la palabra (no la
+  // casilla) de un <label>, Chromium reenvía el click al checkbox de forma
+  // asíncrona y el focusout que dispara mientras tanto llega con
+  // relatedTarget null, aunque el foco sí termine dentro del menú. Esperar
+  // un tick y mirar activeElement evita cerrar el menú antes de que el
+  // navegador termine de marcar la casilla.
   document
     .getElementById('analisis-paneles-menu')
-    ?.parentElement?.addEventListener('focusout', (evento) => {
-      const destino = (evento as FocusEvent).relatedTarget as Node | null;
-      if (
-        estaAbierto() &&
-        !menu?.contains(destino) &&
-        !boton?.contains(destino)
-      ) {
-        cerrarMenu();
-      }
+    ?.parentElement?.addEventListener('focusout', () => {
+      if (!estaAbierto()) return;
+      window.setTimeout(() => {
+        const activo = document.activeElement;
+        if (!menu?.contains(activo) && !boton?.contains(activo)) {
+          cerrarMenu();
+        }
+      }, 0);
     });
 
   casillas.forEach((casilla) => {

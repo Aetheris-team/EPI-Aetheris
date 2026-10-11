@@ -1,6 +1,7 @@
 ---
 import PanelWorkspace from './analisis/PanelWorkspace.astro';
-import CargadorCurva from './CargadorCurva.astro';
+import MenuExportar from './MenuExportar.astro';
+import SelectorSemanaEpi from './SelectorSemanaEpi.astro';
 import { ANIOS_RESPIRATORIO } from '../lib/respiratorio-state';
 interface Props {
   evento?: 'ira' | 'neumonias';
@@ -14,6 +15,7 @@ const evento = Astro.props.evento ?? 'ira';
 const departamentoFijo = Astro.props.departamento;
 const etiqueta = evento === 'neumonias' ? 'Neumonías' : 'IRA';
 const apiBase = evento === 'neumonias' ? '/api/neumonias' : '/api/ira';
+const idPrefijo = `curva-${evento}${departamentoFijo ? `-${departamentoFijo}` : ''}`;
 ---
 
 <PanelWorkspace
@@ -59,8 +61,16 @@ const apiBase = evento === 'neumonias' ? '/api/neumonias' : '/api/ira';
         <option value="">(ningún otro departamento)</option>
       </select>
     </label>
-    <label class="flex flex-wrap items-center gap-2"
-      >SE
+    <div class="flex flex-wrap items-center gap-2">
+      <span class="text-xs font-medium text-ink-muted">Desde:</span>
+      <SelectorSemanaEpi
+        id={`${idPrefijo}-selector-desde`}
+        semana={1}
+        compacto={true}
+        mostrarRangoFechas={false}
+        etiqueta={`Semana epidemiológica inicial ${etiqueta}`}
+        class="curva-selector-desde"
+      />
       <input
         data-curva-desde
         type="range"
@@ -69,6 +79,16 @@ const apiBase = evento === 'neumonias' ? '/api/neumonias' : '/api/ira';
         value="1"
         aria-label="Semana epidemiológica inicial"
         aria-valuetext="Semana epidemiológica 1"
+        class="w-20 sm:w-28 accent-accent"
+      />
+      <span class="text-xs font-medium text-ink-muted">Hasta:</span>
+      <SelectorSemanaEpi
+        id={`${idPrefijo}-selector-hasta`}
+        semana={52}
+        compacto={true}
+        mostrarRangoFechas={false}
+        etiqueta={`Semana epidemiológica final ${etiqueta}`}
+        class="curva-selector-hasta"
       />
       <input
         data-curva-hasta
@@ -78,34 +98,37 @@ const apiBase = evento === 'neumonias' ? '/api/neumonias' : '/api/ira';
         value="52"
         aria-label="Semana epidemiológica final"
         aria-valuetext="Semana epidemiológica 52"
+        class="w-20 sm:w-28 accent-accent"
       />
       <span data-curva-rango class="font-sans tabular-nums text-xs"
         >SE1–SE52</span
       >
-    </label>
-    <button
-      type="button"
-      data-curva-export
-      aria-label={`Exportar datos de ${etiqueta} a CSV`}
-      disabled
-      class="rounded-lg border border-border bg-bg px-3 py-1.5 font-sans text-xs font-semibold text-ink transition-colors hover:border-accent/50 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-50"
-    >
-      Exportar CSV
-    </button>
+    </div>
+    <MenuExportar
+      csv={`curva-csv-${evento}`}
+      titulo={`Casos semanales de ${etiqueta} por departamento`}
+      fuente="Boletines epidemiológicos de MINSAL"
+    />
   </div>
 
   <div
     data-curva-canvas
-    class="mt-4 rounded-xl border border-border bg-bg p-3 transition-opacity sm:p-4"
-    role="status"
+    class="mt-4 min-h-[340px] rounded-xl border border-border bg-bg p-3 sm:p-4"
+    role="region"
+    aria-label={`Casos semanales notificados de ${etiqueta} por departamento`}
+    aria-busy="true"
   >
-    <div data-estado aria-hidden="true">
-      <CargadorCurva
-        class="h-40 w-full justify-center sm:h-52"
-        texto="Cargando la curva…"
-      />
+    <div
+      class="flex h-full min-h-[312px] w-full flex-col justify-around gap-4 p-4"
+      aria-hidden="true"
+    >
+      <div class="skeleton h-5 w-full rounded"></div>
+      <div class="skeleton h-5 w-full rounded"></div>
+      <div class="skeleton h-5 w-full rounded"></div>
     </div>
   </div>
+
+  <p data-curva-huecos class="mt-2 font-sans text-xs text-ink-muted" hidden></p>
 </PanelWorkspace>
 
 <script>
@@ -114,6 +137,16 @@ const apiBase = evento === 'neumonias' ? '/api/neumonias' : '/api/ira';
     RespuestaIraDepartamental,
   } from '../lib/tipos-analisis';
   import { colorCualitativo } from '../lib/colores';
+  import { montarGrafico } from '../lib/echarts-montaje';
+  import type { GraficoMontado } from '../lib/echarts-montaje';
+  import {
+    crearOpcionBase,
+    ejeSemana,
+    ejeValores,
+    etiquetaSemana,
+    tooltipSeries,
+  } from '../lib/echarts-tema';
+  import { habilitarCsv, inhabilitarCsv } from '../lib/exportar-csv';
   import {
     actualizarFiltrosRespiratorio,
     obtenerFiltrosRespiratorio,
@@ -138,10 +171,11 @@ const apiBase = evento === 'neumonias' ? '/api/neumonias' : '/api/ira';
     aviso: string;
   }
 
-  const SVG_NS = 'http://www.w3.org/2000/svg';
-  const ANCHO = 720;
-  const ALTO = 260;
-  const MARGEN = { arriba: 20, abajo: 40, izquierda: 44, derecha: 8 };
+  interface Capa {
+    nombre: string;
+    series: Record<string, Punto[]>;
+    dashed?: boolean;
+  }
 
   function recortar(
     series: Record<string, Punto[]>,
@@ -157,23 +191,28 @@ const apiBase = evento === 'neumonias' ? '/api/neumonias' : '/api/ira';
     return out;
   }
 
-  function dibujar(
+  /**
+   * Devuelve el gráfico recién montado (o null si no hubo dato): cada
+   * instancia de este componente (IRA, Neumonías, comparación fija) guarda su
+   * propio gráfico en una variable local, no aquí -- la página monta varias
+   * instancias a la vez y comparten este módulo.
+   */
+  async function dibujar(
     contenedor: HTMLElement,
-    capas: {
-      nombre: string;
-      series: Record<string, Punto[]>;
-      dashed?: boolean;
-    }[],
+    huecos: HTMLElement,
+    capas: Capa[],
     desde: number,
     hasta: number,
-  ) {
-    contenedor.innerHTML = '';
+    previo: GraficoMontado | null,
+  ): Promise<GraficoMontado | null> {
+    previo?.destruir();
+    huecos.hidden = true;
 
-    const series = capas[0]?.series ?? {};
-    const anios = Object.keys(series).sort();
+    const primarias = capas[0]?.series ?? {};
+    const anios = Object.keys(primarias).sort();
     const valores = capas.flatMap((c) =>
       Object.values(c.series).flatMap((pts) =>
-        pts.map((p) => p[1]).filter((v) => v !== null),
+        pts.map((p) => p[1]).filter((v): v is number => v !== null),
       ),
     );
     if (valores.length === 0) {
@@ -181,138 +220,72 @@ const apiBase = evento === 'neumonias' ? '/api/neumonias' : '/api/ira';
         contenedor,
         'Sin puntos con dato para este departamento en el rango elegido.',
       );
-      return;
+      return null;
     }
-    const maxValor = Math.max(...(valores as number[]));
-    const areaGrafica = ALTO - MARGEN.arriba - MARGEN.abajo;
-    const escalaY = (v: number) =>
-      ALTO - MARGEN.abajo - (v / (maxValor || 1)) * areaGrafica;
-    const anchoSe = Math.max(1, hasta - desde);
-    const escalaX = (semana: number) =>
-      MARGEN.izquierda +
-      ((semana - desde) / anchoSe) *
-        (ANCHO - MARGEN.izquierda - MARGEN.derecha);
 
-    const svg = document.createElementNS(SVG_NS, 'svg');
-    svg.setAttribute('viewBox', `0 0 ${ANCHO} ${ALTO}`);
-    svg.setAttribute('class', 'w-full');
-    svg.setAttribute('role', 'img');
-    svg.setAttribute(
-      'aria-label',
-      `Casos semanales notificados ${capas.map((c) => c.nombre).join(' y ')}, SE${desde}–SE${hasta}`,
+    contenedor.style.height = '340px';
+    const nombreDescripcion = capas.map((c) => c.nombre).join(' y ');
+    const grafico = await montarGrafico(
+      contenedor,
+      (t) => ({
+        ...crearOpcionBase(t, {
+          grid: { bottom: 92 },
+          legend: { data: anios },
+          tooltip: {
+            formatter: tooltipSeries(
+              (semana) => etiquetaSemana(semana),
+              'casos notificados',
+            ),
+          },
+        }),
+        xAxis: ejeSemana(t, desde, hasta),
+        yAxis: ejeValores(t, 'Casos notificados', { min: 0, minInterval: 1 }),
+        series: capas.flatMap((capa, indiceCapa) => {
+          const aniosCapa = Object.keys(capa.series).sort();
+          return aniosCapa.map((anio) => {
+            const destacado =
+              indiceCapa === 0 && anio === aniosCapa[aniosCapa.length - 1];
+            const color = colorCualitativo(anios.indexOf(anio));
+            return {
+              id: `${indiceCapa}-${anio}`,
+              name: capas.length > 1 ? `${capa.nombre} ${anio}` : anio,
+              type: 'line' as const,
+              symbol: capa.dashed ? 'none' : 'circle',
+              symbolSize: destacado ? 6 : 4,
+              itemStyle: { color },
+              lineStyle: destacado
+                ? { width: 2.25, color }
+                : {
+                    width: 1.5,
+                    color,
+                    type: capa.dashed
+                      ? ('dashed' as const)
+                      : ('solid' as const),
+                  },
+              z: destacado ? 5 : 2,
+              data: capa.series[anio],
+            };
+          });
+        }),
+      }),
+      `Casos semanales notificados ${nombreDescripcion}, SE${desde}–SE${hasta}`,
     );
-    const numeros = valores as number[];
-    const totalCasos = numeros.reduce((suma, v) => suma + v, 0);
-    const descSvg = document.createElementNS(SVG_NS, 'desc');
-    descSvg.textContent = `Entre la semana epidemiológica ${desde} y la ${hasta}, el valor máximo notificado en cualquier semana fue ${Math.max(...numeros).toLocaleString('es-SV')} y el total acumulado en el rango fue ${totalCasos.toLocaleString('es-SV')}.`;
-    svg.appendChild(descSvg);
+    contenedor.removeAttribute('aria-busy');
 
-    for (const nivel of [0, maxValor / 2, maxValor]) {
-      const y = escalaY(nivel);
-      const linea = document.createElementNS(SVG_NS, 'line');
-      linea.setAttribute('x1', String(MARGEN.izquierda));
-      linea.setAttribute('x2', String(ANCHO - MARGEN.derecha));
-      linea.setAttribute('y1', String(y));
-      linea.setAttribute('y2', String(y));
-      linea.setAttribute('stroke', 'var(--color-border)');
-      linea.setAttribute('stroke-width', '1');
-      svg.appendChild(linea);
-
-      const etiqueta = document.createElementNS(SVG_NS, 'text');
-      etiqueta.setAttribute('x', String(MARGEN.izquierda - 8));
-      etiqueta.setAttribute('y', String(y + 3));
-      etiqueta.setAttribute('text-anchor', 'end');
-      etiqueta.setAttribute('font-family', 'var(--font-sans)');
-      etiqueta.style.fontVariantNumeric = 'tabular-nums';
-      etiqueta.setAttribute('font-size', '9');
-      etiqueta.setAttribute('fill', 'var(--color-ink-muted)');
-      etiqueta.textContent = Math.round(nivel).toLocaleString('es-SV');
-      svg.appendChild(etiqueta);
-    }
-
-    const marcas = [desde, Math.round((desde + hasta) / 2), hasta];
-    for (const semana of marcas) {
-      const etiqueta = document.createElementNS(SVG_NS, 'text');
-      etiqueta.setAttribute('x', String(escalaX(semana)));
-      etiqueta.setAttribute('y', String(ALTO - 24));
-      etiqueta.setAttribute('text-anchor', 'middle');
-      etiqueta.setAttribute('font-family', 'var(--font-sans)');
-      etiqueta.style.fontVariantNumeric = 'tabular-nums';
-      etiqueta.setAttribute('font-size', '9');
-      etiqueta.setAttribute('fill', 'var(--color-ink-muted)');
-      etiqueta.textContent = `SE${semana}`;
-      svg.appendChild(etiqueta);
-    }
-
-    for (const capa of capas) {
-      const aniosCapa = Object.keys(capa.series).sort();
-      for (const anio of aniosCapa) {
-        let d = '';
-        let enTramo = false;
-        for (const [semana, valor] of capa.series[anio]) {
-          if (valor === null) {
-            enTramo = false;
-            continue;
-          }
-          d += `${enTramo ? 'L' : 'M'}${escalaX(semana).toFixed(1)},${escalaY(valor).toFixed(1)} `;
-          enTramo = true;
-        }
-        if (!d) continue;
-        const trazo = document.createElementNS(SVG_NS, 'path');
-        trazo.setAttribute('d', d.trim());
-        trazo.setAttribute('fill', 'none');
-        trazo.setAttribute('stroke', colorCualitativo(anios.indexOf(anio)));
-        trazo.setAttribute(
-          'stroke-width',
-          anio === aniosCapa[aniosCapa.length - 1] ? '2' : '1.5',
-        );
-        if (capa.dashed) trazo.setAttribute('stroke-dasharray', '4 3');
-        trazo.setAttribute('stroke-linejoin', 'round');
-        trazo.setAttribute('stroke-linecap', 'round');
-        svg.appendChild(trazo);
-      }
-    }
-
-    // Leyenda de años sobre la línea base inferior.
-    let x = MARGEN.izquierda;
-    for (const anio of anios) {
-      const muestra = document.createElementNS(SVG_NS, 'line');
-      muestra.setAttribute('x1', String(x));
-      muestra.setAttribute('x2', String(x + 14));
-      muestra.setAttribute('y1', String(ALTO - 8));
-      muestra.setAttribute('y2', String(ALTO - 8));
-      muestra.setAttribute('stroke', colorCualitativo(anios.indexOf(anio)));
-      muestra.setAttribute('stroke-width', '2');
-      svg.appendChild(muestra);
-      const texto = document.createElementNS(SVG_NS, 'text');
-      texto.setAttribute('x', String(x + 18));
-      texto.setAttribute('y', String(ALTO - 5));
-      texto.setAttribute('font-family', 'var(--font-sans)');
-      texto.style.fontVariantNumeric = 'tabular-nums';
-      texto.setAttribute('font-size', '10');
-      texto.setAttribute('fill', 'var(--color-ink-muted)');
-      texto.textContent = anio;
-      svg.appendChild(texto);
-      x += 60;
-    }
-
-    contenedor.appendChild(svg);
-
-    // Nota de huecos: cuántas semanas por año quedaron sin dato, y por qué
-    // tipo (hueco entre cortes vs corrección retroactiva excluida).
+    // Nota de huecos: cuántas semanas por año quedaron sin dato en la capa
+    // principal (no interpoladas).
     const resumen = anios
       .map((a) => {
-        const sinDato = series[a].filter((p) => p[1] === null).length;
+        const sinDato = primarias[a].filter((p) => p[1] === null).length;
         return sinDato > 0 ? `${a}: ${sinDato} semanas sin dato` : null;
       })
       .filter(Boolean)
       .join(' · ');
     if (resumen) {
-      const p = document.createElement('p');
-      p.className = 'mt-2 font-sans text-xs text-ink-muted';
-      p.textContent = `Huecos (no interpolados) -- ${resumen}`;
-      contenedor.appendChild(p);
+      huecos.textContent = `Huecos (no interpolados) -- ${resumen}`;
+      huecos.hidden = false;
     }
+    return grafico;
   }
 
   const API_BASE = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8000';
@@ -339,9 +312,13 @@ const apiBase = evento === 'neumonias' ? '/api/neumonias' : '/api/ira';
   }
 
   async function iniciarSeccion(seccion: HTMLElement) {
+    let grafico: GraficoMontado | null = null;
     const apiBase = seccion.dataset.curvaApi ?? '/api/ira';
     const contenedor = seccion.querySelector(
       '[data-curva-canvas]',
+    ) as HTMLElement | null;
+    const huecos = seccion.querySelector(
+      '[data-curva-huecos]',
     ) as HTMLElement | null;
     const selector = seccion.querySelector(
       '[data-curva-depto]',
@@ -361,11 +338,18 @@ const apiBase = evento === 'neumonias' ? '/api/neumonias' : '/api/ira';
     const txtRango = seccion.querySelector(
       '[data-curva-rango]',
     ) as HTMLElement | null;
-    const btnExport = seccion.querySelector(
-      '[data-curva-export]',
-    ) as HTMLButtonElement | null;
+    const opcionCsv = seccion.querySelector<HTMLElement>(
+      '[data-menu-accion="csv"]',
+    );
+    const selectorDesde = seccion.querySelector<HTMLElement>(
+      '.curva-selector-desde',
+    );
+    const selectorHasta = seccion.querySelector<HTMLElement>(
+      '.curva-selector-hasta',
+    );
     if (
       !contenedor ||
+      !huecos ||
       !selector ||
       !selAnio ||
       !selCompare ||
@@ -374,7 +358,6 @@ const apiBase = evento === 'neumonias' ? '/api/neumonias' : '/api/ira';
       !txtRango
     )
       return;
-    let ultimoCsv = '';
 
     let departamentos: DepartamentoIRA[];
     try {
@@ -411,6 +394,17 @@ const apiBase = evento === 'neumonias' ? '/api/neumonias' : '/api/ira';
       txtRango.textContent = `SE${desde}–SE${hasta}`;
       inpDesde.setAttribute('aria-valuetext', `Semana epidemiológica ${desde}`);
       inpHasta.setAttribute('aria-valuetext', `Semana epidemiológica ${hasta}`);
+      const anioNum = selAnio.value === 'todos' ? 2024 : Number(selAnio.value);
+      selectorDesde?.dispatchEvent(
+        new CustomEvent('ajustar-semana', {
+          detail: { anio: anioNum, semana: desde },
+        }),
+      );
+      selectorHasta?.dispatchEvent(
+        new CustomEvent('ajustar-semana', {
+          detail: { anio: anioNum, semana: hasta },
+        }),
+      );
       return { desde, hasta };
     };
 
@@ -435,6 +429,17 @@ const apiBase = evento === 'neumonias' ? '/api/neumonias' : '/api/ira';
         inpDesde.value = String(f.semanaDesde);
         inpHasta.value = String(f.semanaHasta);
       }
+      const anioNum = f.anio === 'todos' ? 2024 : f.anio;
+      selectorDesde?.dispatchEvent(
+        new CustomEvent('ajustar-semana', {
+          detail: { anio: anioNum, semana: f.semanaDesde },
+        }),
+      );
+      selectorHasta?.dispatchEvent(
+        new CustomEvent('ajustar-semana', {
+          detail: { anio: anioNum, semana: f.semanaHasta },
+        }),
+      );
     };
     sincronizarControles(
       fijo
@@ -447,7 +452,6 @@ const apiBase = evento === 'neumonias' ? '/api/neumonias' : '/api/ira';
       const codigo = selector.value;
       const nombre = selector.selectedOptions[0]?.textContent ?? codigo;
       contenedor.setAttribute('aria-busy', 'true');
-      contenedor.classList.add('opacity-60');
       try {
         const series = await cargarTemporal(apiBase, codigo);
         const filtro = selAnio.value;
@@ -456,11 +460,7 @@ const apiBase = evento === 'neumonias' ? '/api/neumonias' : '/api/ira';
           desde,
           hasta,
         );
-        const capas: {
-          nombre: string;
-          series: Record<string, Punto[]>;
-          dashed?: boolean;
-        }[] = [{ nombre, series: base }];
+        const capas: Capa[] = [{ nombre, series: base }];
         const cmp = selCompare.value;
         if (cmp && cmp !== codigo) {
           const series2 = await cargarTemporal(apiBase, cmp);
@@ -477,7 +477,14 @@ const apiBase = evento === 'neumonias' ? '/api/neumonias' : '/api/ira';
             ),
           });
         }
-        dibujar(contenedor, capas, desde, hasta);
+        grafico = await dibujar(
+          contenedor,
+          huecos,
+          capas,
+          desde,
+          hasta,
+          grafico,
+        );
         const lineas = ['departamento,anio,semana,valor'];
         for (const capa of capas) {
           for (const anio of Object.keys(capa.series)) {
@@ -486,9 +493,14 @@ const apiBase = evento === 'neumonias' ? '/api/neumonias' : '/api/ira';
             }
           }
         }
-        ultimoCsv = lineas.join('\n');
-        if (btnExport) btnExport.disabled = false;
+        const contenido = lineas.join('\n');
+        habilitarCsv(opcionCsv, () => ({
+          nombre: 'serie-respiratoria.csv',
+          contenido,
+        }));
       } catch (err) {
+        grafico?.destruir();
+        grafico = null;
         const noDisponible =
           err instanceof Error &&
           (err as Error & { noDisponible?: boolean }).noDisponible === true;
@@ -501,11 +513,9 @@ const apiBase = evento === 'neumonias' ? '/api/neumonias' : '/api/ira';
         } else {
           renderErrorFuente(contenedor, () => void refrescar());
         }
-        ultimoCsv = '';
-        if (btnExport) btnExport.disabled = true;
+        inhabilitarCsv(opcionCsv);
       } finally {
         contenedor.removeAttribute('aria-busy');
-        contenedor.classList.remove('opacity-60');
       }
     };
     const alCambiar = () => {
@@ -526,21 +536,24 @@ const apiBase = evento === 'neumonias' ? '/api/neumonias' : '/api/ira';
     selCompare.addEventListener('change', alCambiar);
     inpDesde.addEventListener('input', alCambiar);
     inpHasta.addEventListener('input', alCambiar);
+    selectorDesde?.addEventListener('cambio-semana', ((
+      ev: CustomEvent<{ semana: number }>,
+    ) => {
+      inpDesde.value = String(ev.detail.semana);
+      alCambiar();
+    }) as EventListener);
+    selectorHasta?.addEventListener('cambio-semana', ((
+      ev: CustomEvent<{ semana: number }>,
+    ) => {
+      inpHasta.value = String(ev.detail.semana);
+      alCambiar();
+    }) as EventListener);
     if (!fijo) {
       suscribirFiltrosRespiratorio((f) => {
         sincronizarControles(f);
         void refrescar();
       }, false);
     }
-    btnExport?.addEventListener('click', () => {
-      if (!ultimoCsv) return;
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(
-        new Blob([ultimoCsv], { type: 'text/csv;charset=utf-8' }),
-      );
-      a.download = 'serie-respiratoria.csv';
-      a.click();
-    });
     void refrescar();
   }
 

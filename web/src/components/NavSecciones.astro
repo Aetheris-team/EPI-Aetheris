@@ -7,13 +7,14 @@ interface Enlace {
 interface Props {
   etiqueta: string;
   enlaces: Enlace[];
+  class?: string;
 }
 
-const { etiqueta, enlaces } = Astro.props;
+const { etiqueta, enlaces, class: clasePersonalizada = 'mb-6' } = Astro.props;
 ---
 
 <nav
-  class="mb-6 flex flex-wrap gap-2 font-sans text-sm"
+  class:list={['flex flex-wrap gap-2 font-sans text-sm', clasePersonalizada]}
   aria-label={etiqueta}
   data-nav-secciones
 >

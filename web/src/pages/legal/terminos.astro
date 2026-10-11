@@ -22,6 +22,23 @@
  *    mismo main.py (prohíbe '*').
  *  - 2.3 y 4.5 token: POST/PATCH /api/alertas exigen Bearer ALERTAS_TOKEN;
  *    /alertas/nueva lo guarda en localStorage solo con la casilla marcada.
+ *    Mientras convivan el token y las cuentas (ADR 0024, punto I), los
+ *    términos nombran ambos; al retirar el token se quita de 2.3 y 4.5.
+ *  - Secciones 8 a 10 (cuentas, deberes de quien publica, facultades del
+ *    proyecto): ADR 0024. Alta solo por invitación, tres roles
+ *    (publicador, revisor, administrador), segundo factor obligatorio y
+ *    llave de acceso para administradores (backend/api/cuentas/servicio.py);
+ *    invitación válida 72 h; retirada con motivo público y aprobación de una
+ *    segunda persona en alertas de nivel atención e intensificación y en
+ *    reportes (decisión D del ADR). La publicación con identidad todavía no
+ *    está abierta: estas cláusulas son las condiciones que aceptan las
+ *    personas con cuenta desde la primera invitación.
+ *  - 8.4: VERSION_TERMINOS del backend es «2026-10» (servicio.py); la casilla
+ *    de src/pages/cuenta/aceptar.astro guarda esa versión. Si cambian de
+ *    fondo estos términos o la política de privacidad, hay que subirla.
+ *  - 9.4 alertas descriptivas: el aviso sale de AVISO_HONESTIDAD_ALERTAS_CLINICO
+ *    (src/lib/vista-alertas.ts) y el deslinde largo, de RUTA_SENSIBILIDAD;
+ *    no se repiten aquí.
  *  - 5.2 predicción: components/nowcast/PanelNowcastDengue.astro (1 a 8
  *    semanas desde la última semana observada, no desde hoy).
  *  - 5.4 clasificador retirado: components/MetricasModelo.astro (en /prediccion).
@@ -33,6 +50,7 @@
 import DocumentoTexto from '../../components/DocumentoTexto.astro';
 import { navegacionLegal } from '../../lib/navegacion-documentos';
 import { RUTA_SENSIBILIDAD } from '../../lib/enlaces';
+import { AVISO_HONESTIDAD_ALERTAS_CLINICO } from '../../lib/vista-alertas';
 
 const HISTORIAL_TERMINOS =
   'https://github.com/the-monolith-project/aetheris-nitor/commits/main/src/pages/legal/terminos.astro';
@@ -42,12 +60,15 @@ const HISTORIAL_TERMINOS =
   navegacion={navegacionLegal('/legal/terminos')}
   seccion="Documento legal"
   titulo="Términos de uso"
-  descripcion="Condiciones para usar el sitio, la API y los datos de EPI-Aetheris, y qué garantiza y qué no garantiza el proyecto."
-  actualizado="24 de septiembre de 2026"
+  descripcion="Condiciones para usar el sitio, la API y los datos de EPI-Aetheris y para tener una cuenta del equipo, y qué garantiza y qué no garantiza el proyecto."
+  actualizado="4 de octubre de 2026"
 >
   <h2>En resumen</h2>
   <ul>
-    <li>El sitio y la API son gratuitos y no piden registro.</li>
+    <li>
+      El sitio y la API son gratuitos y no piden registro. Las cuentas son solo
+      para el equipo y se crean por invitación.
+    </li>
     <li>
       Muestran datos públicos de dengue e infecciones respiratorias. Nada de lo
       publicado es consejo médico, y la predicción de casos puede equivocarse.
@@ -59,6 +80,10 @@ const HISTORIAL_TERMINOS =
     <li>
       No se permite saturar ni atacar el servicio, ni hacerse pasar por el
       proyecto o por el MINSAL.
+    </li>
+    <li>
+      Quien publica con una cuenta firma con su nombre y su institución, no
+      publica datos de pacientes y responde de lo que firma.
     </li>
     <li>
       El servicio se ofrece tal cual, sin garantía de exactitud ni de
@@ -77,6 +102,11 @@ const HISTORIAL_TERMINOS =
     <a href="/legal/aviso-legal">aviso legal</a> y el{' '}
     <a href={RUTA_SENSIBILIDAD}>aviso de sensibilidad</a> de la Biblioteca.
   </p>
+  <p>
+    Las personas con cuenta aceptan además las secciones 8 a 10 al recibir la
+    invitación. La versión vigente de estos términos y de la política de
+    privacidad es la 2026-10.
+  </p>
 
   <h2>2. Qué ofrece el servicio</h2>
   <ol class="clausulas" style="--c: '2'">
@@ -90,15 +120,18 @@ const HISTORIAL_TERMINOS =
       No cobra, no tiene publicidad y no ofrece suscripciones.
     </li>
     <li>
-      <strong>Sin cuentas.</strong> Consultar el sitio no requiere registro ni datos
-      personales. La única credencial es el token con el que el equipo publica alertas.
-      Es de uso interno del equipo, y el navegador solo lo guarda si se marca la casilla
-      «Recordar el token en este navegador».
+      <strong>Consulta sin cuenta.</strong> Consultar el sitio no requiere registro
+      ni datos personales. Las cuentas existen solo para las personas del equipo que
+      publican o revisan contenido, se crean por invitación y se rigen por las secciones
+      8 a 10. Mientras convivan con ellas, el equipo también publica alertas con un
+      token de uso interno, que el navegador solo guarda si se marca la casilla «Recordar
+      el token en este navegador».
     </li>
     <li>
       <strong>Sin contenido del público.</strong> El sitio no tiene formularios abiertos
-      al público ni publica textos de sus visitantes. Las sugerencias se envían como
-      incidencias en GitHub y se rigen por los términos de GitHub.
+      al público ni publica textos de sus visitantes. Solo publican las personas con
+      cuenta. Las sugerencias se envían como incidencias en GitHub y se rigen por
+      los términos de GitHub.
     </li>
   </ol>
 
@@ -155,7 +188,8 @@ const HISTORIAL_TERMINOS =
       o presentar contenido propio como si viniera de ellos.
     </li>
     <li>
-      Usar el token de alertas sin autorización o compartirlo con terceros.
+      Usar sin autorización el token de alertas o una cuenta, o compartirlos con
+      terceros.
     </li>
     <li>
       Republicar alertas alteradas, sin su contexto o sin sus fechas de
@@ -165,7 +199,8 @@ const HISTORIAL_TERMINOS =
   </ol>
   <p>
     Ante estos usos, el proyecto puede bloquear el acceso desde las direcciones
-    implicadas y ejercer las acciones legales que correspondan.
+    implicadas, suspender las cuentas que corresponda y ejercer las acciones
+    legales que procedan.
   </p>
 
   <h2>5. Cómo leer los datos y la predicción</h2>
@@ -235,6 +270,12 @@ const HISTORIAL_TERMINOS =
       la fuente y el enlace.
     </li>
     <li>
+      <strong>Lo que publica una persona con cuenta</strong> sigue siendo de su autoría
+      o de la institución que firma. Al publicarlo, la persona autoriza que el proyecto
+      lo muestre, lo archive con sus versiones y permita citarlo como se indica en
+      el punto anterior.
+    </li>
+    <li>
       <strong>El nombre y el logotipo</strong> de EPI-Aetheris identifican al proyecto.
       No deben usarse de forma que sugiera un respaldo que no existe.
     </li>
@@ -243,13 +284,122 @@ const HISTORIAL_TERMINOS =
   <h2>7. Servicios de terceros</h2>
   <p>
     El sitio usa servicios externos y enlaza a otros: los mapas de
-    OpenStreetMap, el alojamiento en Render, los repositorios y las sugerencias
-    en GitHub, y las fuentes de datos. El proyecto no controla su contenido ni
-    sus políticas, y al usarlos se aplican sus propios términos. Qué datos
-    reciben al navegar se explica en la política de privacidad.
+    OpenStreetMap, el alojamiento en Render y su red de distribución, el envío
+    de correos de las cuentas, los repositorios y las sugerencias en GitHub, y
+    las fuentes de datos. El proyecto no controla su contenido ni sus políticas,
+    y al usarlos se aplican sus propios términos. Qué datos reciben se explica
+    en la política de privacidad.
   </p>
 
-  <h2>8. Disponibilidad</h2>
+  <h2>8. Cuentas del equipo</h2>
+  <ol class="clausulas" style="--c: '8'">
+    <li>
+      <strong>Quién puede tener una cuenta.</strong> Personas mayores de edad que
+      colaboran con el proyecto y reciben la invitación de un administrador en un
+      correo propio. No hay registro público. La invitación sirve 72 horas.
+    </li>
+    <li>
+      <strong>La cuenta es personal.</strong> Cada cuenta es de una sola persona y
+      no se presta, no se cede y no se comparte. Lo que se haga desde ella queda a
+      nombre de esa persona.
+    </li>
+    <li>
+      <strong>Cuidar el acceso.</strong> La persona elige una contraseña que no usa
+      en otro sitio y configura un segundo factor, que es obligatorio. En las cuentas
+      de administración el segundo factor es una llave de acceso. Guarda los códigos
+      de recuperación en un lugar seguro. Si pierde un factor o sospecha que alguien
+      más entró, escribe cuanto antes a{' '}
+      <a href="mailto:epi-aetheris@epi-aetheris.dev"
+        >epi-aetheris@epi-aetheris.dev</a
+      > para que se suspenda la cuenta.
+    </li>
+    <li>
+      <strong>Aceptación y datos.</strong> Al aceptar la invitación, la persona acepta
+      estos términos y la <a href="/legal/privacidad">política de privacidad</a
+      >, incluido que su nombre, su cargo si lo indica y su institución se
+      muestren junto a lo que firma. La política explica qué datos se guardan,
+      cuánto tiempo y cómo ejercer los derechos sobre ellos.
+    </li>
+    <li>
+      <strong>Baja.</strong> La persona puede pedir la baja en cualquier momento escribiendo
+      al correo de contacto. Lo que ya firmó se mantiene con su firma, como explica
+      la política de privacidad.
+    </li>
+  </ol>
+
+  <h2>9. Deberes de quien publica</h2>
+  <p>
+    Quien publica o revisa contenido con una cuenta se compromete a lo
+    siguiente.
+  </p>
+  <ol class="clausulas" style="--c: '9'">
+    <li>
+      <strong>Veracidad.</strong> Publica solo lo que puede respaldar con datos públicos
+      o con lo que conoce por su trabajo, cita la fuente y las fechas de vigencia,
+      y no inventa ni exagera.
+    </li>
+    <li>
+      <strong>Sin datos personales de pacientes.</strong> No publica nombres, documentos,
+      direcciones, historias clínicas ni ningún dato que permita identificar a una
+      persona enferma, ni siquiera combinando varios, como un caso en una localidad
+      pequeña con su edad y su ocupación. Si se publica algo así por error, avisa
+      de inmediato para que se retire.
+    </li>
+    <li>
+      <strong>Firma con nombre e institución.</strong> Firma con su nombre real y
+      con la institución a la que pertenece de verdad. No firma en nombre de una institución
+      sin su autorización ni se hace pasar por otra persona.
+    </li>
+    <li>
+      <strong>Alertas descriptivas.</strong> Las alertas son información descriptiva.
+      {AVISO_HONESTIDAD_ALERTAS_CLINICO} Quien las publica no las presenta como diagnóstico,
+      indicación clínica ni aviso oficial, y respeta lo que explica el <a
+        href={RUTA_SENSIBILIDAD}>aviso de sensibilidad</a
+      >.
+    </li>
+    <li>
+      <strong>Corregir y retirar.</strong> Si descubre un error en algo que firmó,
+      lo corrige o lo retira sin demora. Retirar exige un motivo, y ese motivo es
+      público. Lo retirado queda en el archivo con su motivo y sus versiones.
+    </li>
+    <li>
+      <strong>Respeto a terceros.</strong> No publica contenido ilegal, difamatorio
+      ni discriminatorio, ni material que vulnere derechos de otras personas.
+    </li>
+  </ol>
+
+  <h2>10. Lo que puede hacer el proyecto</h2>
+  <ol class="clausulas" style="--c: '10'">
+    <li>
+      <strong>Suspender o dar de baja una cuenta</strong> si se incumplen estos términos,
+      si hay sospecha de acceso ajeno, si la persona deja de colaborar o si lleva
+      mucho tiempo sin usarla. Cuando hay riesgo, suspende primero y explica el motivo
+      por correo después.
+    </li>
+    <li>
+      <strong>Retirar o corregir contenido.</strong> Una sola persona con permiso
+      puede retirar de inmediato una pieza que contenga datos personales de pacientes,
+      un error material o algo que incumpla estos términos. El motivo de la retirada
+      se publica.
+    </li>
+    <li>
+      <strong>Pedir aprobación.</strong> Según su tipo y su nivel, una pieza necesita
+      la aprobación de una segunda persona antes de publicarse: siempre en los reportes,
+      y en las alertas de nivel atención e intensificación.
+    </li>
+    <li>
+      <strong>Registrar lo que se hace.</strong> Las acciones de cada cuenta quedan
+      en un registro de auditoría, como explica la política de privacidad.
+    </li>
+    <li>
+      <strong>Qué significa «verificada».</strong> Una institución aparece como verificada
+      cuando un administrador comprobó que la persona pertenece a ella por el medio
+      que se anotó al invitarla. No garantiza que lo publicado sea exacto ni significa
+      que la institución respalde el contenido.
+    </li>
+  </ol>
+
+  <h2>11. Disponibilidad</h2>
   <p>
     El servicio es gratuito y se mantiene según la disponibilidad del equipo. No
     hay compromiso de nivel de servicio ni de continuidad. El proyecto puede
@@ -257,7 +407,7 @@ const HISTORIAL_TERMINOS =
     sin aviso previo.
   </p>
 
-  <h2>9. Ausencia de garantías</h2>
+  <h2>12. Ausencia de garantías</h2>
   <p>
     El servicio se ofrece <strong>«tal cual»</strong> y
     <strong>«según disponibilidad»</strong>. No se garantiza, ni de forma
@@ -273,8 +423,8 @@ const HISTORIAL_TERMINOS =
     17 de la licencia GPL-3.0.
   </p>
 
-  <h2>10. Limitación de responsabilidad</h2>
-  <ol class="clausulas" style="--c: '10'">
+  <h2>13. Limitación de responsabilidad</h2>
+  <ol class="clausulas" style="--c: '13'">
     <li>
       En la medida en que lo permita la ley, el responsable del sitio no
       responde de los daños, directos o indirectos, causados por usar el
@@ -289,26 +439,32 @@ const HISTORIAL_TERMINOS =
       Quien reutilice los datos, la predicción o la API en su propio trabajo
       responde de ese uso y de lo que publique a partir de él.
     </li>
+    <li>
+      Lo que firma una persona con cuenta es responsabilidad de esa persona y,
+      en la medida en que la ley lo disponga, de la institución que la firma
+      representa. El proyecto no lo respalda por el solo hecho de alojarlo.
+    </li>
   </ol>
 
-  <h2>11. Cambios en estos términos</h2>
+  <h2>14. Cambios en estos términos</h2>
   <p>
     Estos términos pueden cambiar para reflejar cambios en el servicio o en la
     ley. La fecha de la última actualización aparece al principio, y el{' '}
     <a href={HISTORIAL_TERMINOS} target="_blank" rel="noopener noreferrer"
       >historial de cambios de este documento</a
     > es público. Seguir usando el sitio después de un cambio supone aceptar la nueva
-    versión.
+    versión. Si el cambio afecta a las personas con cuenta, se les avisa por correo
+    y se les pide aceptar la nueva versión para seguir usando la cuenta.
   </p>
 
-  <h2>12. Ley aplicable</h2>
+  <h2>15. Ley aplicable</h2>
   <p>
     Estos términos se rigen por las leyes de la República de El Salvador. Eso no
     limita los derechos que la ley del lugar de residencia reconozca a cada
     persona, en particular sobre la protección de sus datos.
   </p>
 
-  <h2>13. Contacto</h2>
+  <h2>16. Contacto</h2>
   <p>
     Las dudas sobre estos términos se pueden enviar desde la{' '}
     <a href="/contacto">página de contacto</a>. Las vulnerabilidades de

@@ -8,6 +8,7 @@
  * colores salen de los tokens deep-ink y no dependen de data-theme.
  */
 import { RUTA_PREDICCION } from '../lib/enlaces';
+import { CUENTAS_HABILITADAS } from '../lib/cuentas-config';
 
 const API_BASE = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8000';
 
@@ -15,6 +16,8 @@ interface Enlace {
   href: string;
   etiqueta: string;
   externo?: boolean;
+  /** Enlace de cuenta: el script lo cambia a "Mi cuenta" si hay sesión. */
+  cuenta?: boolean;
 }
 
 const COLUMNAS: { id: string; titulo: string; enlaces: Enlace[] }[] = [
@@ -93,6 +96,10 @@ const COLUMNAS: { id: string; titulo: string; enlaces: Enlace[] }[] = [
       },
       { href: '/sugerencias', etiqueta: 'Sugerencias' },
       { href: '/estado', etiqueta: 'Estado del servicio' },
+      // Sin cuentas activadas no hay ningún enlace hacia ellas (decisión 15).
+      ...(CUENTAS_HABILITADAS
+        ? [{ href: '/cuenta/ingresar', etiqueta: 'Ingresar', cuenta: true }]
+        : []),
     ],
   },
 ];
@@ -117,6 +124,7 @@ const COLUMNAS: { id: string; titulo: string; enlaces: Enlace[] }[] = [
                     href={enlace.href}
                     class="enlace-filete py-1 text-deep-ink transition-colors hover:text-white"
                     rel={enlace.externo ? 'noopener noreferrer' : undefined}
+                    data-enlace-cuenta={enlace.cuenta ? '' : undefined}
                   >
                     {enlace.etiqueta}
                   </a>
@@ -205,4 +213,26 @@ const COLUMNAS: { id: string; titulo: string; enlaces: Enlace[] }[] = [
   });
   window.addEventListener(EVENTO_PREFERENCIAS, pintar);
   pintar();
+
+  // "Ingresar" pasa a "Mi cuenta" cuando hay una sesión completa. El módulo de
+  // sesión se carga solo si el pie tiene el enlace (cuentas activadas), y solo
+  // consulta al backend si este navegador tiene la pista de una sesión previa.
+  const enlaceCuenta = document.querySelector<HTMLAnchorElement>(
+    '[data-enlace-cuenta]',
+  );
+  if (enlaceCuenta) {
+    void import('../lib/sesion-state').then(
+      ({ cargarSesionSiHayPista, esSesionCompleta, suscribirSesion }) => {
+        const pintarCuenta = (
+          sesion: Parameters<typeof esSesionCompleta>[0],
+        ) => {
+          const hay = esSesionCompleta(sesion);
+          enlaceCuenta.textContent = hay ? 'Mi cuenta' : 'Ingresar';
+          enlaceCuenta.href = hay ? '/cuenta' : '/cuenta/ingresar';
+        };
+        suscribirSesion(pintarCuenta);
+        void cargarSesionSiHayPista();
+      },
+    );
+  }
 </script>

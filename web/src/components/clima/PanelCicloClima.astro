@@ -1,6 +1,7 @@
 ---
 import PanelWorkspace from '../analisis/PanelWorkspace.astro';
-import BotonExportarGrafico from '../BotonExportarGrafico.astro';
+import { URL_CLIMA_MULTIPAIS } from '../../lib/analisis-api';
+import MenuExportar from '../MenuExportar.astro';
 // Ciclo medio de los casos junto al de una variable climática, por país
 // (P4 de GET /api/clima-dengue/multipais). Promedio de los años de análisis
 // para cada semana del año; el desfase es el desplazamiento (0 a 16 semanas)
@@ -55,10 +56,14 @@ import BotonExportarGrafico from '../BotonExportarGrafico.astro';
       </div>
     </div>
 
-    <BotonExportarGrafico
+    <MenuExportar
       class="mt-3"
+      alineacion="izquierda"
       titulo="Ciclo anual de los casos de dengue y del clima"
       fuente="EPI-Aetheris · OpenDengue y Open-Meteo"
+      enlaces={[
+        { texto: '18 países, completo (JSON)', href: URL_CLIMA_MULTIPAIS },
+      ]}
     />
 
     <details class="mt-3 rounded-xl border border-border bg-bg p-3">

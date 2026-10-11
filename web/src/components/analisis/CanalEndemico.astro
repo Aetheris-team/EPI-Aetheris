@@ -1,6 +1,6 @@
 ---
 import AyudaTermino from '../AyudaTermino.astro';
-import BotonExportarGrafico from '../BotonExportarGrafico.astro';
+import MenuExportar from '../MenuExportar.astro';
 import PanelWorkspace from './PanelWorkspace.astro';
 import { rutaFicha } from '../../fichas/registro';
 
@@ -49,8 +49,9 @@ const { departamento, anio } = Astro.props;
   >
   </div>
 
-  <BotonExportarGrafico
+  <MenuExportar
     class="mt-3"
+    alineacion="izquierda"
     titulo="Canal endémico"
     fuente="Boletines epidemiológicos de MINSAL"
     filtros={departamento ? `${departamento} · ${anio}` : 'analisis'}
@@ -87,6 +88,7 @@ const { departamento, anio } = Astro.props;
 </PanelWorkspace>
 
 <script>
+  import { escapeHtml } from '../../utils/security';
   import {
     esNoDisponible,
     motivoNoDisponible,
@@ -373,7 +375,7 @@ const { departamento, anio } = Astro.props;
       grafico = montado;
 
       const nombre = respuesta.departamento_nombre ?? departamento;
-      resumen!.innerHTML = `<strong class="font-medium text-ink">${nombre}</strong> · año <span class="cifra">${anio}</span> · serie ${serie}. Bandas: hasta P50 baja, entre P50 y P75 media, por encima de P75 alta.`;
+      resumen!.innerHTML = `<strong class="font-medium text-ink">${escapeHtml(nombre)}</strong> · año <span class="cifra">${anio}</span> · serie ${serie}. Bandas: hasta P50 baja, entre P50 y P75 media, por encima de P75 alta.`;
       if (aviso) aviso.textContent = respuesta.aviso ?? '';
     }
 

@@ -1,0 +1,971 @@
+---
+/**
+ * Selector interactivo de semanas epidemiológicas (MINSAL / OPS).
+ * Permite seleccionar una semana epidemiológica específica de domingo a sábado
+ * mediante un calendario mensual interactivo o una cuadrícula rápida de todas
+ * las semanas del año (52 o 53 semanas).
+ *
+ * Admite sincronización automática con el estado global de análisis
+ * (`src/lib/analisis-state.ts`) o funcionamiento independiente para formularios.
+ */
+import Icono from './Icono.astro';
+import { aniosClimaPresentacion } from '../lib/tipos-analisis.ts';
+import {
+  DIAS_SEMANA_CORTOS,
+  NOMBRES_MESES,
+  obtenerInfoSemanaEpi,
+  generarMesCalendarioEpi,
+  generarCuadriculaAnualEpi,
+  mesDeSemanaEpi,
+} from '../lib/calendario-epidemico.ts';
+
+interface Props {
+  /** Identificador único del componente */
+  id?: string;
+  /** Identificador para el span de la insignia SE## (ej. "analisis-reproductor-badge") */
+  badgeId?: string;
+  /** Nombre para el campo de formulario oculto (ej. "semana") */
+  nombre?: string;
+  /** Año inicial de vigilancia */
+  anio?: number;
+  /** Semana epidemiológica inicial (1..53) */
+  semana?: number;
+  /** Lista de años disponibles para selección */
+  aniosDisponibles?: number[];
+  /** Sincronizar automáticamente con `analisis-state.ts` */
+  sincronizarAnalisis?: boolean;
+  /** Modo visual compacto (ideal para barras de herramientas compactas) */
+  compacto?: boolean;
+  /** Etiqueta descriptiva para accesibilidad */
+  etiqueta?: string;
+  /** Mostrar rango de fechas en el disparador */
+  mostrarRangoFechas?: boolean;
+  /** Clases CSS adicionales para el contenedor */
+  class?: string;
+}
+
+const {
+  id = `selector-semana-epi-${Math.random().toString(36).slice(2, 8)}`,
+  badgeId,
+  nombre = 'semana',
+  anio = 2023,
+  semana = 1,
+  aniosDisponibles = aniosClimaPresentacion(),
+  sincronizarAnalisis = false,
+  compacto = false,
+  etiqueta = 'Semana epidemiológica',
+  mostrarRangoFechas = true,
+  class: clase = '',
+} = Astro.props;
+
+const infoInicial = obtenerInfoSemanaEpi(anio, semana);
+const mesInicial = mesDeSemanaEpi(anio, semana);
+const datosMesInicial = generarMesCalendarioEpi(anio, mesInicial, {
+  anio,
+  semana,
+});
+const datosCuadriculaInicial = generarCuadriculaAnualEpi(anio, semana);
+
+const popoverId = `${id}-popover`;
+---
+
+<div
+  id={id}
+  class:list={['selector-semana-epi relative inline-block', clase]}
+  data-selector-semana-epi
+  data-id={id}
+  data-nombre={nombre}
+  data-anio={anio}
+  data-semana={semana}
+  data-mes={mesInicial}
+  data-sincronizar={sincronizarAnalisis ? 'true' : 'false'}
+  data-compacto={compacto ? 'true' : 'false'}
+>
+  <!-- Inputs ocultos para compatibilidad con formularios nativos -->
+  <input type="hidden" name={nombre} value={semana} data-input-semana />
+  <input type="hidden" name={`${nombre}-anio`} value={anio} data-input-anio />
+
+  <!-- Botón disparador (Trigger) con formato de fecha epidemiológica -->
+  <button
+    type="button"
+    id={`${id}-disparador`}
+    data-disparador
+    popovertarget={popoverId}
+    aria-haspopup="dialog"
+    aria-expanded="false"
+    aria-controls={popoverId}
+    aria-label={`${etiqueta}: ${infoInicial.codigo}, ${infoInicial.etiquetaRango}`}
+    title={`Cambiar semana epidemiológica (${infoInicial.codigo})`}
+    class:list={[
+      'inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-border bg-bg px-3 py-1.5 font-sans text-xs text-ink transition-colors hover:border-accent/60 hover:bg-secondary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
+      compacto ? 'min-w-[100px]' : 'min-w-[140px]',
+    ]}
+  >
+    <Icono
+      nombre="calendar-week"
+      class="h-4 w-4 shrink-0 text-accent"
+      aria-hidden="true"
+    />
+
+    <span
+      id={badgeId}
+      data-etiqueta-codigo
+      class="rounded-md bg-accent/10 px-1.5 py-0.5 font-mono text-xs font-bold text-accent"
+    >
+      {infoInicial.codigo}
+    </span>
+
+    {
+      !compacto && mostrarRangoFechas && (
+        <span
+          data-etiqueta-fechas
+          class="hidden sm:inline font-sans text-xs text-ink-muted truncate max-w-[160px]"
+        >
+          {infoInicial.etiquetaCorta}
+        </span>
+      )
+    }
+
+    <Icono
+      nombre="chevron-down"
+      class="h-3.5 w-3.5 shrink-0 text-ink-muted transition-transform duration-150 data-[abierto]:rotate-180"
+      data-icono-chevron
+      aria-hidden="true"
+    />
+  </button>
+
+  <!-- Panel Popover flotante del calendario -->
+  <div
+    id={popoverId}
+    popover="auto"
+    data-panel-popover
+    role="dialog"
+    aria-modal="false"
+    aria-label={`Calendario epidemiológico: ${etiqueta}`}
+    class="selector-semana-popover rounded-2xl border border-border bg-surface text-ink shadow-2xl backdrop-blur-md p-4 w-[min(380px,calc(100vw-2rem))] sm:w-[410px] z-50 text-xs"
+  >
+    <!-- Encabezado de navegación de Mes y Año -->
+    <div
+      class="flex items-center justify-between gap-2 border-b border-border/80 pb-3"
+    >
+      <!-- Navegar al mes anterior -->
+      <button
+        type="button"
+        data-boton-mes-prev
+        class="flex min-h-[36px] min-w-[36px] items-center justify-center rounded-lg border border-border bg-bg text-ink transition-colors hover:border-accent/50 hover:bg-secondary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        aria-label="Mes anterior"
+        title="Mes anterior"
+      >
+        <Icono nombre="chevron-left" class="h-4 w-4" aria-hidden="true" />
+      </button>
+
+      <!-- Selectores de Mes y Año -->
+      <div class="flex items-center gap-1.5">
+        <label class="sr-only" for={`${id}-select-mes`}
+          >Mes del calendario</label
+        >
+        <select
+          id={`${id}-select-mes`}
+          data-select-mes
+          class="min-h-[36px] rounded-lg border border-border bg-bg px-2 py-1 font-sans text-xs font-medium text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        >
+          {
+            NOMBRES_MESES.map((nombreMes, indice) => (
+              <option value={indice + 1} selected={indice + 1 === mesInicial}>
+                {nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1)}
+              </option>
+            ))
+          }
+        </select>
+
+        <label class="sr-only" for={`${id}-select-anio`}
+          >Periodo anual del calendario</label
+        >
+        <select
+          id={`${id}-select-anio`}
+          data-select-anio
+          class="min-h-[36px] rounded-lg border border-border bg-bg px-2 py-1 font-mono text-xs font-semibold text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        >
+          {
+            aniosDisponibles.map((a) => (
+              <option value={a} selected={a === anio}>
+                {a}
+              </option>
+            ))
+          }
+        </select>
+      </div>
+
+      <!-- Navegar al mes siguiente -->
+      <button
+        type="button"
+        data-boton-mes-next
+        class="flex min-h-[36px] min-w-[36px] items-center justify-center rounded-lg border border-border bg-bg text-ink transition-colors hover:border-accent/50 hover:bg-secondary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        aria-label="Mes siguiente"
+        title="Mes siguiente"
+      >
+        <Icono nombre="chevron-right" class="h-4 w-4" aria-hidden="true" />
+      </button>
+    </div>
+
+    <!-- Pestañas de modo: Calendario mensual vs Cuadrícula anual -->
+    <div
+      class="mt-2.5 flex items-center justify-center gap-1 rounded-xl bg-bg p-1 border border-border/60"
+      role="tablist"
+      aria-label="Modo de visualización"
+    >
+      <button
+        type="button"
+        data-pestana="calendario"
+        aria-selected="true"
+        role="tab"
+        class="flex-1 flex min-h-[32px] items-center justify-center gap-1.5 rounded-lg px-2.5 py-1 font-sans text-xs font-semibold transition-all data-[activa]:bg-surface data-[activa]:text-accent data-[activa]:shadow-sm text-ink-muted hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        data-activa
+      >
+        <Icono nombre="calendar" class="h-3.5 w-3.5" aria-hidden="true" />
+        <span>Calendario</span>
+      </button>
+
+      <button
+        type="button"
+        data-pestana="cuadricula"
+        aria-selected="false"
+        role="tab"
+        class="flex-1 flex min-h-[32px] items-center justify-center gap-1.5 rounded-lg px-2.5 py-1 font-sans text-xs font-medium transition-all data-[activa]:bg-surface data-[activa]:text-accent data-[activa]:shadow-sm text-ink-muted hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+      >
+        <Icono nombre="layout-grid" class="h-3.5 w-3.5" aria-hidden="true" />
+        <span>Todas las semanas</span>
+      </button>
+    </div>
+
+    <!-- Contenedor Vista Calendario Mensual -->
+    <div data-vista-calendario class="mt-3">
+      <!-- Encabezados de días de la semana (Dom a Sáb) -->
+      <div
+        class="grid grid-cols-[38px_repeat(7,1fr)] items-center gap-1 text-center font-sans text-[11px] font-semibold text-ink-muted pb-1.5 border-b border-border/40"
+        aria-hidden="true"
+      >
+        <span class="text-[10px] text-ink-muted/80">Sem</span>
+        {DIAS_SEMANA_CORTOS.map((dia) => <span>{dia}</span>)}
+      </div>
+
+      <!-- Cuadrícula de filas de semanas epidemiológicas -->
+      <div
+        data-contenedor-filas-mes
+        class="mt-1 flex flex-col gap-1"
+        role="listbox"
+        aria-label="Semanas del mes"
+      >
+        {
+          datosMesInicial.filas.map((fila) => (
+            <div
+              class:list={[
+                'grupo-semana group grid grid-cols-[38px_repeat(7,1fr)] items-center gap-1 rounded-lg p-0.5 transition-colors cursor-pointer',
+                fila.esActiva
+                  ? 'bg-accent/15 ring-1 ring-accent'
+                  : 'hover:bg-secondary/40',
+              ]}
+              data-fila-semana={fila.semana}
+              data-fila-anio={fila.anio}
+              role="option"
+              tabindex="0"
+              aria-selected={fila.esActiva ? 'true' : 'false'}
+              aria-label={`Semana epidemiológica ${fila.semana}, ${fila.etiquetaRango}`}
+              title={`Seleccionar ${fila.codigo} (${fila.etiquetaRango})`}
+            >
+              {/* Botón identificador de semana (SE##) */}
+              <span
+                class:list={[
+                  'flex min-h-[32px] items-center justify-center rounded-md font-mono text-[11px] font-bold transition-colors',
+                  fila.esActiva
+                    ? 'bg-accent text-accent-ink shadow-xs'
+                    : 'bg-bg text-ink-muted group-hover:bg-accent/20 group-hover:text-accent',
+                ]}
+              >
+                {fila.codigo}
+              </span>
+
+              {/* Celdas de días (Domingo a Sábado) */}
+              {fila.dias.map((dia) => (
+                <span
+                  class:list={[
+                    'flex min-h-[32px] items-center justify-center rounded-md font-sans text-xs transition-colors',
+                    dia.esMesActual
+                      ? 'text-ink'
+                      : 'text-ink-muted/40 font-light',
+                    fila.esActiva ? 'font-bold' : '',
+                  ]}
+                >
+                  {dia.numeroDia}
+                </span>
+              ))}
+            </div>
+          ))
+        }
+      </div>
+    </div>
+
+    <!-- Contenedor Vista Cuadrícula Rápida (52/53 semanas) -->
+    <div
+      data-vista-cuadricula
+      class="mt-3 hidden max-h-[290px] overflow-y-auto pr-1"
+      role="region"
+      aria-label="Cuadrícula anual de semanas epidemiológicas"
+    >
+      <div data-contenedor-trimestres class="flex flex-col gap-3">
+        {
+          datosCuadriculaInicial.trimestres.map((trimestre) => (
+            <div>
+              <h4 class="font-sans text-[11px] font-semibold text-ink-muted mb-1.5">
+                {trimestre.nombre}
+              </h4>
+              <div class="grid grid-cols-5 sm:grid-cols-6 gap-1.5">
+                {trimestre.semanas.map((sem) => (
+                  <button
+                    type="button"
+                    data-chip-semana={sem.semana}
+                    data-chip-anio={sem.anio}
+                    class:list={[
+                      'flex min-h-[34px] flex-col items-center justify-center rounded-lg border p-1 font-mono text-xs transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
+                      sem.esActiva
+                        ? 'border-accent bg-accent font-bold text-accent-ink shadow-sm'
+                        : 'border-border bg-bg text-ink hover:border-accent/60 hover:bg-secondary/30',
+                    ]}
+                    aria-label={`Semana ${sem.semana}, ${sem.etiquetaRango}`}
+                    title={`${sem.codigo}: ${sem.etiquetaRango}`}
+                  >
+                    <span>{sem.codigo}</span>
+                    <span class="text-[9px] font-sans font-normal opacity-75">
+                      {sem.diaInicio} {sem.etiquetaCorta.split(' ')[1]}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+
+    <!-- Pie del Popover: Resumen y accesos rápidos -->
+    <div
+      class="mt-3 flex items-center justify-between border-t border-border/80 pt-2.5"
+    >
+      <div class="min-w-0 flex-1 font-sans text-[11px] text-ink-muted truncate">
+        <span data-resumen-semana class="font-semibold text-ink">
+          {infoInicial.codigo}
+        </span>
+        <span data-resumen-rango class="ml-1 text-ink-muted">
+          · {infoInicial.etiquetaRango}
+        </span>
+      </div>
+
+      <div class="flex items-center gap-1.5 shrink-0">
+        <button
+          type="button"
+          data-boton-hoy
+          class="rounded-lg border border-border bg-bg px-2 py-1 font-sans text-[11px] font-semibold text-ink transition-colors hover:border-accent/60 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          title="Ir a la semana actual o última con datos"
+        >
+          Hoy
+        </button>
+
+        <button
+          type="button"
+          data-boton-cerrar
+          class="rounded-lg border border-border bg-bg px-2 py-1 font-sans text-[11px] font-semibold text-ink transition-colors hover:border-accent/60 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        >
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Reglas de visualización del Popover y posicionamiento con fallback */
+  .selector-semana-popover {
+    box-sizing: border-box;
+    position: fixed;
+    margin: 0;
+    inset: auto;
+  }
+
+  /* Soporte nativo de Popover API */
+  @supports selector(:popover-open) {
+    .selector-semana-popover:not(:popover-open) {
+      display: none;
+    }
+  }
+
+  /* Fallback para navegadores sin Popover API nativo */
+  @supports not selector(:popover-open) {
+    .selector-semana-popover:not([data-abierto]) {
+      display: none;
+    }
+    .selector-semana-popover[data-abierto] {
+      display: block;
+      position: fixed;
+    }
+  }
+
+  /* Resaltado accesible al enfocar la fila */
+  .grupo-semana:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 1px;
+  }
+</style>
+
+<script>
+  import {
+    obtenerInfoSemanaEpi,
+    generarMesCalendarioEpi,
+    generarCuadriculaAnualEpi,
+    mesDeSemanaEpi,
+    ajustarMes,
+  } from '../lib/calendario-epidemico.ts';
+  import {
+    actualizarFiltrosAnalisis,
+    suscribirFiltrosAnalisis,
+  } from '../lib/analisis-state.ts';
+  import { semanaEpidemiologica } from '../lib/integridad.ts';
+
+  /**
+   * Controlador de instancia para cada selector de semana epidemiológica.
+   */
+  function inicializarSelector(contenedor: HTMLElement): void {
+    if (contenedor.dataset.inicializado === 'true') return;
+    contenedor.dataset.inicializado = 'true';
+
+    const disparador =
+      contenedor.querySelector<HTMLButtonElement>('[data-disparador]');
+    const popover = contenedor.querySelector<HTMLElement>(
+      '[data-panel-popover]',
+    );
+    const inputSemana = contenedor.querySelector<HTMLInputElement>(
+      '[data-input-semana]',
+    );
+    const inputAnio =
+      contenedor.querySelector<HTMLInputElement>('[data-input-anio]');
+    const etiquetaCodigo = contenedor.querySelector<HTMLElement>(
+      '[data-etiqueta-codigo]',
+    );
+    const etiquetaFechas = contenedor.querySelector<HTMLElement>(
+      '[data-etiqueta-fechas]',
+    );
+    const iconoChevron = contenedor.querySelector<HTMLElement>(
+      '[data-icono-chevron]',
+    );
+
+    const botonPrev = popover?.querySelector<HTMLButtonElement>(
+      '[data-boton-mes-prev]',
+    );
+    const botonNext = popover?.querySelector<HTMLButtonElement>(
+      '[data-boton-mes-next]',
+    );
+    const selectMes =
+      popover?.querySelector<HTMLSelectElement>('[data-select-mes]');
+    const selectAnio =
+      popover?.querySelector<HTMLSelectElement>('[data-select-anio]');
+
+    const pestanaCalendario = popover?.querySelector<HTMLButtonElement>(
+      '[data-pestana="calendario"]',
+    );
+    const pestanaCuadricula = popover?.querySelector<HTMLButtonElement>(
+      '[data-pestana="cuadricula"]',
+    );
+    const vistaCalendario = popover?.querySelector<HTMLElement>(
+      '[data-vista-calendario]',
+    );
+    const vistaCuadricula = popover?.querySelector<HTMLElement>(
+      '[data-vista-cuadricula]',
+    );
+
+    const contenedorFilasMes = popover?.querySelector<HTMLElement>(
+      '[data-contenedor-filas-mes]',
+    );
+    const contenedorTrimestres = popover?.querySelector<HTMLElement>(
+      '[data-contenedor-trimestres]',
+    );
+
+    const resumenSemana = popover?.querySelector<HTMLElement>(
+      '[data-resumen-semana]',
+    );
+    const resumenRango = popover?.querySelector<HTMLElement>(
+      '[data-resumen-rango]',
+    );
+    const botonHoy =
+      popover?.querySelector<HTMLButtonElement>('[data-boton-hoy]');
+    const botonCerrar = popover?.querySelector<HTMLButtonElement>(
+      '[data-boton-cerrar]',
+    );
+
+    if (!disparador || !popover) return;
+
+    let anioActual = Number(contenedor.dataset.anio) || 2023;
+    let semanaActual = Number(contenedor.dataset.semana) || 1;
+    let mesVisualizado =
+      Number(contenedor.dataset.mes) ||
+      mesDeSemanaEpi(anioActual, semanaActual);
+    const sincronizar = contenedor.dataset.sincronizar === 'true';
+
+    const soportePopoverNativo = 'showPopover' in HTMLElement.prototype;
+
+    // Actualiza la posición del popover respecto al disparador
+    function posicionarPopover(): void {
+      if (!popover || !disparador) return;
+      const rect = disparador.getBoundingClientRect();
+      const altoPopover = popover.offsetHeight || 380;
+      const anchoPopover = popover.offsetWidth || 380;
+
+      const espacioAbajo = window.innerHeight - rect.bottom;
+      let top: number;
+      if (espacioAbajo < altoPopover && rect.top > altoPopover) {
+        top = Math.max(8, rect.top - altoPopover - 6);
+      } else {
+        top = Math.min(window.innerHeight - altoPopover - 8, rect.bottom + 6);
+      }
+
+      const izquierda = Math.min(
+        Math.max(8, rect.left),
+        window.innerWidth - anchoPopover - 8,
+      );
+
+      popover.style.top = `${top}px`;
+      popover.style.left = `${izquierda}px`;
+    }
+
+    function abrirPopover(): void {
+      if (!popover || !disparador) return;
+      posicionarPopover();
+      if (soportePopoverNativo) {
+        try {
+          popover.showPopover();
+        } catch {
+          // Ignorar si ya estaba abierto
+        }
+      } else {
+        popover.setAttribute('data-abierto', 'true');
+        disparador.setAttribute('aria-expanded', 'true');
+        if (iconoChevron) iconoChevron.setAttribute('data-abierto', 'true');
+      }
+    }
+
+    function cerrarPopover(restaurarFoco = false): void {
+      if (!popover || !disparador) return;
+      if (soportePopoverNativo) {
+        try {
+          popover.hidePopover();
+        } catch {
+          // Ignorar si ya estaba cerrado
+        }
+      } else {
+        popover.removeAttribute('data-abierto');
+        disparador.setAttribute('aria-expanded', 'false');
+        if (iconoChevron) iconoChevron.removeAttribute('data-abierto');
+      }
+      if (restaurarFoco) disparador.focus();
+    }
+
+    function alternarPopover(): void {
+      const estaAbierto = disparador?.getAttribute('aria-expanded') === 'true';
+      if (estaAbierto) {
+        cerrarPopover();
+      } else {
+        abrirPopover();
+      }
+    }
+
+    // Renderiza la matriz del mes en el DOM
+    function renderizarMes(): void {
+      if (!contenedorFilasMes) return;
+      const datosMes = generarMesCalendarioEpi(anioActual, mesVisualizado, {
+        anio: anioActual,
+        semana: semanaActual,
+      });
+
+      if (selectMes) selectMes.value = String(mesVisualizado);
+      if (selectAnio) selectAnio.value = String(anioActual);
+
+      contenedorFilasMes.innerHTML = '';
+
+      datosMes.filas.forEach((fila) => {
+        const filaEl = document.createElement('div');
+        filaEl.className = `grupo-semana group grid grid-cols-[38px_repeat(7,1fr)] items-center gap-1 rounded-lg p-0.5 transition-colors cursor-pointer ${
+          fila.esActiva
+            ? 'bg-accent/15 ring-1 ring-accent'
+            : 'hover:bg-secondary/40'
+        }`;
+        filaEl.dataset.filaSemana = String(fila.semana);
+        filaEl.dataset.filaAnio = String(fila.anio);
+        filaEl.setAttribute('role', 'option');
+        filaEl.setAttribute('tabindex', '0');
+        filaEl.setAttribute('aria-selected', fila.esActiva ? 'true' : 'false');
+        filaEl.setAttribute(
+          'aria-label',
+          `Semana epidemiológica ${fila.semana}, ${fila.etiquetaRango}`,
+        );
+        filaEl.title = `Seleccionar ${fila.codigo} (${fila.etiquetaRango})`;
+
+        // Insignia SE##
+        const badgeEl = document.createElement('span');
+        badgeEl.className = `flex min-h-[32px] items-center justify-center rounded-md font-mono text-[11px] font-bold transition-colors ${
+          fila.esActiva
+            ? 'bg-accent text-accent-ink shadow-xs'
+            : 'bg-bg text-ink-muted group-hover:bg-accent/20 group-hover:text-accent'
+        }`;
+        badgeEl.textContent = fila.codigo;
+        filaEl.appendChild(badgeEl);
+
+        // 7 Días
+        fila.dias.forEach((dia) => {
+          const diaEl = document.createElement('span');
+          diaEl.className = `flex min-h-[32px] items-center justify-center rounded-md font-sans text-xs transition-colors ${
+            dia.esMesActual ? 'text-ink' : 'text-ink-muted/40 font-light'
+          } ${fila.esActiva ? 'font-bold' : ''}`;
+          diaEl.textContent = String(dia.numeroDia);
+          filaEl.appendChild(diaEl);
+        });
+
+        // Eventos de selección de fila
+        filaEl.addEventListener('click', () => {
+          seleccionarSemana(fila.anio, fila.semana);
+          cerrarPopover(true);
+        });
+
+        filaEl.addEventListener('keydown', (ev) => {
+          if (ev.key === 'Enter' || ev.key === ' ') {
+            ev.preventDefault();
+            seleccionarSemana(fila.anio, fila.semana);
+            cerrarPopover(true);
+          }
+        });
+
+        contenedorFilasMes.appendChild(filaEl);
+      });
+    }
+
+    // Renderiza la cuadrícula rápida de 52/53 semanas
+    function renderizarCuadricula(): void {
+      if (!contenedorTrimestres) return;
+      const datosAnual = generarCuadriculaAnualEpi(anioActual, semanaActual);
+
+      contenedorTrimestres.innerHTML = '';
+
+      datosAnual.trimestres.forEach((trimestre) => {
+        const grupo = document.createElement('div');
+
+        const titulo = document.createElement('h4');
+        titulo.className =
+          'font-sans text-[11px] font-semibold text-ink-muted mb-1.5';
+        titulo.textContent = trimestre.nombre;
+        grupo.appendChild(titulo);
+
+        const cuadricula = document.createElement('div');
+        cuadricula.className = 'grid grid-cols-5 sm:grid-cols-6 gap-1.5';
+
+        trimestre.semanas.forEach((sem) => {
+          const botonChip = document.createElement('button');
+          botonChip.type = 'button';
+          botonChip.className = `flex min-h-[34px] flex-col items-center justify-center rounded-lg border p-1 font-mono text-xs transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+            sem.esActiva
+              ? 'border-accent bg-accent font-bold text-accent-ink shadow-sm'
+              : 'border-border bg-bg text-ink hover:border-accent/60 hover:bg-secondary/30'
+          }`;
+          botonChip.dataset.chipSemana = String(sem.semana);
+          botonChip.dataset.chipAnio = String(sem.anio);
+          botonChip.setAttribute(
+            'aria-label',
+            `Semana ${sem.semana}, ${sem.etiquetaRango}`,
+          );
+          botonChip.title = `${sem.codigo}: ${sem.etiquetaRango}`;
+
+          botonChip.innerHTML = `
+            <span>${sem.codigo}</span>
+            <span class="text-[9px] font-sans font-normal opacity-75">${sem.diaInicio} ${sem.etiquetaCorta.split(' ')[1]}</span>
+          `;
+
+          botonChip.addEventListener('click', () => {
+            seleccionarSemana(sem.anio, sem.semana);
+            cerrarPopover(true);
+          });
+
+          cuadricula.appendChild(botonChip);
+        });
+
+        grupo.appendChild(cuadricula);
+        contenedorTrimestres.appendChild(grupo);
+      });
+    }
+
+    // Aplica la selección de semana
+    function seleccionarSemana(
+      nuevoAnio: number,
+      nuevaSemana: number,
+      emitirEvento = true,
+    ): void {
+      anioActual = nuevoAnio;
+      semanaActual = nuevaSemana;
+      mesVisualizado = mesDeSemanaEpi(anioActual, semanaActual);
+
+      contenedor.dataset.anio = String(anioActual);
+      contenedor.dataset.semana = String(semanaActual);
+      contenedor.dataset.mes = String(mesVisualizado);
+
+      if (inputSemana) inputSemana.value = String(semanaActual);
+      if (inputAnio) inputAnio.value = String(anioActual);
+
+      const info = obtenerInfoSemanaEpi(anioActual, semanaActual);
+
+      if (etiquetaCodigo) etiquetaCodigo.textContent = info.codigo;
+      if (etiquetaFechas) etiquetaFechas.textContent = info.etiquetaCorta;
+      if (disparador) {
+        disparador.setAttribute(
+          'aria-label',
+          `${contenedor.dataset.nombre || 'Semana'}: ${info.codigo}, ${info.etiquetaRango}`,
+        );
+        disparador.title = `Semana ${info.codigo} (${info.etiquetaRango})`;
+      }
+
+      if (resumenSemana) resumenSemana.textContent = info.codigo;
+      if (resumenRango) resumenRango.textContent = `· ${info.etiquetaRango}`;
+
+      renderizarMes();
+      renderizarCuadricula();
+
+      if (emitirEvento) {
+        // Disparar evento personalizado
+        contenedor.dispatchEvent(
+          new CustomEvent('cambio-semana', {
+            bubbles: true,
+            detail: {
+              anio: anioActual,
+              semana: semanaActual,
+              ...info,
+            },
+          }),
+        );
+
+        // Disparar evento de cambio estándar para formularios
+        contenedor.dispatchEvent(new Event('change', { bubbles: true }));
+
+        // Sincronizar con el store analítico si está habilitado
+        if (sincronizar) {
+          actualizarFiltrosAnalisis({
+            anio: anioActual,
+            semana: semanaActual,
+          });
+        }
+      }
+    }
+
+    // Permitir actualización programática desde componentes externos
+    contenedor.addEventListener('ajustar-semana', ((
+      ev: CustomEvent<{ anio?: number; semana?: number }>,
+    ) => {
+      const anio = ev.detail?.anio ?? anioActual;
+      const semana = ev.detail?.semana ?? semanaActual;
+      seleccionarSemana(anio, semana, false);
+    }) as EventListener);
+
+    // Eventos de navegación mensual
+    botonPrev?.addEventListener('click', () => {
+      const { anio, mes } = ajustarMes(anioActual, mesVisualizado, -1);
+      anioActual = anio;
+      mesVisualizado = mes;
+      renderizarMes();
+      renderizarCuadricula();
+    });
+
+    botonNext?.addEventListener('click', () => {
+      const { anio, mes } = ajustarMes(anioActual, mesVisualizado, 1);
+      anioActual = anio;
+      mesVisualizado = mes;
+      renderizarMes();
+      renderizarCuadricula();
+    });
+
+    selectMes?.addEventListener('change', () => {
+      mesVisualizado = Number(selectMes.value);
+      renderizarMes();
+    });
+
+    selectAnio?.addEventListener('change', () => {
+      anioActual = Number(selectAnio.value);
+      renderizarMes();
+      renderizarCuadricula();
+      if (sincronizar) {
+        actualizarFiltrosAnalisis({ anio: anioActual });
+      }
+    });
+
+    // Pestañas
+    pestanaCalendario?.addEventListener('click', () => {
+      pestanaCalendario.setAttribute('data-activa', '');
+      pestanaCalendario.setAttribute('aria-selected', 'true');
+      pestanaCuadricula?.removeAttribute('data-activa');
+      pestanaCuadricula?.setAttribute('aria-selected', 'false');
+      if (vistaCalendario) vistaCalendario.classList.remove('hidden');
+      if (vistaCuadricula) vistaCuadricula.classList.add('hidden');
+    });
+
+    pestanaCuadricula?.addEventListener('click', () => {
+      pestanaCuadricula.setAttribute('data-activa', '');
+      pestanaCuadricula.setAttribute('aria-selected', 'true');
+      pestanaCalendario?.removeAttribute('data-activa');
+      pestanaCalendario?.setAttribute('aria-selected', 'false');
+      if (vistaCalendario) vistaCalendario.classList.add('hidden');
+      if (vistaCuadricula) vistaCuadricula.classList.remove('hidden');
+    });
+
+    // Botones rápidos del pie
+    botonHoy?.addEventListener('click', () => {
+      // Calcula la semana epidemiológica de hoy
+      const hoyEpi = semanaEpidemiologica(new Date());
+      // Si el año de hoy no está en los permitidos, usar el año activo con semana 52 o última
+      const aniosOpts = Array.from(selectAnio?.options || []).map((o) =>
+        Number(o.value),
+      );
+      const anioDestino = aniosOpts.includes(hoyEpi.anio)
+        ? hoyEpi.anio
+        : anioActual;
+      const semanaDestino = anioDestino === hoyEpi.anio ? hoyEpi.semana : 52;
+      seleccionarSemana(anioDestino, semanaDestino);
+      cerrarPopover(true);
+    });
+
+    botonCerrar?.addEventListener('click', () => {
+      cerrarPopover(true);
+    });
+
+    if (soportePopoverNativo) {
+      popover.addEventListener('beforetoggle', (ev: Event) => {
+        const toggleEv = ev as { newState?: string };
+        const abierto = toggleEv.newState === 'open';
+        disparador.setAttribute('aria-expanded', abierto ? 'true' : 'false');
+        if (iconoChevron) {
+          if (abierto) iconoChevron.setAttribute('data-abierto', 'true');
+          else iconoChevron.removeAttribute('data-abierto');
+        }
+        if (abierto) {
+          posicionarPopover();
+        }
+      });
+
+      disparador.addEventListener('click', () => {
+        posicionarPopover();
+      });
+    } else {
+      // Eventos del disparador y teclado para navegadores sin Popover API
+      disparador.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        alternarPopover();
+      });
+
+      document.addEventListener('keydown', (ev) => {
+        if (
+          ev.key === 'Escape' &&
+          disparador.getAttribute('aria-expanded') === 'true'
+        ) {
+          cerrarPopover(true);
+        }
+      });
+
+      document.addEventListener('click', (ev) => {
+        if (
+          disparador.getAttribute('aria-expanded') === 'true' &&
+          !contenedor.contains(ev.target as Node) &&
+          !popover.contains(ev.target as Node)
+        ) {
+          cerrarPopover();
+        }
+      });
+    }
+
+    // Delegación de eventos para la cuadrícula anual (52/53 semanas)
+    contenedorTrimestres?.addEventListener('click', (ev) => {
+      const chip = (ev.target as HTMLElement).closest<HTMLElement>(
+        '[data-chip-semana]',
+      );
+      if (!chip) return;
+      const anio = Number(chip.dataset.chipAnio) || anioActual;
+      const sem = Number(chip.dataset.chipSemana);
+      if (sem) {
+        seleccionarSemana(anio, sem);
+        cerrarPopover(true);
+      }
+    });
+
+    // Delegación de eventos para las filas del mes
+    contenedorFilasMes?.addEventListener('click', (ev) => {
+      const fila = (ev.target as HTMLElement).closest<HTMLElement>(
+        '[data-fila-semana]',
+      );
+      if (!fila) return;
+      const anio = Number(fila.dataset.filaAnio) || anioActual;
+      const sem = Number(fila.dataset.filaSemana);
+      if (sem) {
+        seleccionarSemana(anio, sem);
+        cerrarPopover(true);
+      }
+    });
+
+    contenedorFilasMes?.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter' || ev.key === ' ') {
+        const fila = (ev.target as HTMLElement).closest<HTMLElement>(
+          '[data-fila-semana]',
+        );
+        if (!fila) return;
+        ev.preventDefault();
+        const anio = Number(fila.dataset.filaAnio) || anioActual;
+        const sem = Number(fila.dataset.filaSemana);
+        if (sem) {
+          seleccionarSemana(anio, sem);
+          cerrarPopover(true);
+        }
+      }
+    });
+
+    // Sincronización entrante desde el estado analítico
+    if (sincronizar) {
+      suscribirFiltrosAnalisis((filtros) => {
+        if (filtros.anio !== anioActual || filtros.semana !== semanaActual) {
+          anioActual = filtros.anio;
+          semanaActual = filtros.semana;
+          mesVisualizado = mesDeSemanaEpi(anioActual, semanaActual);
+          contenedor.dataset.anio = String(anioActual);
+          contenedor.dataset.semana = String(semanaActual);
+          contenedor.dataset.mes = String(mesVisualizado);
+
+          if (inputSemana) inputSemana.value = String(semanaActual);
+          if (inputAnio) inputAnio.value = String(anioActual);
+
+          const info = obtenerInfoSemanaEpi(anioActual, semanaActual);
+          if (etiquetaCodigo) etiquetaCodigo.textContent = info.codigo;
+          if (etiquetaFechas) etiquetaFechas.textContent = info.etiquetaCorta;
+          if (resumenSemana) resumenSemana.textContent = info.codigo;
+          if (resumenRango)
+            resumenRango.textContent = `· ${info.etiquetaRango}`;
+
+          renderizarMes();
+          renderizarCuadricula();
+        }
+      }, false);
+    }
+  }
+
+  // Inicializa todos los selectores al cargar la página
+  function registrarTodos(): void {
+    document
+      .querySelectorAll<HTMLElement>('[data-selector-semana-epi]')
+      .forEach(inicializarSelector);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', registrarTodos);
+  } else {
+    registrarTodos();
+  }
+
+  document.addEventListener('astro:page-load', registrarTodos);
+</script>

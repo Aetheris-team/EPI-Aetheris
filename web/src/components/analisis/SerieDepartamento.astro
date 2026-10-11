@@ -103,6 +103,7 @@ import PanelWorkspace from './PanelWorkspace.astro';
 </PanelWorkspace>
 
 <script>
+  import { escapeHtml } from '../../utils/security';
   import {
     esNoDisponible,
     motivoNoDisponible,
@@ -698,7 +699,7 @@ import PanelWorkspace from './PanelWorkspace.astro';
       idoneidad?.departamento_nombre ??
       presion?.departamento_nombre ??
       filtros.departamento;
-    resumen.innerHTML = `<span><strong class="font-medium text-ink">${nombre}</strong> · año <span class="cifra">${filtros.anio}</span> · rango <span class="cifra">SE${String(
+    resumen.innerHTML = `<span><strong class="font-medium text-ink">${escapeHtml(nombre)}</strong> · año <span class="cifra">${filtros.anio}</span> · rango <span class="cifra">SE${String(
       filtros.semanaDesde,
     ).padStart(
       2,

@@ -70,6 +70,7 @@ import PanelWorkspace from './PanelWorkspace.astro';
 </PanelWorkspace>
 
 <script>
+  import { escapeHtml } from '../../utils/security';
   import {
     esNoDisponible,
     motivoNoDisponible,
@@ -310,7 +311,7 @@ import PanelWorkspace from './PanelWorkspace.astro';
         (punto) => punto.casos !== null,
       ).length;
       if (resumen) {
-        resumen.innerHTML = `<span><strong class="font-medium text-ink">${departamento}</strong> · serie ${filtros.serie} · año destacado <span class="cifra">${filtros.anio}</span> (<span class="cifra">${observacionesSeleccionadas}</span> semanas observadas) · rango <span class="cifra">SE${String(filtros.semanaDesde).padStart(2, '0')}–SE${String(filtros.semanaHasta).padStart(2, '0')}</span>.</span>`;
+        resumen.innerHTML = `<span><strong class="font-medium text-ink">${escapeHtml(departamento)}</strong> · serie ${filtros.serie} · año destacado <span class="cifra">${filtros.anio}</span> (<span class="cifra">${observacionesSeleccionadas}</span> semanas observadas) · rango <span class="cifra">SE${String(filtros.semanaDesde).padStart(2, '0')}–SE${String(filtros.semanaHasta).padStart(2, '0')}</span>.</span>`;
       }
     } catch {
       if (idRevision !== revision) return;

@@ -1,6 +1,7 @@
 ---
 import PanelWorkspace from '../analisis/PanelWorkspace.astro';
-import BotonExportarGrafico from '../BotonExportarGrafico.astro';
+import { URL_CLIMA_POR_ANIO } from '../../lib/analisis-api';
+import MenuExportar from '../MenuExportar.astro';
 // Aporte del clima al predictor de dengue, año por año (A1 de
 // GET /api/clima-dengue/por-anio). Es la lectura de la ablación del ADR 0020:
 // habilidad del predictor completo menos la del mismo predictor sin el grupo
@@ -45,10 +46,17 @@ import BotonExportarGrafico from '../BotonExportarGrafico.astro';
       </div>
     </div>
 
-    <BotonExportarGrafico
+    <MenuExportar
       class="mt-3"
+      alineacion="izquierda"
       titulo="Aporte del clima al pronóstico de dengue, año por año"
       fuente="EPI-Aetheris · ablación del predictor, OpenDengue y Open-Meteo"
+      enlaces={[
+        {
+          texto: 'El Salvador por año, completo (JSON)',
+          href: URL_CLIMA_POR_ANIO,
+        },
+      ]}
     />
 
     <details class="mt-3 rounded-xl border border-border bg-bg p-3">

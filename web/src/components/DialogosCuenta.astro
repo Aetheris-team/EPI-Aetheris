@@ -1,0 +1,75 @@
+---
+/**
+ * Marcado de los diálogos que usa lib/dialogos-cuenta.ts. Se incluye una vez
+ * por página que necesite confirmar contraseña o confirmar una acción.
+ */
+const CLASE_DIALOGO =
+  'm-auto w-[min(32rem,calc(100vw-2rem))] rounded-2xl border border-border bg-surface p-0 text-ink shadow-xl backdrop:bg-black/50';
+const CLASE_CAMPO =
+  'w-full rounded-xl border border-border bg-bg px-3.5 py-2 font-sans text-sm text-ink focus:border-accent focus:outline-hidden focus-visible:ring-2 focus-visible:ring-accent';
+const CLASE_PRINCIPAL =
+  'boton-principal inline-flex min-h-[44px] items-center justify-center rounded-full bg-accent px-5 py-2 font-sans text-sm font-semibold text-accent-ink disabled:opacity-60';
+const CLASE_SECUNDARIO =
+  'boton-secundario inline-flex min-h-[44px] items-center justify-center rounded-full border border-border px-5 py-2 font-sans text-sm font-semibold text-ink';
+---
+
+<dialog
+  data-dialogo-reauth
+  aria-labelledby="reauth-titulo"
+  class={CLASE_DIALOGO}
+>
+  <form method="dialog" novalidate class="flex flex-col gap-4 p-6">
+    <h2 id="reauth-titulo" class="font-sans text-lg font-bold">
+      Confirma tu contraseña
+    </h2>
+    <p class="font-sans text-sm leading-relaxed text-ink-muted">
+      Esta acción pide que confirmes tu contraseña, aunque ya hayas iniciado
+      sesión.
+    </p>
+    <label class="flex flex-col gap-1.5">
+      <span class="font-sans text-xs font-semibold">Contraseña</span>
+      <input
+        type="password"
+        name="contrasena"
+        autocomplete="current-password"
+        required
+        class={CLASE_CAMPO}
+      />
+    </label>
+    <div data-aviso tabindex="-1" hidden></div>
+    <div class="flex flex-wrap justify-end gap-3">
+      <button type="button" data-cancelar class={CLASE_SECUNDARIO}
+        >Cancelar</button
+      >
+      <button type="submit" data-confirmar class={CLASE_PRINCIPAL}
+        >Confirmar</button
+      >
+    </div>
+  </form>
+</dialog>
+
+<dialog
+  data-dialogo-confirmar
+  aria-labelledby="confirmar-titulo"
+  class={CLASE_DIALOGO}
+>
+  <form method="dialog" novalidate class="flex flex-col gap-4 p-6">
+    <h2 id="confirmar-titulo" data-titulo class="font-sans text-lg font-bold">
+    </h2>
+    <p data-texto class="font-sans text-sm leading-relaxed text-ink-muted"></p>
+    <label data-grupo-motivo hidden class="flex flex-col gap-1.5">
+      <span data-etiqueta-motivo class="font-sans text-xs font-semibold"
+        >Motivo</span
+      >
+      <textarea name="motivo" rows="3" maxlength="500" class={CLASE_CAMPO}
+      ></textarea>
+    </label>
+    <div data-aviso tabindex="-1" hidden></div>
+    <div class="flex flex-wrap justify-end gap-3">
+      <button type="button" data-cancelar class={CLASE_SECUNDARIO}
+        >Cancelar</button
+      >
+      <button type="submit" data-confirmar class={CLASE_PRINCIPAL}></button>
+    </div>
+  </form>
+</dialog>

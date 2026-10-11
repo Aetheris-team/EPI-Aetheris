@@ -28,6 +28,75 @@ for (const entrada of entradas) {
     if (grupo) grupo.items.push(entrada);
   }
 }
+
+const METADATOS_DOCUMENTOS: Record<
+  string,
+  { icono: string; etiqueta: string; tiempo: string }
+> = {
+  '01-que-es': {
+    icono: 'book-2',
+    etiqueta: 'Fundamentos',
+    tiempo: '3 min',
+  },
+  '03-funciones': {
+    icono: 'calculator',
+    etiqueta: 'Módulos M1-M4',
+    tiempo: '10 min',
+  },
+  '06-arquitectura-y-reproducibilidad': {
+    icono: 'cpu',
+    etiqueta: 'Docker & Stack',
+    tiempo: '5 min',
+  },
+  '04-fuentes-de-datos': {
+    icono: 'database',
+    etiqueta: 'Procedencia & Licencias',
+    tiempo: '8 min',
+  },
+  '05-sensibilidad-y-honestidad': {
+    icono: 'shield-check',
+    etiqueta: 'Límites & Honestidad',
+    tiempo: '9 min',
+  },
+  '07-clima-y-dengue': {
+    icono: 'chart-line',
+    etiqueta: 'Modelado & Evidencia',
+    tiempo: '15 min',
+  },
+};
+
+const ICONOS_CATEGORIA: Record<string, string> = {
+  'El proyecto': 'compass',
+  'Cómo funciona': 'tools',
+  'Datos y método': 'binary-tree',
+};
+
+const METADATOS_FICHAS: Record<
+  string,
+  { icono: string; insignia: string; destacado?: boolean }
+> = {
+  'm1-idoneidad-biofisica': {
+    icono: 'temperature',
+    insignia: 'Laboratorio climático',
+  },
+  'm2-anomalia-climatica': {
+    icono: 'wave-sine',
+    insignia: 'Laboratorio de dispersión (σ)',
+  },
+  'm3-presion-epidemiologica': {
+    icono: 'chart-dots',
+    insignia: 'Laboratorio de percentiles',
+  },
+  'm4-integridad-vigilancia': {
+    icono: 'shield-check',
+    insignia: 'Laboratorio de calidad',
+  },
+  'modelo-predictivo': {
+    icono: 'sparkles',
+    insignia: 'Simulador Nowcast CQR-r',
+    destacado: true,
+  },
+};
 ---
 
 <Layout
@@ -36,78 +105,235 @@ for (const entrada of entradas) {
 >
   <main
     id="contenido-principal"
-    class="mx-auto max-w-[1600px] px-4 py-8 sm:px-8 sm:py-10 lg:px-12"
+    class="mx-auto max-w-[1600px] px-4 py-8 sm:px-8 sm:py-12 lg:px-12"
   >
-    <header class="mb-10 max-w-3xl">
+    <header class="mb-12 max-w-4xl sm:mb-14">
+      <div
+        class="mb-3 inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 font-mono text-xs font-medium text-ink-muted"
+      >
+        <Icono nombre="book-2" class="h-4 w-4 text-accent" />
+        <span>Documentación técnica y conceptual</span>
+      </div>
       <h1
-        class="font-display text-2xl font-semibold tracking-tight text-ink sm:text-[1.75rem]"
+        class="font-display text-3xl font-semibold tracking-tight text-ink sm:text-4xl lg:text-[2.75rem]"
       >
         Biblioteca
       </h1>
-      <p class="mt-3 font-sans text-sm leading-relaxed text-ink-muted">
+      <p
+        class="mt-4 font-sans text-base leading-relaxed text-ink-muted sm:text-lg"
+      >
         Qué es el sistema, qué hace cada función, de dónde salen los datos, qué
         límites tiene y cómo se instala en otra computadora. Para quien estudia,
         investiga, evalúa o quiere replicar el proyecto.
       </p>
+
+      <div class="mt-6 flex flex-wrap items-center gap-3">
+        <a
+          href="#documentos-referencia"
+          class="inline-flex items-center gap-2 rounded-full border border-secondary bg-secondary/60 px-3.5 py-1.5 font-sans text-xs font-medium text-secondary-ink transition-colors hover:bg-secondary sm:text-sm"
+        >
+          <Icono nombre="file-text" class="h-4 w-4" />
+          <span>6 documentos de referencia</span>
+        </a>
+        <a
+          href="#fichas-titulo"
+          class="inline-flex items-center gap-2 rounded-full border border-secondary bg-secondary/60 px-3.5 py-1.5 font-sans text-xs font-medium text-secondary-ink transition-colors hover:bg-secondary sm:text-sm"
+        >
+          <Icono nombre="flask" class="h-4 w-4" />
+          <span>5 fichas con laboratorios interactivos</span>
+        </a>
+      </div>
     </header>
 
-    <div class="grid grid-cols-1 gap-10 lg:grid-cols-3 lg:items-start lg:gap-8">
+    <div id="documentos-referencia" class="space-y-12 sm:space-y-16">
       {
-        grupos.map((grupo) => (
-          <section>
-            <h2 class="flex items-center gap-2.5 font-display text-lg font-semibold tracking-tight text-ink">
-              <Icono nombre="book-2" class="h-5 w-5 text-accent" />
-              {grupo.categoria}
-            </h2>
-            <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-1">
-              {grupo.items.map((item) => (
-                <a
-                  href={`/biblioteca/${item.id}`}
-                  class="card-elevated flex flex-col gap-2 rounded-2xl border border-border bg-surface p-5"
+        grupos.map((grupo) => {
+          const slugId = grupo.categoria
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-');
+          const iconoCat = ICONOS_CATEGORIA[grupo.categoria] ?? 'book-2';
+          const esUnico = grupo.items.length === 1;
+
+          return (
+            <section aria-labelledby={`cat-${slugId}`}>
+              <div class="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
+                <h2
+                  id={`cat-${slugId}`}
+                  class="flex items-center gap-2.5 font-display text-xl font-semibold tracking-tight text-ink sm:text-2xl"
                 >
-                  <h3 class="font-sans text-base font-semibold leading-snug text-ink">
-                    {item.data.titulo}
-                  </h3>
-                  <p class="font-sans text-sm leading-relaxed text-ink-muted">
-                    {item.data.descripcion}
-                  </p>
-                </a>
-              ))}
-            </div>
-          </section>
-        ))
+                  <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary text-secondary-ink">
+                    <Icono nombre={iconoCat} class="h-4.5 w-4.5" />
+                  </span>
+                  {grupo.categoria}
+                </h2>
+                <span class="rounded-full border border-border bg-surface px-3 py-1 font-mono text-xs font-semibold text-ink-muted">
+                  {grupo.items.length}{' '}
+                  {grupo.items.length === 1 ? 'documento' : 'documentos'}
+                </span>
+              </div>
+
+              <div
+                class:list={[
+                  'grid grid-cols-1 gap-6 sm:grid-cols-2 xl:gap-8',
+                  esUnico
+                    ? 'lg:grid-cols-3'
+                    : grupo.items.length === 2
+                      ? 'lg:grid-cols-2'
+                      : 'lg:grid-cols-3',
+                ]}
+              >
+                {grupo.items.map((item) => {
+                  const meta = METADATOS_DOCUMENTOS[item.id] ?? {
+                    icono: 'file-text',
+                    etiqueta: 'Documento',
+                    tiempo: '5 min',
+                  };
+
+                  return (
+                    <a
+                      href={`/biblioteca/${item.id}`}
+                      class:list={[
+                        'superficie-pulsable group flex flex-col justify-between rounded-2xl border border-border bg-surface p-6 sm:p-7 xl:p-8',
+                        esUnico ? 'sm:col-span-2 lg:col-span-2' : '',
+                      ]}
+                    >
+                      <div>
+                        <div class="flex items-center justify-between gap-3">
+                          <span class="insignia-icono flex h-11 w-11 items-center justify-center rounded-xl bg-secondary text-secondary-ink shrink-0 xl:h-12 xl:w-12">
+                            <Icono
+                              nombre={meta.icono}
+                              class="h-5 w-5 xl:h-6 xl:w-6"
+                            />
+                          </span>
+                          <div class="flex items-center gap-2">
+                            <span class="rounded-full border border-border bg-bg px-2.5 py-0.5 font-mono text-xs text-ink-muted">
+                              {meta.tiempo}
+                            </span>
+                            <span class="rounded-full border border-secondary bg-secondary/80 px-2.5 py-0.5 font-sans text-xs font-semibold text-secondary-ink">
+                              {meta.etiqueta}
+                            </span>
+                          </div>
+                        </div>
+
+                        <h3 class="mt-5 font-sans text-lg font-semibold leading-snug text-ink transition-colors group-hover:text-accent sm:text-xl xl:text-[1.35rem]">
+                          {item.data.titulo}
+                        </h3>
+                        <p class="mt-3 font-sans text-sm leading-relaxed text-ink-muted sm:text-[15px] xl:text-base">
+                          {item.data.descripcion}
+                        </p>
+                      </div>
+
+                      <div class="mt-6 flex items-center justify-between border-t border-border/60 pt-4 font-sans text-sm font-semibold text-accent xl:text-[15px]">
+                        <span class="enlace-filete">Leer documento</span>
+                        <Icono
+                          nombre="arrow-right"
+                          class="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1"
+                        />
+                      </div>
+                    </a>
+                  );
+                })}
+              </div>
+            </section>
+          );
+        })
       }
     </div>
 
-    <section class="mt-12 max-w-5xl" aria-labelledby="fichas-titulo">
-      <h2
-        id="fichas-titulo"
-        class="flex items-center gap-2.5 font-display text-lg font-semibold tracking-tight text-ink"
+    <section class="mt-16 sm:mt-20 lg:mt-24" aria-labelledby="fichas-titulo">
+      <div
+        class="mb-8 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-4"
       >
-        <Icono nombre="book-2" class="h-5 w-5 text-accent" />
-        Fichas enriquecidas
-      </h2>
-      <p
-        class="mt-2 max-w-3xl font-sans text-sm leading-relaxed text-ink-muted"
+        <div>
+          <div
+            class="mb-2 inline-flex items-center gap-2 rounded-full border border-secondary bg-secondary/70 px-3 py-1 font-mono text-xs font-semibold text-secondary-ink"
+          >
+            <Icono nombre="flask" class="h-3.5 w-3.5" />
+            <span>Interactividad y simulación</span>
+          </div>
+          <h2
+            id="fichas-titulo"
+            class="font-display text-2xl font-semibold tracking-tight text-ink sm:text-3xl"
+          >
+            Fichas enriquecidas
+          </h2>
+          <p
+            class="mt-2 max-w-3xl font-sans text-sm leading-relaxed text-ink-muted sm:text-base"
+          >
+            Explicaciones visuales, paso a paso, que complementan a los
+            documentos de arriba. Cada ficha incluye un recorrido conceptual y
+            un laboratorio interactivo para probar variables en tiempo real.
+          </p>
+        </div>
+        <span
+          class="shrink-0 rounded-full border border-border bg-surface px-3.5 py-1.5 font-mono text-xs font-semibold text-ink-muted"
+        >
+          {FICHAS.length} fichas interactivas
+        </span>
+      </div>
+
+      <div
+        class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:gap-8"
       >
-        Explicaciones visuales, paso a paso, que complementan a los documentos
-        de arriba. Los documentos siguen siendo la referencia formal.
-      </p>
-      <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {
-          FICHAS.map((ficha) => (
-            <a
-              href={rutaFicha(ficha.slug)}
-              class="card-elevated flex flex-col gap-2 rounded-2xl border border-border bg-surface p-5"
-            >
-              <h3 class="font-sans text-base font-semibold leading-snug text-ink">
-                {ficha.titulo}
-              </h3>
-              <p class="font-sans text-sm leading-relaxed text-ink-muted">
-                {ficha.subtitulo}
-              </p>
-            </a>
-          ))
+          FICHAS.map((ficha) => {
+            const meta = METADATOS_FICHAS[ficha.slug] ?? {
+              icono: 'flask',
+              insignia: 'Laboratorio',
+            };
+            const esDestacado = Boolean(meta.destacado);
+
+            return (
+              <a
+                href={rutaFicha(ficha.slug)}
+                class:list={[
+                  'superficie-pulsable group flex flex-col justify-between rounded-2xl border border-border bg-surface p-6 sm:p-7 xl:p-8',
+                  esDestacado
+                    ? 'sm:col-span-2 lg:col-span-2 xl:col-span-2'
+                    : '',
+                ]}
+              >
+                <div>
+                  <div class="flex items-start justify-between gap-3">
+                    <span class="insignia-icono flex h-12 w-12 items-center justify-center rounded-2xl bg-secondary text-secondary-ink shrink-0 xl:h-14 xl:w-14">
+                      <Icono
+                        nombre={meta.icono}
+                        class="h-6 w-6 xl:h-7 xl:w-7"
+                      />
+                    </span>
+                    <span class="shrink-0 rounded-full border border-secondary bg-secondary/80 px-3 py-1 font-mono text-[11px] font-semibold text-secondary-ink xl:text-xs">
+                      {meta.insignia}
+                    </span>
+                  </div>
+
+                  <h3 class="mt-5 font-sans text-lg font-semibold leading-snug text-ink transition-colors group-hover:text-accent sm:text-xl xl:text-[1.35rem]">
+                    {ficha.titulo}
+                  </h3>
+                  <p class="mt-2.5 font-sans text-sm leading-relaxed text-ink-muted sm:text-[15px] xl:text-base">
+                    {ficha.subtitulo}
+                  </p>
+
+                  {ficha.etiquetas && ficha.etiquetas.length > 0 && (
+                    <div class="mt-4 flex flex-wrap gap-1.5 pt-1">
+                      {ficha.etiquetas.map((etiqueta) => (
+                        <span class="rounded-md border border-border bg-bg px-2.5 py-1 font-mono text-[11px] text-ink-muted">
+                          {etiqueta}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div class="mt-6 flex items-center justify-between border-t border-border/60 pt-4 font-sans text-sm font-semibold text-accent xl:text-[15px]">
+                  <span class="enlace-filete">Explorar ficha interactiva</span>
+                  <Icono
+                    nombre="arrow-right"
+                    class="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1"
+                  />
+                </div>
+              </a>
+            );
+          })
         }
       </div>
     </section>

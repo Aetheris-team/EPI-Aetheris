@@ -32,12 +32,20 @@ if (!import.meta.env.DEV) {
     instantanea = null;
   }
 }
+
+interface Props {
+  class?: string;
+}
+const { class: clasePersonalizada } = Astro.props;
 ---
 
 <section
   aria-labelledby="ultima-semana-titulo"
   data-ultima-semana
-  class="mt-6 rounded-2xl border border-border bg-surface p-4 sm:p-6"
+  class:list={[
+    'rounded-2xl border border-border bg-surface p-4 sm:p-6 shadow-2xs',
+    clasePersonalizada ?? 'mt-6',
+  ]}
 >
   <div class="flex flex-wrap items-center justify-between gap-2">
     <h2

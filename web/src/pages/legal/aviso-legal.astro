@@ -9,6 +9,10 @@
  * /contacto, y el alojamiento en Render (región de Oregón, EE. UU.) sale del
  * render.yaml del monorepo. Si cambia alguno, hay que cambiarlo en todos.
  *
+ * Encargados del tratamiento (Render, Cloudflare como red de distribución de
+ * Render, Resend para el correo de las cuentas): la lista completa y lo que
+ * recibe cada uno está en privacidad.astro; aquí solo se nombran.
+ *
  * Lo que un aviso legal mercantil incluiría y aquí no aparece (domicilio
  * comercial, datos de inscripción) se dice explícitamente en vez de omitirlo
  * en silencio: quien busca ese dato tiene que saber por qué no está.
@@ -22,7 +26,7 @@ import { navegacionLegal } from '../../lib/navegacion-documentos';
   seccion="Documento legal"
   titulo="Aviso legal"
   descripcion="Quién es responsable de este sitio, qué tipo de proyecto es, dónde está alojado, cómo contactar y qué ley se aplica."
-  actualizado="24 de septiembre de 2026"
+  actualizado="4 de octubre de 2026"
 >
   <h2>Responsable del sitio</h2>
   <table>
@@ -38,6 +42,14 @@ import { navegacionLegal } from '../../lib/navegacion-documentos';
             >epi-aetheris@epi-aetheris.dev</a
           ></td
         >
+      </tr>
+      <tr>
+        <th scope="row">Datos personales</th>
+        <td>
+          El mismo responsable atiende las solicitudes sobre datos personales,
+          en el mismo correo. El procedimiento está en la{' '}
+          <a href="/legal/privacidad">política de privacidad</a>.
+        </td>
       </tr>
       <tr>
         <th scope="row">Dominio</th>
@@ -78,8 +90,12 @@ import { navegacionLegal } from '../../lib/navegacion-documentos';
   <h2>Alojamiento</h2>
   <p>
     El sitio, la API y la base de datos se alojan en servidores de Render
-    Services, Inc., en Estados Unidos. Qué datos técnicos recibe ese proveedor
-    se explica en la <a href="/legal/privacidad">política de privacidad</a>.
+    Services, Inc., en Estados Unidos, que entrega el sitio por la red de
+    Cloudflare. Los correos de las cuentas del equipo los envía Resend, Inc.,
+    también en Estados Unidos. Qué datos recibe cada proveedor se explica en la{
+      ' '
+    }
+    <a href="/legal/privacidad">política de privacidad</a>.
   </p>
 
   <h2>Contenido y responsabilidad</h2>

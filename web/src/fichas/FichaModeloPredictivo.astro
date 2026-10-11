@@ -1,0 +1,2414 @@
+---
+/**
+ * Ficha enriquecida: Modelo predictivo de dengue (Nowcast).
+ *
+ * Disposición dividida (split-screen scrollytelling):
+ * - Columna izquierda: Formalidades, narrativa técnica exhaustiva y fórmulas matemáticas crudas.
+ * - Columna derecha (sticky): Barra de progreso vertical descendente y escenario dinámico
+ *   con 6 animaciones vívidas e interactivas que evolucionan con el recorrido.
+ */
+import Icono from '../components/Icono.astro';
+---
+
+<div
+  class="ficha-predictiva-layout grid grid-cols-1 lg:grid-cols-12 gap-8 items-start"
+  data-ficha-predictiva
+>
+  <!-- ========================================================================= -->
+  <!-- COLUMNA IZQUIERDA: FORMALIDADES + NARRATIVA TÉCNICA + FÓRMULAS CRUDAS    -->
+  <!-- ========================================================================= -->
+  <div class="lg:col-span-5 flex flex-col gap-8">
+    <!-- Tarjeta 1: Título y Formalidades (encabezado lateral del brief) -->
+    <header
+      class="card-elevated rounded-2xl border border-border bg-surface p-6 sm:p-7 shadow-sm"
+    >
+      <div class="flex flex-wrap items-center gap-2 mb-3">
+        <span
+          class="inline-flex items-center gap-1.5 rounded-full bg-accent/10 px-3 py-1 font-mono text-xs font-semibold text-accent"
+        >
+          <span
+            class="h-1.5 w-1.5 rounded-full bg-accent animate-pulse"
+            aria-hidden="true"></span>
+          Nowcast epidémico
+        </span>
+        <span
+          class="rounded-full border border-border px-2.5 py-0.5 font-sans text-xs text-ink-muted"
+        >
+          El Salvador · Nacional
+        </span>
+      </div>
+
+      <h1
+        class="font-display text-2xl sm:text-3xl font-semibold tracking-tight text-ink"
+      >
+        Modelo predictivo de dengue
+      </h1>
+
+      <p
+        class="mt-2.5 font-sans text-sm sm:text-base leading-relaxed text-ink-muted"
+      >
+        Cómo los registros epidemiológicos históricos, el clima departamental y
+        23 cuantiles de incertidumbre proyectan el conteo nacional de casos para
+        las próximas 8 semanas.
+      </p>
+
+      <ul
+        class="mt-4 flex flex-wrap gap-1.5 list-none p-0 m-0"
+        aria-label="Etiquetas técnicas del modelo"
+      >
+        <li
+          class="rounded-md bg-secondary/50 border border-border/80 px-2.5 py-1 font-mono text-xs text-ink font-medium"
+        >
+          HistGradientBoosting
+        </li>
+        <li
+          class="rounded-md bg-secondary/50 border border-border/80 px-2.5 py-1 font-mono text-xs text-ink font-medium"
+        >
+          23 Cuantiles CDC/OPS
+        </li>
+        <li
+          class="rounded-md bg-secondary/50 border border-border/80 px-2.5 py-1 font-mono text-xs text-ink font-medium"
+        >
+          Calibración CQR-r
+        </li>
+        <li
+          class="rounded-md bg-secondary/50 border border-border/80 px-2.5 py-1 font-mono text-xs text-ink font-medium"
+        >
+          Regla de tendencia (φ=0.8)
+        </li>
+        <li
+          class="rounded-md bg-secondary/50 border border-border/80 px-2.5 py-1 font-mono text-xs text-ink font-medium"
+        >
+          Horizonte h = 1..8 sem.
+        </li>
+      </ul>
+
+      <!-- Bloque de formalidad, alcance y honestidad metodológica -->
+      <div
+        class="mt-5 rounded-xl border border-border/90 bg-bg/60 p-4 font-sans text-xs leading-relaxed text-ink-muted"
+      >
+        <div class="flex items-center gap-2 font-semibold text-ink">
+          <Icono nombre="info-circle" class="h-4 w-4 text-accent" />
+          <span>Límites y referencia formal</span>
+        </div>
+        <p class="mt-1.5">
+          Esta ficha visual documenta la matemática, la arquitectura de insumos
+          y el ensamble del modelo implementado en EPI-Aetheris. La predicción
+          probabilística es una herramienta de apoyo a la vigilancia que no
+          reemplaza el criterio epidemiológico de campo ni los lineamientos del
+          MINSAL.
+        </p>
+        <div class="mt-3 pt-3 border-t border-border/80 flex flex-col gap-1.5">
+          <a
+            href="/biblioteca/05-sensibilidad-y-honestidad#predicción-de-casos-a-corto-plazo"
+            class="font-semibold text-accent underline underline-offset-2 hover:text-accent/80 transition-colors"
+          >
+            Ver documento formal: Sensibilidad y honestidad →
+          </a>
+          <a
+            href="/prediccion"
+            class="font-semibold text-ink underline underline-offset-2 hover:text-accent transition-colors"
+          >
+            Ir al tablero operativo de predicción activa →
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Lista de Pasos Técnicos con Fórmulas Crudas y Explicaciones -->
+    <div class="space-y-6" data-lista-pasos>
+      <!-- PASO 1: Insumos Territoriales y Fuentes -->
+      <section
+        id="paso-insumos"
+        class="card-elevated rounded-2xl border border-border bg-surface p-6 sm:p-7 shadow-sm transition-all duration-300"
+        data-paso-card="0"
+      >
+        <div
+          class="flex items-center justify-between border-b border-border/80 pb-3 mb-4"
+        >
+          <span
+            class="font-mono text-xs font-bold text-accent uppercase tracking-wider"
+            >Etapa 01</span
+          >
+          <span
+            class="rounded-full bg-secondary/40 px-2.5 py-0.5 font-mono text-xs text-ink-muted"
+            >Fuentes primarias</span
+          >
+        </div>
+
+        <h2 class="font-display text-xl font-semibold text-ink">
+          Insumos y señales territoriales de El Salvador
+        </h2>
+
+        <p class="mt-3 font-sans text-sm leading-relaxed text-ink-muted">
+          El modelo no utiliza estimaciones sintéticas ni datos agregados
+          extranjeros. Se alimenta exclusivamente de series territoriales de El
+          Salvador de punta a punta mediante cuatro fuentes primarias:
+        </p>
+
+        <ul
+          class="mt-3 space-y-2.5 font-sans text-xs text-ink-muted list-none pl-0"
+        >
+          <li class="flex items-start gap-2">
+            <span class="mt-1 h-1.5 w-1.5 rounded-full bg-accent shrink-0"
+            ></span>
+            <span
+              ><strong>Serie nacional de dengue (2014-2024):</strong> OpenDengue V1.3
+              con 574 semanas epidemiológicas continuas verificadas contra boletines
+              oficiales del MINSAL.</span
+            >
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="mt-1 h-1.5 w-1.5 rounded-full bg-accent shrink-0"
+            ></span>
+            <span
+              ><strong>Serie de vigilancia reciente (2025-2026):</strong> Casos sospechosos
+              reportados semanalmente por el tablero institucional del MINSAL.</span
+            >
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="mt-1 h-1.5 w-1.5 rounded-full bg-accent shrink-0"
+            ></span>
+            <span
+              ><strong>Clima satelital ERA5/ERA5-Land (Open-Meteo):</strong> Agregación
+              de 7 variables atmosféricas para las coordenadas geográficas de los
+              <strong>14 departamentos</strong> de El Salvador.</span
+            >
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="mt-1 h-1.5 w-1.5 rounded-full bg-accent shrink-0"
+            ></span>
+            <span
+              ><strong>Índice Oceánico El Niño (ONI / NOAA):</strong> Anomalía térmica
+              trimestral del Pacífico Ecuatorial (Niño 3.4) para captar forzamientos
+              macroclimáticos interanuales.</span
+            >
+          </li>
+        </ul>
+
+        <!-- Fórmulas crudas de entrada -->
+        <div class="mt-5 rounded-xl border border-border bg-bg/70 p-4">
+          <span
+            class="font-mono text-[11px] font-semibold uppercase tracking-wider text-accent block mb-2"
+          >
+            Fórmula de agregación climática nacional:
+          </span>
+          <div
+            class="font-mono text-xs sm:text-sm text-ink bg-surface p-3 rounded-lg border border-border/80 overflow-x-auto"
+          >
+            X̄<sub>clima</sub>(t) = &frac114; &sum;<sub>d=1..14</sub> X<sub
+              >d</sub
+            >(t) &emsp;&forall; X &isin; &#123;T<sub>med</sub>, T<sub>min</sub>,
+            T<sub>max</sub>, Lluvia, HR&#125;
+          </div>
+          <p class="mt-2 font-sans text-xs text-ink-muted">
+            Las 7 variables climáticas departamentales se ponderan
+            territorialmente sin retrasos artificiales, conocidas en el punto de
+            corte temporal <em>t</em>.
+          </p>
+        </div>
+      </section>
+
+      <!-- PASO 2: Preprocesamiento y Rezagos Temporales -->
+      <section
+        id="paso-rezagos"
+        class="card-elevated rounded-2xl border border-border bg-surface p-6 sm:p-7 shadow-sm transition-all duration-300"
+        data-paso-card="1"
+      >
+        <div
+          class="flex items-center justify-between border-b border-border/80 pb-3 mb-4"
+        >
+          <span
+            class="font-mono text-xs font-bold text-accent uppercase tracking-wider"
+            >Etapa 02</span
+          >
+          <span
+            class="rounded-full bg-secondary/40 px-2.5 py-0.5 font-mono text-xs text-ink-muted"
+            >Ingeniería de variables</span
+          >
+        </div>
+
+        <h2 class="font-display text-xl font-semibold text-ink">
+          Transformación logarítmica y rezagos temporales
+        </h2>
+
+        <p class="mt-3 font-sans text-sm leading-relaxed text-ink-muted">
+          Los brotes de dengue experimentan expansiones exponenciales y semanas
+          con reportes de baja magnitud. Trabajar directamente con el conteo
+          crudo genera inestabilidad de varianza. Por ello, la señal experimenta
+          una transformación monótona estricta:
+        </p>
+
+        <!-- Fórmula cruda z_t -->
+        <div class="mt-4 rounded-xl border border-border bg-bg/70 p-4">
+          <span
+            class="font-mono text-[11px] font-semibold uppercase tracking-wider text-accent block mb-1.5"
+          >
+            Transformación estabilizadora de varianza:
+          </span>
+          <div
+            class="font-mono text-xs sm:text-sm text-ink bg-surface p-3 rounded-lg border border-border/80 overflow-x-auto"
+          >
+            z(t) = ln(1 + y(t)) &emsp;&Longleftrightarrow;&emsp; y(t) =
+            exp(z(t)) - 1
+          </div>
+          <p class="mt-2 font-sans text-xs text-ink-muted">
+            Donde <em>y(t)</em> es el conteo semanal de casos sospechosos en la semana
+            epidemiológica <em>t</em>.
+          </p>
+        </div>
+
+        <p class="mt-4 font-sans text-sm leading-relaxed text-ink-muted">
+          A partir de <em>z(t)</em>, el espacio de características construye una
+          memoria temporal autorregresiva de 8 semanas retrospectivas,
+          complementada con componentes armónicas de periodicidad anual:
+        </p>
+
+        <!-- Fórmulas crudas de rezagos y armónicos -->
+        <div
+          class="mt-3 rounded-xl border border-border bg-bg/70 p-4 space-y-3"
+        >
+          <div>
+            <span
+              class="font-mono text-[11px] font-semibold uppercase tracking-wider text-accent block mb-1"
+            >
+              Vector autorregresivo (8 rezagos de memoria):
+            </span>
+            <div
+              class="font-mono text-xs text-ink bg-surface p-2.5 rounded-lg border border-border/80 overflow-x-auto"
+            >
+              <strong>Z</strong><sub>rezagos</sub>(t) = [ z(t), z(t-1), z(t-2),
+              z(t-3), z(t-4), z(t-5), z(t-6), z(t-7) ]
+            </div>
+          </div>
+          <div>
+            <span
+              class="font-mono text-[11px] font-semibold uppercase tracking-wider text-accent block mb-1"
+            >
+              Estacionalidad armónica continua (MMWR):
+            </span>
+            <div
+              class="font-mono text-xs text-ink bg-surface p-2.5 rounded-lg border border-border/80 overflow-x-auto"
+            >
+              sen_sem(t) = sen( 2&pi; &middot; sem / 52.1775 ), &emsp;
+              cos_sem(t) = cos( 2&pi; &middot; sem / 52.1775 )
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PASO 3: Núcleo M0 y 23 Cuantiles CDC/OPS -->
+      <section
+        id="paso-m0"
+        class="card-elevated rounded-2xl border border-border bg-surface p-6 sm:p-7 shadow-sm transition-all duration-300"
+        data-paso-card="2"
+      >
+        <div
+          class="flex items-center justify-between border-b border-border/80 pb-3 mb-4"
+        >
+          <span
+            class="font-mono text-xs font-bold text-accent uppercase tracking-wider"
+            >Etapa 03</span
+          >
+          <span
+            class="rounded-full bg-secondary/40 px-2.5 py-0.5 font-mono text-xs text-ink-muted"
+            >Núcleo M0</span
+          >
+        </div>
+
+        <h2 class="font-display text-xl font-semibold text-ink">
+          Gradient Boosting y los 23 cuantiles de incertidumbre
+        </h2>
+
+        <p class="mt-3 font-sans text-sm leading-relaxed text-ink-muted">
+          Los modelos epidemiológicos tradicionales fallan cuando intentan dar
+          una sola cifra ("habrá exactamente 84 casos"). EPI-Aetheris adopta el
+          estándar de los centros de modelado de la OPS y los CDC: modelar la <strong
+            >distribución completa de incertidumbre</strong
+          > mediante 23 cuantiles calibrados.
+        </p>
+
+        <!-- Fórmula cruda Pinball Loss -->
+        <div class="mt-4 rounded-xl border border-border bg-bg/70 p-4">
+          <span
+            class="font-mono text-[11px] font-semibold uppercase tracking-wider text-accent block mb-1.5"
+          >
+            Función de pérdida cuantílica (Pinball Loss):
+          </span>
+          <div
+            class="font-mono text-xs sm:text-sm text-ink bg-surface p-3 rounded-lg border border-border/80 overflow-x-auto"
+          >
+            L<sub>&tau;</sub>(y, ŷ) = max&#40; &tau;(y - ŷ), (1 - &tau;)(ŷ - y)
+            &#41;
+          </div>
+          <p class="mt-2 font-sans text-xs text-ink-muted">
+            Un estimador <code
+              >HistGradientBoostingRegressor(loss='quantile')</code
+            > independiente entrena cada combinación de cuantil &tau; &isin; &#123;0.01,
+            0.025, 0.05, 0.10, ..., 0.95, 0.975, 0.99&#125; y horizonte <em
+              >h &isin; [1..8]</em
+            >.
+          </p>
+        </div>
+
+        <!-- Calibración Conformal CQR-r -->
+        <div class="mt-4 rounded-xl border border-border bg-bg/70 p-4">
+          <span
+            class="font-mono text-[11px] font-semibold uppercase tracking-wider text-accent block mb-1.5"
+          >
+            Calibración conformal retrospectiva (CQR-r):
+          </span>
+          <p class="font-sans text-xs text-ink-muted leading-relaxed">
+            Para corregir el subcubrimiento empírico en horizontes lejanos, se
+            calcula un residuo de no-conformidad sobre la ventana expansiva
+            histórica previa al punto de corte:
+          </p>
+          <div
+            class="mt-2 font-mono text-xs text-ink bg-surface p-2.5 rounded-lg border border-border/80 overflow-x-auto"
+          >
+            ŷ<sub>&tau;</sub><sup>calibrado</sup> = ŷ<sub>&tau;</sub> + sign(&tau;
+            - 0.5) &middot; &delta;<sub>CQR</sub>(h)
+          </div>
+        </div>
+      </section>
+
+      <!-- PASO 4: Ensamble y Regla de Tendencia (Modelo C) -->
+      <section
+        id="paso-ensamble"
+        class="card-elevated rounded-2xl border border-border bg-surface p-6 sm:p-7 shadow-sm transition-all duration-300"
+        data-paso-card="3"
+      >
+        <div
+          class="flex items-center justify-between border-b border-border/80 pb-3 mb-4"
+        >
+          <span
+            class="font-mono text-xs font-bold text-accent uppercase tracking-wider"
+            >Etapa 04</span
+          >
+          <span
+            class="rounded-full bg-secondary/40 px-2.5 py-0.5 font-mono text-xs text-ink-muted"
+            >Modelo C (2025+)</span
+          >
+        </div>
+
+        <h2 class="font-display text-xl font-semibold text-ink">
+          Ensamble dinámico y regla de tendencia amortiguada
+        </h2>
+
+        <p class="mt-3 font-sans text-sm leading-relaxed text-ink-muted">
+          A partir de 2025, la serie oficial del MINSAL se publica mediante un
+          tablero suavizado (promedio móvil de ~6 semanas). Ante esta inercia,
+          el modelo M0 puro presentaba sobre-predicción. La solución técnica es
+          el <strong>Modelo C</strong>: una fusión 50/50 con una regla de
+          tendencia amortiguada que no requiere reentrenamiento.
+        </p>
+
+        <!-- Fórmula cruda de tendencia amortiguada -->
+        <div
+          class="mt-4 rounded-xl border border-border bg-bg/70 p-4 space-y-3"
+        >
+          <div>
+            <span
+              class="font-mono text-[11px] font-semibold uppercase tracking-wider text-accent block mb-1"
+            >
+              1. Inercia amortiguada hacia el horizonte h (freno &phi; = 0.8):
+            </span>
+            <div
+              class="font-mono text-xs sm:text-sm text-ink bg-surface p-3 rounded-lg border border-border/80 overflow-x-auto"
+            >
+              ẑ<sub>tendencia</sub>(t+h) = z(t) + &sum;<sub>k=1..h</sub> (0.8)<sup
+                >k</sup
+              > &middot; &#91; z(t) - z(t-1) &#93;
+            </div>
+          </div>
+          <div>
+            <span
+              class="font-mono text-[11px] font-semibold uppercase tracking-wider text-accent block mb-1"
+            >
+              2. Fusión en log-espacio del Modelo C:
+            </span>
+            <div
+              class="font-mono text-xs sm:text-sm text-ink bg-surface p-3 rounded-lg border border-border/80 overflow-x-auto"
+            >
+              ẑ<sub>C</sub>(t+h, &tau;) = 0.5 &middot; ẑ<sub>M0</sub>(t+h,
+              &tau;) + 0.5 &middot; ẑ<sub>tendencia</sub>(t+h)
+            </div>
+          </div>
+        </div>
+
+        <p class="mt-3 font-sans text-xs text-ink-muted leading-relaxed">
+          Esta mezcla estabiliza la respuesta: la regla de tendencia preserva la
+          pendiente local inmediata, mientras que el modelo M0 modula la
+          amplitud estacional y la dispersión cuantílica.
+        </p>
+      </section>
+
+      <!-- PASO 5: El Abanico Predictivo (Fan Chart) y Evaluación WIS -->
+      <section
+        id="paso-abanico"
+        class="card-elevated rounded-2xl border border-border bg-surface p-6 sm:p-7 shadow-sm transition-all duration-300"
+        data-paso-card="4"
+      >
+        <div
+          class="flex items-center justify-between border-b border-border/80 pb-3 mb-4"
+        >
+          <span
+            class="font-mono text-xs font-bold text-accent uppercase tracking-wider"
+            >Etapa 05</span
+          >
+          <span
+            class="rounded-full bg-secondary/40 px-2.5 py-0.5 font-mono text-xs text-ink-muted"
+            >Proyección operativa</span
+          >
+        </div>
+
+        <h2 class="font-display text-xl font-semibold text-ink">
+          El abanico probabilístico y la puntuación WIS
+        </h2>
+
+        <p class="mt-3 font-sans text-sm leading-relaxed text-ink-muted">
+          Los 23 cuantiles proyectados en escala logarítmica regresan a la
+          escala natural de conteo de casos mediante la función exponencial
+          truncada a cero:
+        </p>
+
+        <!-- Fórmula cruda expm1 -->
+        <div class="mt-4 rounded-xl border border-border bg-bg/70 p-4">
+          <span
+            class="font-mono text-[11px] font-semibold uppercase tracking-wider text-accent block mb-1.5"
+          >
+            Retorno a escala natural de casos:
+          </span>
+          <div
+            class="font-mono text-xs sm:text-sm text-ink bg-surface p-3 rounded-lg border border-border/80 overflow-x-auto"
+          >
+            ŷ(t+h, &tau;) = max&#40; 0, exp( ẑ<sub>C</sub>(t+h, &tau;) ) - 1
+            &#41;
+          </div>
+          <p class="mt-2 font-sans text-xs text-ink-muted">
+            En el visor se sintetizan 3 niveles operativos: la <strong
+              >Mediana (&tau; = 0.50)</strong
+            >, la <strong>Banda del 50%</strong> (&tau; &isin; [0.25, 0.75]) y la
+            <strong>Banda de contingencia del 95%</strong> (&tau; &isin; [0.025, 0.975]).
+          </p>
+        </div>
+
+        <!-- Métrica de evaluación WIS -->
+        <div class="mt-4 rounded-xl border border-border bg-bg/70 p-4">
+          <span
+            class="font-mono text-[11px] font-semibold uppercase tracking-wider text-accent block mb-1.5"
+          >
+            Puntuación WIS (Weighted Interval Score):
+          </span>
+          <div
+            class="font-mono text-xs sm:text-sm text-ink bg-surface p-3 rounded-lg border border-border/80 overflow-x-auto"
+          >
+            WIS = [1 / (K + 0.5)] &middot; &#40; 0.5 &middot; |y - m| + &sum;<sub
+              >k=1..K</sub
+            > w<sub>k</sub> &middot; IS<sub>&alpha;<sub>k</sub></sub> &#41;
+          </div>
+
+          <p class="mt-2 font-sans text-xs text-ink-muted">
+            Regla de puntuación estrictamente propia que penaliza la dispersión
+            de las bandas, la sub-predicción y la sobre-predicción, garantizando
+            honestidad sin optimizaciones oportunistas.
+          </p>
+        </div>
+      </section>
+
+      <!-- PASO 6: Laboratorio y Simulador Interactivo -->
+      <section
+        id="paso-laboratorio"
+        class="card-elevated rounded-2xl border border-border bg-surface p-6 sm:p-7 shadow-sm transition-all duration-300"
+        data-paso-card="5"
+      >
+        <div
+          class="flex items-center justify-between border-b border-border/80 pb-3 mb-4"
+        >
+          <span
+            class="font-mono text-xs font-bold text-accent uppercase tracking-wider"
+            >Etapa 06</span
+          >
+          <span
+            class="rounded-full bg-accent/15 text-accent px-2.5 py-0.5 font-mono text-xs font-semibold"
+            >Simulador en vivo</span
+          >
+        </div>
+
+        <h2 class="font-display text-xl font-semibold text-ink">
+          Laboratorio interactivo del abanico predictivo
+        </h2>
+
+        <p class="mt-3 font-sans text-sm leading-relaxed text-ink-muted">
+          En el panel interactivo contiguo puedes manipular los parámetros clave
+          de partida (el volumen de casos reportados en la última semana, el
+          impulso de aceleración o desaceleración epidémica y la condición
+          estacional) para observar cómo responde la proyección a 8 semanas en
+          tiempo real.
+        </p>
+
+        <div
+          class="mt-4 rounded-xl border border-border/90 bg-bg/80 p-4 font-sans text-xs text-ink-muted"
+        >
+          <strong class="text-ink font-semibold block mb-1"
+            >Aviso sobre la simulación en cliente:</strong
+          >
+          Los cálculos del laboratorio se ejecutan instantáneamente en tu navegador
+          aplicando las formulaciones matemáticas exactas del ensamble y la amortiguación
+          inercial descritas arriba. Permite evaluar la sensibilidad de las bandas
+          ante cambios súbitos de tendencia.
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- COLUMNA DERECHA: STICKY STAGE CON BARRA DE PROGRESO Y ANIMACIONES VÍVIDAS -->
+  <!-- ========================================================================= -->
+  <aside
+    class="lg:col-span-7 lg:sticky lg:top-[calc(var(--alto-header)+1rem)] z-10"
+    aria-label="Escenario interactivo de representaciones"
+  >
+    <div
+      class="card-elevated rounded-2xl border border-border bg-surface p-5 sm:p-6 shadow-md flex flex-col gap-5 min-h-[640px] max-h-[calc(100vh-var(--alto-header)-2rem)] overflow-y-auto"
+    >
+      <!-- Cabecera del Escenario + Barra de Progreso Vertical / Stepper -->
+      <div class="border-b border-border/80 pb-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="relative flex h-2.5 w-2.5">
+              <span
+                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"
+              ></span>
+              <span
+                class="relative inline-flex rounded-full h-2.5 w-2.5 bg-accent"
+              ></span>
+            </span>
+            <span
+              class="font-mono text-xs uppercase tracking-wider text-ink-muted"
+              >Representación viva</span
+            >
+          </div>
+          <span
+            class="font-mono text-xs font-semibold text-accent px-2 py-0.5 rounded-full bg-accent/10"
+            data-indicador-contador
+          >
+            Etapa 1 de 6
+          </span>
+        </div>
+
+        <h2
+          class="mt-1.5 font-display text-lg font-semibold text-ink"
+          data-titulo-etapa-activa
+        >
+          1. Insumos y fuentes territoriales
+        </h2>
+
+        <!-- Barra de progreso interactiva (Stepper de 6 nodos) -->
+        <div class="mt-4 relative" aria-label="Progreso de etapas">
+          <div
+            class="h-1.5 w-full bg-bg rounded-full overflow-hidden border border-border/80"
+          >
+            <div
+              class="h-full bg-accent transition-all duration-500 ease-out"
+              data-barra-progreso
+              style="width: 16.66%;"
+            >
+            </div>
+          </div>
+
+          <div
+            class="mt-2.5 flex items-center justify-between text-xs font-mono"
+          >
+            {
+              [
+                { n: 1, label: 'Insumos' },
+                { n: 2, label: 'Rezagos' },
+                { n: 3, label: 'Cuantiles' },
+                { n: 4, label: 'Ensamble' },
+                { n: 5, label: 'Abanico' },
+                { n: 6, label: 'Simulador' },
+              ].map((item, idx) => (
+                <button
+                  type="button"
+                  data-boton-etapa={idx}
+                  class={`flex flex-col items-center gap-1 transition-colors group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded px-1.5 py-0.5 ${
+                    idx === 0
+                      ? 'text-accent font-bold'
+                      : 'text-ink-muted hover:text-ink'
+                  }`}
+                  aria-label={`Saltar a etapa ${item.n}: ${item.label}`}
+                >
+                  <span
+                    class={`w-5 h-5 rounded-full border flex items-center justify-center text-[10px] transition-colors ${
+                      idx === 0
+                        ? 'border-accent bg-accent text-white font-bold'
+                        : 'border-border bg-bg group-hover:border-accent/40'
+                    }`}
+                    data-nodo-circulo={idx}
+                  >
+                    {item.n}
+                  </span>
+                  <span class="text-[11px] hidden sm:inline">{item.label}</span>
+                </button>
+              ))
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Contenedor del Escenario Dinámico (Lienzo interactivo) -->
+      <div
+        class="flex-1 relative min-h-[480px] flex flex-col justify-center overflow-hidden rounded-xl bg-bg/50 border border-border/70 p-4 sm:p-5"
+        data-escenario-lienzo
+      >
+        <!-- =================================================================== -->
+        <!-- ANIMACIÓN 1: Red de Insumos y Señales de El Salvador                -->
+        <!-- =================================================================== -->
+        <div class="escenario-panel active space-y-4" data-escenario-panel="0">
+          <div
+            class="flex items-center justify-between text-xs font-mono text-ink-muted border-b border-border/60 pb-2"
+          >
+            <span>Red de alimentación sensorial</span>
+            <span class="text-accent font-semibold"
+              >14 deptos · 574 sem. · ONI</span
+            >
+          </div>
+
+          <!-- SVG Visual interactivo de la constelación de datos -->
+          <div
+            class="relative w-full aspect-[4/3] max-h-[360px] flex items-center justify-center bg-surface rounded-xl border border-border/80 p-3 shadow-inner overflow-hidden"
+          >
+            <svg
+              viewBox="0 0 500 340"
+              class="w-full h-full"
+              aria-label="Diagrama animado de fuentes de datos de El Salvador hacia el modelo"
+            >
+              <defs>
+                <!-- Gradientes y efectos -->
+                <linearGradient
+                  id="grad-flujo"
+                  x1="0%"
+                  y1="0%"
+                  x2="100%"
+                  y2="100%"
+                >
+                  <stop offset="0%" stop-color="#183e39" stop-opacity="0.2"
+                  ></stop>
+                  <stop offset="100%" stop-color="#183e39" stop-opacity="0.8"
+                  ></stop>
+                </linearGradient>
+                <linearGradient
+                  id="grad-pacifico"
+                  x1="0%"
+                  y1="0%"
+                  x2="100%"
+                  y2="0%"
+                >
+                  <stop offset="0%" stop-color="#1f5fb4"></stop>
+                  <stop offset="100%" stop-color="#ff5a45"></stop>
+                </linearGradient>
+                <filter
+                  id="brillo-nodo"
+                  x="-20%"
+                  y="-20%"
+                  width="140%"
+                  height="140%"
+                >
+                  <feGaussianBlur stdDeviation="3" result="blur"
+                  ></feGaussianBlur>
+                  <feComposite in="SourceGraphic" in2="blur" operator="over"
+                  ></feComposite>
+                </filter>
+              </defs>
+
+              <!-- Conexiones animadas hacia el centro -->
+              <path
+                d="M 100 70 Q 250 120 250 170"
+                fill="none"
+                stroke="var(--color-border)"
+                stroke-width="2"
+                stroke-dasharray="4 4"></path>
+              <path
+                d="M 400 70 Q 250 120 250 170"
+                fill="none"
+                stroke="var(--color-border)"
+                stroke-width="2"
+                stroke-dasharray="4 4"></path>
+              <path
+                d="M 100 270 Q 250 220 250 170"
+                fill="none"
+                stroke="var(--color-border)"
+                stroke-width="2"
+                stroke-dasharray="4 4"></path>
+              <path
+                d="M 400 270 Q 250 220 250 170"
+                fill="none"
+                stroke="var(--color-border)"
+                stroke-width="2"
+                stroke-dasharray="4 4"></path>
+
+              <!-- Partículas pulsantes viajando por las líneas -->
+              <circle cx="100" cy="70" r="4" fill="var(--color-accent)">
+                <animate
+                  attributeName="cx"
+                  values="100;175;250"
+                  dur="2.4s"
+                  repeatCount="indefinite"></animate>
+                <animate
+                  attributeName="cy"
+                  values="70;110;170"
+                  dur="2.4s"
+                  repeatCount="indefinite"></animate>
+                <animate
+                  attributeName="opacity"
+                  values="1;0.8;0"
+                  dur="2.4s"
+                  repeatCount="indefinite"></animate>
+              </circle>
+              <circle cx="400" cy="70" r="4" fill="var(--color-estimacion)">
+                <animate
+                  attributeName="cx"
+                  values="400;325;250"
+                  dur="2.8s"
+                  repeatCount="indefinite"></animate>
+                <animate
+                  attributeName="cy"
+                  values="70;110;170"
+                  dur="2.8s"
+                  repeatCount="indefinite"></animate>
+                <animate
+                  attributeName="opacity"
+                  values="1;0.8;0"
+                  dur="2.8s"
+                  repeatCount="indefinite"></animate>
+              </circle>
+              <circle cx="100" cy="270" r="4" fill="#5b3fa8">
+                <animate
+                  attributeName="cx"
+                  values="100;175;250"
+                  dur="2.2s"
+                  repeatCount="indefinite"></animate>
+                <animate
+                  attributeName="cy"
+                  values="270;230;170"
+                  dur="2.2s"
+                  repeatCount="indefinite"></animate>
+                <animate
+                  attributeName="opacity"
+                  values="1;0.8;0"
+                  dur="2.2s"
+                  repeatCount="indefinite"></animate>
+              </circle>
+              <circle cx="400" cy="270" r="4" fill="#ff5a45">
+                <animate
+                  attributeName="cx"
+                  values="400;325;250"
+                  dur="2.6s"
+                  repeatCount="indefinite"></animate>
+                <animate
+                  attributeName="cy"
+                  values="270;230;170"
+                  dur="2.6s"
+                  repeatCount="indefinite"></animate>
+                <animate
+                  attributeName="opacity"
+                  values="1;0.8;0"
+                  dur="2.6s"
+                  repeatCount="indefinite"></animate>
+              </circle>
+
+              <!-- NODO 1 (Noroeste): 14 Departamentos ERA5 -->
+              <g transform="translate(40, 30)">
+                <rect
+                  width="120"
+                  height="70"
+                  rx="12"
+                  fill="var(--color-surface)"
+                  stroke="var(--color-accent)"
+                  stroke-width="1.5"></rect>
+                <text
+                  x="60"
+                  y="24"
+                  text-anchor="middle"
+                  font-size="11"
+                  font-weight="bold"
+                  fill="var(--color-accent)">14 Departamentos</text
+                >
+                <text
+                  x="60"
+                  y="40"
+                  text-anchor="middle"
+                  font-size="9"
+                  fill="var(--color-ink-muted)">ERA5 / Open-Meteo</text
+                >
+                <text
+                  x="60"
+                  y="55"
+                  text-anchor="middle"
+                  font-size="9"
+                  font-family="monospace"
+                  fill="var(--color-ink)">T, Lluvia, HR</text
+                >
+              </g>
+
+              <!-- NODO 2 (Noreste): OpenDengue V1.3 -->
+              <g transform="translate(340, 30)">
+                <rect
+                  width="120"
+                  height="70"
+                  rx="12"
+                  fill="var(--color-surface)"
+                  stroke="var(--color-estimacion)"
+                  stroke-width="1.5"></rect>
+                <text
+                  x="60"
+                  y="24"
+                  text-anchor="middle"
+                  font-size="11"
+                  font-weight="bold"
+                  fill="var(--color-estimacion)">OpenDengue V1.3</text
+                >
+                <text
+                  x="60"
+                  y="40"
+                  text-anchor="middle"
+                  font-size="9"
+                  fill="var(--color-ink-muted)">2014 - 2024</text
+                >
+                <text
+                  x="60"
+                  y="55"
+                  text-anchor="middle"
+                  font-size="9"
+                  font-family="monospace"
+                  fill="var(--color-ink)">574 semanas</text
+                >
+              </g>
+
+              <!-- NODO CENTRAL: Acopio e Ingesta Nacional -->
+              <g transform="translate(200, 120)">
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="46"
+                  fill="var(--color-deep)"
+                  stroke="var(--color-accent)"
+                  stroke-width="2.5"
+                  filter="url(#brillo-nodo)"></circle>
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="38"
+                  fill="none"
+                  stroke="var(--color-secondary)"
+                  stroke-width="1"
+                  stroke-dasharray="3 3"
+                >
+                  <animateTransform
+                    attributeName="transform"
+                    type="rotate"
+                    from="0 50 50"
+                    to="360 50 50"
+                    dur="14s"
+                    repeatCount="indefinite"></animateTransform>
+                </circle>
+                <text
+                  x="50"
+                  y="46"
+                  text-anchor="middle"
+                  font-size="11"
+                  font-weight="bold"
+                  fill="#ffffff">RECOLECTOR</text
+                >
+                <text
+                  x="50"
+                  y="60"
+                  text-anchor="middle"
+                  font-size="9"
+                  font-family="monospace"
+                  fill="var(--color-secondary)">EPI-SV (t)</text
+                >
+              </g>
+
+              <!-- NODO 3 (Suroeste): Tablero MINSAL 2025+ -->
+              <g transform="translate(40, 240)">
+                <rect
+                  width="120"
+                  height="70"
+                  rx="12"
+                  fill="var(--color-surface)"
+                  stroke="#5b3fa8"
+                  stroke-width="1.5"></rect>
+                <text
+                  x="60"
+                  y="24"
+                  text-anchor="middle"
+                  font-size="11"
+                  font-weight="bold"
+                  fill="#5b3fa8">Tablero MINSAL</text
+                >
+                <text
+                  x="60"
+                  y="40"
+                  text-anchor="middle"
+                  font-size="9"
+                  fill="var(--color-ink-muted)">2025 - 2026</text
+                >
+                <text
+                  x="60"
+                  y="55"
+                  text-anchor="middle"
+                  font-size="9"
+                  font-family="monospace"
+                  fill="var(--color-ink)">Casos sospechosos</text
+                >
+              </g>
+
+              <!-- NODO 4 (Sureste): Señal Oceánica ONI NOAA -->
+              <g transform="translate(340, 240)">
+                <rect
+                  width="120"
+                  height="70"
+                  rx="12"
+                  fill="var(--color-surface)"
+                  stroke="#ff5a45"
+                  stroke-width="1.5"></rect>
+                <text
+                  x="60"
+                  y="24"
+                  text-anchor="middle"
+                  font-size="11"
+                  font-weight="bold"
+                  fill="#ff5a45">Índice ONI (NOAA)</text
+                >
+                <text
+                  x="60"
+                  y="40"
+                  text-anchor="middle"
+                  font-size="9"
+                  fill="var(--color-ink-muted)">Pacífico Ecuatorial</text
+                >
+                <text
+                  x="60"
+                  y="55"
+                  text-anchor="middle"
+                  font-size="9"
+                  font-family="monospace"
+                  fill="var(--color-ink)">Niño 3.4 (&plusmn;0.5&deg;C)</text
+                >
+              </g>
+            </svg>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 text-xs font-sans">
+            <div class="p-3 bg-surface rounded-lg border border-border">
+              <span class="text-ink-muted block text-[11px]"
+                >Consistencia temporal:</span
+              >
+              <strong class="text-ink">Semana epidemiológica MMWR</strong>
+            </div>
+            <div class="p-3 bg-surface rounded-lg border border-border">
+              <span class="text-ink-muted block text-[11px]"
+                >Regla anti-fuga:</span
+              >
+              <strong class="text-accent">Solo t &le; semana actual</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- ANIMACIÓN 2: Tubería Logarítmica, 8 Rezagos y Estacionalidad         -->
+        <!-- =================================================================== -->
+        <div class="escenario-panel space-y-4" data-escenario-panel="1">
+          <div
+            class="flex items-center justify-between text-xs font-mono text-ink-muted border-b border-border/60 pb-2"
+          >
+            <span>Cámara de transformación matemática</span>
+            <span class="text-accent font-semibold"
+              >z = ln(1+y) · 8 rezagos</span
+            >
+          </div>
+
+          <!-- SVG Visual interactivo de la cinta de rezagos y onda sinusoidal -->
+          <div
+            class="relative w-full aspect-[4/3] max-h-[360px] flex items-center justify-center bg-surface rounded-xl border border-border/80 p-3 shadow-inner overflow-hidden"
+          >
+            <svg
+              viewBox="0 0 500 340"
+              class="w-full h-full"
+              aria-label="Diagrama de transformación logarítmica y rezagos"
+            >
+              <!-- Cámara de transformación ln(1+y) -->
+              <g transform="translate(30, 25)">
+                <rect
+                  width="130"
+                  height="90"
+                  rx="10"
+                  fill="var(--color-bg)"
+                  stroke="var(--color-border)"
+                  stroke-width="1.5"></rect>
+                <text
+                  x="65"
+                  y="24"
+                  text-anchor="middle"
+                  font-size="11"
+                  font-weight="bold"
+                  fill="var(--color-ink)">Casos crudos y(t)</text
+                >
+                <path
+                  d="M 25 70 Q 45 40, 70 65 T 115 45"
+                  fill="none"
+                  stroke="#ff5a45"
+                  stroke-width="2.5"></path>
+                <text
+                  x="65"
+                  y="82"
+                  text-anchor="middle"
+                  font-size="9"
+                  fill="var(--color-ink-muted)">picos asimétricos</text
+                >
+              </g>
+
+              <!-- Flecha de compresión logarítmica -->
+              <g transform="translate(170, 55)">
+                <path
+                  d="M 0 15 L 40 15"
+                  stroke="var(--color-accent)"
+                  stroke-width="2.5"
+                  marker-end="url(#flecha-acc)"></path>
+                <text
+                  x="20"
+                  y="32"
+                  text-anchor="middle"
+                  font-size="10"
+                  font-family="monospace"
+                  font-weight="bold"
+                  fill="var(--color-accent)">ln(1+y)</text
+                >
+              </g>
+
+              <!-- Señal estabilizada z(t) -->
+              <g transform="translate(225, 25)">
+                <rect
+                  width="245"
+                  height="90"
+                  rx="10"
+                  fill="var(--color-surface)"
+                  stroke="var(--color-accent)"
+                  stroke-width="1.5"></rect>
+                <text
+                  x="122"
+                  y="22"
+                  text-anchor="middle"
+                  font-size="11"
+                  font-weight="bold"
+                  fill="var(--color-accent)">Señal estabilizada z(t)</text
+                >
+                <path
+                  d="M 20 60 Q 50 48, 80 56 T 140 50 T 200 54"
+                  fill="none"
+                  stroke="var(--color-accent)"
+                  stroke-width="2"></path>
+                <text
+                  x="122"
+                  y="80"
+                  text-anchor="middle"
+                  font-size="9"
+                  fill="var(--color-ink-muted)"
+                  >varianza contenida &le; 6.5</text
+                >
+              </g>
+
+              <!-- Buffer circular: 8 Rezagos Temporales [z_t ... z_t-7] -->
+              <g transform="translate(30, 135)">
+                <text
+                  x="0"
+                  y="15"
+                  font-size="11"
+                  font-weight="bold"
+                  fill="var(--color-ink)"
+                  >Memoria autorregresiva (8 rezagos):</text
+                >
+                <g transform="translate(0, 25)">
+                  {
+                    ['t-7', 't-6', 't-5', 't-4', 't-3', 't-2', 't-1', 't'].map(
+                      (lag, i) => (
+                        <g transform={`translate(${i * 55}, 0)`}>
+                          <rect
+                            width="48"
+                            height="44"
+                            rx="6"
+                            fill={
+                              i === 7
+                                ? 'var(--color-accent)'
+                                : 'var(--color-surface)'
+                            }
+                            stroke={
+                              i === 7
+                                ? 'var(--color-accent)'
+                                : 'var(--color-border)'
+                            }
+                            stroke-width="1.5"
+                          />
+                          <text
+                            x="24"
+                            y="18"
+                            text-anchor="middle"
+                            font-size="9"
+                            font-family="monospace"
+                            font-weight="bold"
+                            fill={
+                              i === 7 ? '#ffffff' : 'var(--color-ink-muted)'
+                            }
+                          >
+                            z({lag})
+                          </text>
+                          <text
+                            x="24"
+                            y="34"
+                            text-anchor="middle"
+                            font-size="10"
+                            font-family="monospace"
+                            font-weight="bold"
+                            fill={i === 7 ? '#ffffff' : 'var(--color-ink)'}
+                          >
+                            {(4.2 + i * 0.15).toFixed(2)}
+                          </text>
+                        </g>
+                      ),
+                    )
+                  }
+                </g>
+              </g>
+
+              <!-- Ciclo de estacionalidad sinusoidal (MMWR 52 semanas) -->
+              <g transform="translate(30, 235)">
+                <rect
+                  width="440"
+                  height="75"
+                  rx="10"
+                  fill="var(--color-bg)"
+                  stroke="var(--color-border)"
+                  stroke-width="1"></rect>
+                <text
+                  x="15"
+                  y="20"
+                  font-size="10"
+                  font-weight="bold"
+                  fill="var(--color-ink)"
+                  >Estacionalidad continua (sen &middot; cos):</text
+                >
+
+                <!-- Onda senoidal suave -->
+                <path
+                  d="M 25 50 Q 80 25, 135 50 T 245 50 T 355 50 T 425 50"
+                  fill="none"
+                  stroke="#5b3fa8"
+                  stroke-width="2"></path>
+
+                <!-- Marcador de semana actual orbitando sobre la curva -->
+                <circle
+                  cx="270"
+                  cy="50"
+                  r="6"
+                  fill="#5b3fa8"
+                  stroke="#ffffff"
+                  stroke-width="2"
+                >
+                  <animate
+                    attributeName="cy"
+                    values="50;30;50;70;50"
+                    dur="4s"
+                    repeatCount="indefinite"></animate>
+                  <animate
+                    attributeName="cx"
+                    values="270;310;350;310;270"
+                    dur="4s"
+                    repeatCount="indefinite"></animate>
+                </circle>
+                <text
+                  x="365"
+                  y="30"
+                  font-size="9"
+                  font-family="monospace"
+                  fill="#5b3fa8">Semana 38</text
+                >
+              </g>
+            </svg>
+          </div>
+
+          <div
+            class="p-3 bg-surface rounded-lg border border-border text-xs font-sans text-ink-muted"
+          >
+            <strong class="text-ink font-semibold"
+              >Ventana temporal expansiva:</strong
+            > La historia pasada se conserva íntegra desde 2014, garantizando que
+            el modelo reconozca tanto años endémicos bajos como brotes de alta magnitud.
+          </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- ANIMACIÓN 3: Núcleo M0 y Prisma de los 23 Cuantiles CDC/OPS         -->
+        <!-- =================================================================== -->
+        <div class="escenario-panel space-y-4" data-escenario-panel="2">
+          <div
+            class="flex items-center justify-between text-xs font-mono text-ink-muted border-b border-border/60 pb-2"
+          >
+            <span>Descomposición espectral de incertidumbre</span>
+            <span class="text-accent font-semibold"
+              >23 cuantiles · Pinball Loss · CQR-r</span
+            >
+          </div>
+
+          <!-- SVG Visual interactivo: Prisma de Gradient Boosting -->
+          <div
+            class="relative w-full aspect-[4/3] max-h-[360px] flex items-center justify-center bg-surface rounded-xl border border-border/80 p-3 shadow-inner overflow-hidden"
+          >
+            <svg
+              viewBox="0 0 500 340"
+              class="w-full h-full"
+              aria-label="Diagrama del prisma de 23 cuantiles de Gradient Boosting"
+            >
+              <!-- Entrada del vector de variables -->
+              <g transform="translate(15, 150)">
+                <rect
+                  width="95"
+                  height="40"
+                  rx="8"
+                  fill="var(--color-bg)"
+                  stroke="var(--color-border)"
+                  stroke-width="1.5"></rect>
+                <text
+                  x="47"
+                  y="24"
+                  text-anchor="middle"
+                  font-size="10"
+                  font-family="monospace"
+                  font-weight="bold"
+                  fill="var(--color-ink)">Vector X(t)</text
+                >
+              </g>
+
+              <!-- Haz de entrada -->
+              <line
+                x1="110"
+                y1="170"
+                x2="170"
+                y2="170"
+                stroke="var(--color-ink)"
+                stroke-width="3"></line>
+
+              <!-- Prisma de Gradient Boosting (Triángulo) -->
+              <g transform="translate(170, 70)">
+                <polygon
+                  points="0,100 80,20 80,180"
+                  fill="var(--color-deep)"
+                  stroke="var(--color-accent)"
+                  stroke-width="2"></polygon>
+                <!-- Líneas internas de árboles de decisión -->
+                <line
+                  x1="20"
+                  y1="100"
+                  x2="60"
+                  y2="60"
+                  stroke="var(--color-secondary)"
+                  stroke-width="1.5"></line>
+                <line
+                  x1="20"
+                  y1="100"
+                  x2="60"
+                  y2="140"
+                  stroke="var(--color-secondary)"
+                  stroke-width="1.5"></line>
+                <text
+                  x="50"
+                  y="103"
+                  text-anchor="middle"
+                  font-size="9"
+                  font-family="monospace"
+                  fill="#ffffff"
+                  font-weight="bold">M0</text
+                >
+              </g>
+
+              <!-- Los 23 Cuantiles refractados como abanico de haces luminosos -->
+              <!-- Haces superiores (alerta alta 95% / 99%) -->
+              <line
+                x1="250"
+                y1="170"
+                x2="430"
+                y2="50"
+                stroke="#ff5a45"
+                stroke-width="2"></line>
+              <line
+                x1="250"
+                y1="170"
+                x2="430"
+                y2="70"
+                stroke="#ff5a45"
+                stroke-width="1.5"
+                stroke-dasharray="2 2"></line>
+              <text
+                x="440"
+                y="54"
+                font-size="9"
+                font-family="monospace"
+                font-weight="bold"
+                fill="#ff5a45">&tau;=0.975 (Cota 95%)</text
+              >
+
+              <!-- Haces centrales superiores (banda 50%) -->
+              <line
+                x1="250"
+                y1="170"
+                x2="430"
+                y2="105"
+                stroke="var(--color-estimacion)"
+                stroke-width="1.5"></line>
+              <line
+                x1="250"
+                y1="170"
+                x2="430"
+                y2="125"
+                stroke="var(--color-estimacion)"
+                stroke-width="1.5"></line>
+              <line
+                x1="250"
+                y1="170"
+                x2="430"
+                y2="145"
+                stroke="var(--color-estimacion)"
+                stroke-width="1.5"></line>
+              <text
+                x="440"
+                y="128"
+                font-size="9"
+                font-family="monospace"
+                fill="var(--color-estimacion)">&tau;=0.75 (Cota 50%)</text
+              >
+
+              <!-- MEDIANA DORADA CENTRAL -->
+              <line
+                x1="250"
+                y1="170"
+                x2="430"
+                y2="170"
+                stroke="var(--color-accent)"
+                stroke-width="3"></line>
+              <circle cx="430" cy="170" r="4" fill="var(--color-accent)"
+              ></circle>
+              <text
+                x="440"
+                y="174"
+                font-size="10"
+                font-family="monospace"
+                font-weight="bold"
+                fill="var(--color-accent)">&tau;=0.50 (Mediana)</text
+              >
+
+              <!-- Haces centrales inferiores (banda 50%) -->
+              <line
+                x1="250"
+                y1="170"
+                x2="430"
+                y2="195"
+                stroke="var(--color-estimacion)"
+                stroke-width="1.5"></line>
+              <line
+                x1="250"
+                y1="170"
+                x2="430"
+                y2="215"
+                stroke="var(--color-estimacion)"
+                stroke-width="1.5"></line>
+              <line
+                x1="250"
+                y1="170"
+                x2="430"
+                y2="235"
+                stroke="var(--color-estimacion)"
+                stroke-width="1.5"></line>
+              <text
+                x="440"
+                y="218"
+                font-size="9"
+                font-family="monospace"
+                fill="var(--color-estimacion)">&tau;=0.25 (Piso 50%)</text
+              >
+
+              <!-- Haces inferiores (piso 95% / 1%) -->
+              <line
+                x1="250"
+                y1="170"
+                x2="430"
+                y2="270"
+                stroke="#5b3fa8"
+                stroke-width="1.5"
+                stroke-dasharray="2 2"></line>
+              <line
+                x1="250"
+                y1="170"
+                x2="430"
+                y2="290"
+                stroke="#5b3fa8"
+                stroke-width="2"></line>
+              <text
+                x="440"
+                y="294"
+                font-size="9"
+                font-family="monospace"
+                font-weight="bold"
+                fill="#5b3fa8">&tau;=0.025 (Piso 95%)</text
+              >
+
+              <!-- Calibración Conformal CQR-r (Llave envolvente elástica) -->
+              <path
+                d="M 425 45 C 415 170, 415 170, 425 295"
+                fill="none"
+                stroke="var(--color-accent)"
+                stroke-width="1.5"
+                stroke-dasharray="3 3"></path>
+              <text
+                x="350"
+                y="325"
+                font-size="9"
+                font-family="monospace"
+                fill="var(--color-accent)">Ajuste CQR-r: &Delta;&tau;</text
+              >
+            </svg>
+          </div>
+
+          <div
+            class="p-3 bg-surface rounded-lg border border-border text-xs font-sans text-ink-muted flex items-center justify-between"
+          >
+            <span>Resolución de incertidumbre:</span>
+            <strong class="text-ink"
+              >23 estimadores independientes por horizonte</strong
+            >
+          </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- ANIMACIÓN 4: Ensamble y Mezclador 50/50 (Modelo C)                 -->
+        <!-- =================================================================== -->
+        <div class="escenario-panel space-y-4" data-escenario-panel="3">
+          <div
+            class="flex items-center justify-between text-xs font-mono text-ink-muted border-b border-border/60 pb-2"
+          >
+            <span>Fusión estocástica e inercial</span>
+            <span class="text-accent font-semibold"
+              >50% M0 + 50% Tendencia (&phi;=0.8)</span
+            >
+          </div>
+
+          <!-- SVG Visual interactivo: Mezclador de flujos del Modelo C -->
+          <div
+            class="relative w-full aspect-[4/3] max-h-[360px] flex items-center justify-center bg-surface rounded-xl border border-border/80 p-3 shadow-inner overflow-hidden"
+          >
+            <svg
+              viewBox="0 0 500 340"
+              class="w-full h-full"
+              aria-label="Diagrama del mezclador 50/50 del Modelo C"
+            >
+              <!-- Flujo Superior: M0 (Cuantiles estocásticos) -->
+              <g transform="translate(30, 40)">
+                <rect
+                  width="140"
+                  height="70"
+                  rx="10"
+                  fill="var(--color-surface)"
+                  stroke="var(--color-accent)"
+                  stroke-width="1.5"></rect>
+                <text
+                  x="70"
+                  y="25"
+                  text-anchor="middle"
+                  font-size="11"
+                  font-weight="bold"
+                  fill="var(--color-accent)">Núcleo M0</text
+                >
+                <text
+                  x="70"
+                  y="42"
+                  text-anchor="middle"
+                  font-size="9"
+                  fill="var(--color-ink-muted)">Gradient Boosting</text
+                >
+                <text
+                  x="70"
+                  y="58"
+                  text-anchor="middle"
+                  font-size="9"
+                  font-family="monospace"
+                  fill="var(--color-accent)">Ponderación: 50%</text
+                >
+              </g>
+
+              <!-- Flujo Inferior: Tendencia Amortiguada (Inercia analítica) -->
+              <g transform="translate(30, 210)">
+                <rect
+                  width="140"
+                  height="70"
+                  rx="10"
+                  fill="var(--color-surface)"
+                  stroke="var(--color-estimacion)"
+                  stroke-width="1.5"></rect>
+                <text
+                  x="70"
+                  y="25"
+                  text-anchor="middle"
+                  font-size="11"
+                  font-weight="bold"
+                  fill="var(--color-estimacion)">Tendencia &phi;=0.8</text
+                >
+                <text
+                  x="70"
+                  y="42"
+                  text-anchor="middle"
+                  font-size="9"
+                  fill="var(--color-ink-muted)">Inercia amortiguada</text
+                >
+                <text
+                  x="70"
+                  y="58"
+                  text-anchor="middle"
+                  font-size="9"
+                  font-family="monospace"
+                  fill="var(--color-estimacion)">Ponderación: 50%</text
+                >
+              </g>
+
+              <!-- Caudales convergiendo hacia el reactor central -->
+              <path
+                d="M 170 75 Q 260 75 260 135"
+                fill="none"
+                stroke="var(--color-accent)"
+                stroke-width="3"></path>
+              <path
+                d="M 170 245 Q 260 245 260 185"
+                fill="none"
+                stroke="var(--color-estimacion)"
+                stroke-width="3"></path>
+
+              <!-- Reactor de Ensamble Modelo C -->
+              <g transform="translate(220, 115)">
+                <rect
+                  width="110"
+                  height="90"
+                  rx="16"
+                  fill="var(--color-deep)"
+                  stroke="var(--color-secondary)"
+                  stroke-width="2"></rect>
+                <text
+                  x="55"
+                  y="32"
+                  text-anchor="middle"
+                  font-size="11"
+                  font-weight="bold"
+                  fill="#ffffff">MODELO C</text
+                >
+                <text
+                  x="55"
+                  y="52"
+                  text-anchor="middle"
+                  font-size="9"
+                  font-family="monospace"
+                  fill="var(--color-secondary)"
+                  >0.5&middot;M0 + 0.5&middot;&phi;</text
+                >
+                <text
+                  x="55"
+                  y="70"
+                  text-anchor="middle"
+                  font-size="8"
+                  fill="rgba(221,219,255,0.8)">Escala log1p</text
+                >
+              </g>
+
+              <!-- Canal de Salida hacia la serie suavizada -->
+              <line
+                x1="330"
+                y1="160"
+                x2="420"
+                y2="160"
+                stroke="var(--color-accent)"
+                stroke-width="3.5"></line>
+              <polygon
+                points="420,154 435,160 420,166"
+                fill="var(--color-accent)"></polygon>
+
+              <!-- Salida de Predicción Equilibrada -->
+              <g transform="translate(370, 190)">
+                <text
+                  x="50"
+                  y="0"
+                  text-anchor="middle"
+                  font-size="10"
+                  font-weight="bold"
+                  fill="var(--color-ink)">Señal híbrida</text
+                >
+                <text
+                  x="50"
+                  y="15"
+                  text-anchor="middle"
+                  font-size="8.5"
+                  fill="var(--color-ink-muted)">Resistente a saltos</text
+                >
+              </g>
+            </svg>
+          </div>
+
+          <div
+            class="p-3 bg-surface rounded-lg border border-border text-xs font-sans text-ink-muted"
+          >
+            <strong class="text-ink font-semibold">Ventaja del ensamble:</strong
+            > En 2025-2026 reduce el error frente a la persistencia en un 14% a 4
+            semanas, eliminando oscilaciones artificiales provocadas por el suavizado
+            del tablero oficial.
+          </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- ANIMACIÓN 5: El Abanico Predictivo a 8 Semanas (Fan Chart)          -->
+        <!-- =================================================================== -->
+        <div class="escenario-panel space-y-4" data-escenario-panel="4">
+          <div
+            class="flex items-center justify-between text-xs font-mono text-ink-muted border-b border-border/60 pb-2"
+          >
+            <span>Abanico probabilístico de 8 semanas</span>
+            <span class="text-accent font-semibold"
+              >Mediana · Banda 50% · Banda 95%</span
+            >
+          </div>
+
+          <!-- SVG Visual interactivo: Fan Chart -->
+          <div
+            class="relative w-full aspect-[4/3] max-h-[360px] flex items-center justify-center bg-surface rounded-xl border border-border/80 p-3 shadow-inner overflow-hidden"
+          >
+            <svg
+              viewBox="0 0 500 340"
+              class="w-full h-full"
+              aria-label="Gráfico de abanico predictivo con bandas de incertidumbre a 8 semanas"
+            >
+              <defs>
+                <linearGradient id="fan95" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stop-color="#1f5fb4" stop-opacity="0.1"
+                  ></stop>
+                  <stop offset="100%" stop-color="#1f5fb4" stop-opacity="0.25"
+                  ></stop>
+                </linearGradient>
+                <linearGradient id="fan50" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stop-color="#183e39" stop-opacity="0.2"
+                  ></stop>
+                  <stop offset="100%" stop-color="#183e39" stop-opacity="0.45"
+                  ></stop>
+                </linearGradient>
+              </defs>
+
+              <!-- Ejes y cuadrícula -->
+              <line
+                x1="50"
+                y1="280"
+                x2="470"
+                y2="280"
+                stroke="var(--color-border)"
+                stroke-width="1.5"></line>
+              <line
+                x1="50"
+                y1="40"
+                x2="50"
+                y2="280"
+                stroke="var(--color-border)"
+                stroke-width="1.5"></line>
+
+              <!-- Línea divisoria origen temporal (t) -->
+              <line
+                x1="200"
+                y1="35"
+                x2="200"
+                y2="280"
+                stroke="#ff5a45"
+                stroke-width="1.5"
+                stroke-dasharray="3 3"></line>
+              <text
+                x="200"
+                y="26"
+                text-anchor="middle"
+                font-size="9"
+                font-family="monospace"
+                font-weight="bold"
+                fill="#ff5a45">Origen t (última obs.)</text
+              >
+
+              <!-- Curva observada histórica reciente (izquierda) -->
+              <path
+                d="M 60 210 Q 95 195, 130 180 T 170 160 T 200 150"
+                fill="none"
+                stroke="var(--color-ink)"
+                stroke-width="2.5"></path>
+              <circle cx="200" cy="150" r="4.5" fill="var(--color-ink)"
+              ></circle>
+
+              <!-- Banda del 95% (Abanico amplio) -->
+              <path
+                d="M 200 150 Q 260 110, 330 80 T 460 50 L 460 250 Q 330 220, 260 190 T 200 150 Z"
+                fill="url(#fan95)"></path>
+
+              <!-- Banda del 50% (Núcleo denso de certeza) -->
+              <path
+                d="M 200 150 Q 260 125, 330 105 T 460 90 L 460 210 Q 330 195, 260 175 T 200 150 Z"
+                fill="url(#fan50)"></path>
+
+              <!-- Trayectoria central de la Mediana (Línea sólida dorada/acento) -->
+              <path
+                d="M 200 150 Q 260 135, 330 125 T 460 120"
+                fill="none"
+                stroke="var(--color-accent)"
+                stroke-width="3"></path>
+
+              <!-- Puntos de hitos: h=1, h=4 (1 mes), h=8 (2 meses) -->
+              <circle cx="232" cy="146" r="3.5" fill="var(--color-accent)"
+              ></circle>
+              <text
+                x="232"
+                y="136"
+                text-anchor="middle"
+                font-size="8"
+                font-family="monospace"
+                fill="var(--color-ink)">h=1</text
+              >
+
+              <circle cx="330" cy="125" r="4" fill="var(--color-accent)"
+              ></circle>
+              <text
+                x="330"
+                y="115"
+                text-anchor="middle"
+                font-size="8"
+                font-family="monospace"
+                font-weight="bold"
+                fill="var(--color-ink)">h=4 (1 mes)</text
+              >
+
+              <circle cx="460" cy="120" r="4.5" fill="var(--color-accent)"
+              ></circle>
+              <text
+                x="460"
+                y="110"
+                text-anchor="middle"
+                font-size="8"
+                font-family="monospace"
+                font-weight="bold"
+                fill="var(--color-ink)">h=8 (2 meses)</text
+              >
+
+              <!-- Leyenda en el gráfico -->
+              <g transform="translate(60, 50)">
+                <rect width="12" height="6" fill="url(#fan95)"></rect>
+                <text x="18" y="7" font-size="8" fill="var(--color-ink-muted)"
+                  >Banda 95%</text
+                >
+
+                <rect y="12" width="12" height="6" fill="url(#fan50)"></rect>
+                <text x="18" y="19" font-size="8" fill="var(--color-ink-muted)"
+                  >Banda 50%</text
+                >
+
+                <line
+                  y1="27"
+                  x2="12"
+                  y2="27"
+                  stroke="var(--color-accent)"
+                  stroke-width="2.5"></line>
+                <text
+                  x="18"
+                  y="30"
+                  font-size="8"
+                  font-weight="bold"
+                  fill="var(--color-accent)">Mediana</text
+                >
+              </g>
+            </svg>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2 text-center text-xs font-mono">
+            <div class="p-2 bg-surface rounded-lg border border-border">
+              <span class="text-ink-muted block text-[10px]">Semana 1</span>
+              <strong class="text-ink">78 [52 - 110]</strong>
+            </div>
+            <div class="p-2 bg-surface rounded-lg border border-border">
+              <span class="text-ink-muted block text-[10px]">Semana 4</span>
+              <strong class="text-accent">92 [48 - 165]</strong>
+            </div>
+            <div class="p-2 bg-surface rounded-lg border border-border">
+              <span class="text-ink-muted block text-[10px]">Semana 8</span>
+              <strong class="text-ink">105 [38 - 240]</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- ANIMACIÓN 6: Laboratorio y Simulador Reactivo en Tiempo Real        -->
+        <!-- =================================================================== -->
+        <div class="escenario-panel space-y-4" data-escenario-panel="5">
+          <div
+            class="flex items-center justify-between text-xs font-mono text-ink-muted border-b border-border/60 pb-2"
+          >
+            <span>Simulador en vivo del abanico</span>
+            <span class="text-accent font-semibold"
+              >Cálculo reactivo instantáneo</span
+            >
+          </div>
+
+          <!-- Controles de Simulación (Sliders) -->
+          <div
+            class="space-y-3.5 bg-surface p-4 rounded-xl border border-border text-xs font-sans"
+          >
+            <div>
+              <div class="flex justify-between items-center mb-1">
+                <label for="sim-casos" class="font-semibold text-ink"
+                  >Casos base semana t:</label
+                >
+                <span
+                  class="font-mono text-accent font-bold text-sm"
+                  data-sim-val-casos>85 casos</span
+                >
+              </div>
+              <input
+                id="sim-casos"
+                type="range"
+                min="15"
+                max="350"
+                step="5"
+                value="85"
+                class="w-full accent-accent cursor-pointer h-1.5 bg-bg rounded-lg"
+              />
+            </div>
+
+            <div>
+              <div class="flex justify-between items-center mb-1">
+                <label for="sim-tendencia" class="font-semibold text-ink"
+                  >Inercia reciente (&Delta; casos):</label
+                >
+                <span
+                  class="font-mono text-accent font-bold"
+                  data-sim-val-tendencia>+12% (crecimiento)</span
+                >
+              </div>
+              <input
+                id="sim-tendencia"
+                type="range"
+                min="-40"
+                max="60"
+                step="5"
+                value="12"
+                class="w-full accent-accent cursor-pointer h-1.5 bg-bg rounded-lg"
+              />
+            </div>
+
+            <div>
+              <div class="flex justify-between items-center mb-1">
+                <label for="sim-clima" class="font-semibold text-ink"
+                  >Idoneidad climática estacional:</label
+                >
+                <span class="font-mono text-accent font-bold" data-sim-val-clima
+                  >Media anual (Iv &approx; 0.45)</span
+                >
+              </div>
+              <input
+                id="sim-clima"
+                type="range"
+                min="0"
+                max="100"
+                step="10"
+                value="45"
+                class="w-full accent-accent cursor-pointer h-1.5 bg-bg rounded-lg"
+              />
+            </div>
+          </div>
+
+          <!-- Gráfico SVG Dinámico del Simulador -->
+          <div
+            class="relative w-full aspect-[4/2.5] max-h-[220px] flex items-center justify-center bg-surface rounded-xl border border-border/80 p-2 shadow-inner overflow-hidden"
+          >
+            <svg viewBox="0 0 460 200" class="w-full h-full" id="sim-svg-fan">
+              <!-- Grid -->
+              <line
+                x1="30"
+                y1="170"
+                x2="440"
+                y2="170"
+                stroke="var(--color-border)"
+                stroke-width="1"></line>
+              <line
+                x1="140"
+                y1="15"
+                x2="140"
+                y2="170"
+                stroke="#ff5a45"
+                stroke-width="1"
+                stroke-dasharray="2 2"></line>
+
+              <!-- Fan 95% Dinámico -->
+              <path
+                id="sim-path-95"
+                d="M 140 110 Q 250 80, 430 40 L 430 160 Q 250 140, 140 110 Z"
+                fill="#1f5fb4"
+                fill-opacity="0.18"></path>
+
+              <!-- Fan 50% Dinámico -->
+              <path
+                id="sim-path-50"
+                d="M 140 110 Q 250 95, 430 70 L 430 140 Q 250 125, 140 110 Z"
+                fill="#183e39"
+                fill-opacity="0.35"></path>
+
+              <!-- Mediana Dinámica -->
+              <path
+                id="sim-path-mediana"
+                d="M 140 110 Q 250 105, 430 100"
+                fill="none"
+                stroke="var(--color-accent)"
+                stroke-width="2.5"></path>
+
+              <!-- Histórico hasta t -->
+              <path
+                id="sim-path-hist"
+                d="M 40 130 Q 90 120, 140 110"
+                fill="none"
+                stroke="var(--color-ink)"
+                stroke-width="2"></path>
+              <circle
+                id="sim-circle-t"
+                cx="140"
+                cy="110"
+                r="3.5"
+                fill="var(--color-ink)"></circle>
+
+              <text
+                x="140"
+                y="12"
+                text-anchor="middle"
+                font-size="8"
+                font-family="monospace"
+                fill="#ff5a45">Origen t</text
+              >
+              <text
+                x="430"
+                y="12"
+                text-anchor="end"
+                font-size="8"
+                font-family="monospace"
+                fill="var(--color-accent)">h=8 sem.</text
+              >
+            </svg>
+          </div>
+
+          <!-- Métricas de Resultado Dinámicas -->
+          <div class="grid grid-cols-3 gap-2 text-center text-xs font-mono">
+            <div class="p-2 bg-surface rounded-lg border border-border">
+              <span class="text-ink-muted block text-[10px]">Semana 1</span>
+              <strong class="text-ink" id="sim-res-s1">88 [60-120]</strong>
+            </div>
+            <div class="p-2 bg-surface rounded-lg border border-border">
+              <span class="text-ink-muted block text-[10px]">Semana 4</span>
+              <strong class="text-accent" id="sim-res-s4">102 [54-180]</strong>
+            </div>
+            <div class="p-2 bg-surface rounded-lg border border-border">
+              <span class="text-ink-muted block text-[10px]">Semana 8</span>
+              <strong class="text-ink" id="sim-res-s8">118 [42-260]</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navegación auxiliar en el visor -->
+      <div
+        class="flex items-center justify-between pt-2 border-t border-border/80 text-xs font-sans"
+      >
+        <button
+          type="button"
+          data-btn-anterior
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-ink hover:border-accent hover:text-accent font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+        >
+          &larr; Etapa anterior
+        </button>
+        <span class="text-ink-muted font-mono text-[11px]" data-texto-progreso>
+          Scroll sincronizado
+        </span>
+        <button
+          type="button"
+          data-btn-siguiente
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent text-white hover:bg-accent/90 font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+        >
+          Siguiente etapa &rarr;
+        </button>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<!-- Script interactivo de Scrollytelling, Animaciones y Simulador -->
+<script>
+  import { animacionesActivas } from '../lib/animaciones';
+
+  const TITULOS_ETAPAS = [
+    '1. Insumos y fuentes territoriales',
+    '2. Transformación logarítmica y rezagos',
+    '3. Gradient Boosting y 23 cuantiles',
+    '4. Ensamble dinámico (Modelo C)',
+    '5. Abanico probabilístico (Fan Chart)',
+    '6. Simulador interactivo del abanico',
+  ];
+
+  function inicializarFichaPredictiva() {
+    const contenedor = document.querySelector<HTMLElement>(
+      '[data-ficha-predictiva]',
+    );
+    if (!contenedor) return;
+
+    const cards = Array.from(
+      contenedor.querySelectorAll<HTMLElement>('[data-paso-card]'),
+    );
+    const paneles = Array.from(
+      contenedor.querySelectorAll<HTMLElement>('[data-escenario-panel]'),
+    );
+    const botonesEtapa = Array.from(
+      contenedor.querySelectorAll<HTMLButtonElement>('[data-boton-etapa]'),
+    );
+    const barraProgreso = contenedor.querySelector<HTMLElement>(
+      '[data-barra-progreso]',
+    );
+    const indicadorContador = contenedor.querySelector<HTMLElement>(
+      '[data-indicador-contador]',
+    );
+    const tituloActivo = contenedor.querySelector<HTMLElement>(
+      '[data-titulo-etapa-activa]',
+    );
+    const btnAnt = contenedor.querySelector<HTMLButtonElement>(
+      '[data-btn-anterior]',
+    );
+    const btnSig = contenedor.querySelector<HTMLButtonElement>(
+      '[data-btn-siguiente]',
+    );
+
+    let etapaActual = 0;
+
+    function activarEtapa(idx: number, scroll = false) {
+      if (idx < 0 || idx >= TITULOS_ETAPAS.length) return;
+      etapaActual = idx;
+
+      // Actualizar paneles visibles
+      paneles.forEach((panel, i) => {
+        if (i === idx) {
+          panel.classList.add('active');
+          panel.style.display = 'block';
+        } else {
+          panel.classList.remove('active');
+          panel.style.display = 'none';
+        }
+      });
+
+      // Actualizar barra y textos
+      if (barraProgreso) {
+        barraProgreso.style.width = `${((idx + 1) / TITULOS_ETAPAS.length) * 100}%`;
+      }
+      if (indicadorContador) {
+        indicadorContador.textContent = `Etapa ${idx + 1} de ${TITULOS_ETAPAS.length}`;
+      }
+      if (tituloActivo) {
+        tituloActivo.textContent = TITULOS_ETAPAS[idx];
+      }
+
+      // Actualizar botones de etapa
+      botonesEtapa.forEach((btn, i) => {
+        const circulo = btn.querySelector('[data-nodo-circulo]');
+        if (i === idx) {
+          btn.className =
+            'flex flex-col items-center gap-1 transition-colors group cursor-pointer text-accent font-bold rounded px-1.5 py-0.5';
+          if (circulo) {
+            circulo.className =
+              'w-5 h-5 rounded-full border border-accent bg-accent text-white font-bold flex items-center justify-center text-[10px]';
+          }
+        } else {
+          btn.className =
+            'flex flex-col items-center gap-1 transition-colors group cursor-pointer text-ink-muted hover:text-ink rounded px-1.5 py-0.5';
+          if (circulo) {
+            circulo.className =
+              'w-5 h-5 rounded-full border border-border bg-bg group-hover:border-accent/40 flex items-center justify-center text-[10px] text-ink-muted';
+          }
+        }
+      });
+
+      // Actualizar estado de botones ant/sig
+      if (btnAnt) btnAnt.disabled = idx === 0;
+      if (btnSig) btnSig.disabled = idx === TITULOS_ETAPAS.length - 1;
+
+      // Resaltar tarjeta correspondiente en la columna izquierda
+      cards.forEach((card, i) => {
+        if (i === idx) {
+          card.classList.add('ring-2', 'ring-accent/40');
+        } else {
+          card.classList.remove('ring-2', 'ring-accent/40');
+        }
+      });
+
+      if (scroll && cards[idx]) {
+        cards[idx].scrollIntoView({
+          behavior: animacionesActivas() ? 'smooth' : 'auto',
+          block: 'center',
+        });
+      }
+    }
+
+    // Clicks en botones del stepper
+    botonesEtapa.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const idx = Number(btn.getAttribute('data-boton-etapa'));
+        activarEtapa(idx, true);
+      });
+    });
+
+    if (btnAnt) {
+      btnAnt.addEventListener('click', () => {
+        activarEtapa(etapaActual - 1, true);
+      });
+    }
+
+    if (btnSig) {
+      btnSig.addEventListener('click', () => {
+        activarEtapa(etapaActual + 1, true);
+      });
+    }
+
+    // IntersectionObserver para sincronizar el scroll de las tarjetas de la izquierda
+    if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              const idx = Number(entry.target.getAttribute('data-paso-card'));
+              activarEtapa(idx, false);
+            }
+          });
+        },
+        { rootMargin: '-20% 0px -50% 0px', threshold: 0.1 },
+      );
+
+      cards.forEach((card) => observer.observe(card));
+    }
+
+    // Inicializar primera etapa
+    activarEtapa(0);
+
+    // =========================================================================
+    // LÓGICA REACTIVA DEL SIMULADOR (ETAPA 6)
+    // =========================================================================
+    const sliderCasos =
+      contenedor.querySelector<HTMLInputElement>('#sim-casos');
+    const sliderTendencia =
+      contenedor.querySelector<HTMLInputElement>('#sim-tendencia');
+    const sliderClima =
+      contenedor.querySelector<HTMLInputElement>('#sim-clima');
+
+    const txtCasos = contenedor.querySelector<HTMLElement>(
+      '[data-sim-val-casos]',
+    );
+    const txtTendencia = contenedor.querySelector<HTMLElement>(
+      '[data-sim-val-tendencia]',
+    );
+    const txtClima = contenedor.querySelector<HTMLElement>(
+      '[data-sim-val-clima]',
+    );
+
+    const resS1 = contenedor.querySelector<HTMLElement>('#sim-res-s1');
+    const resS4 = contenedor.querySelector<HTMLElement>('#sim-res-s4');
+    const resS8 = contenedor.querySelector<HTMLElement>('#sim-res-s8');
+
+    const path95 = contenedor.querySelector<SVGPathElement>('#sim-path-95');
+    const path50 = contenedor.querySelector<SVGPathElement>('#sim-path-50');
+    const pathMediana =
+      contenedor.querySelector<SVGPathElement>('#sim-path-mediana');
+    const pathHist = contenedor.querySelector<SVGPathElement>('#sim-path-hist');
+    const circleT = contenedor.querySelector<SVGCircleElement>('#sim-circle-t');
+
+    function actualizarSimulador() {
+      if (!sliderCasos || !sliderTendencia || !sliderClima) return;
+
+      const y0 = Number(sliderCasos.value);
+      const impulso = Number(sliderTendencia.value); // en %
+      const climaIv = Number(sliderClima.value) / 100; // 0..1
+
+      if (txtCasos) txtCasos.textContent = `${y0} casos`;
+      if (txtTendencia) {
+        const signo = impulso > 0 ? '+' : '';
+        txtTendencia.textContent = `${signo}${impulso}% (${impulso > 10 ? 'expansión' : impulso < -10 ? 'descenso' : 'estable'})`;
+      }
+      if (txtClima) {
+        txtClima.textContent =
+          climaIv > 0.65
+            ? `Alta idoneidad (Iv=${climaIv.toFixed(2)})`
+            : climaIv < 0.3
+              ? `Época seca (Iv=${climaIv.toFixed(2)})`
+              : `Moderada (Iv=${climaIv.toFixed(2)})`;
+      }
+
+      // Proyección matemática basada en Modelo C:
+      // z0 = ln(1 + y0)
+      const z0 = Math.log(1 + y0);
+      const deltaZ = (impulso / 100) * 0.45; // pendiente equivalente
+      const phi = 0.8;
+
+      const predicciones: Array<{
+        h: number;
+        med: number;
+        b50Low: number;
+        b50High: number;
+        b95Low: number;
+        b95High: number;
+      }> = [];
+
+      for (let h = 1; h <= 8; h++) {
+        // Regla amortiguada: delta_h = phi^h * deltaZ
+        const acumTendencia = Math.pow(phi, h) * deltaZ * h * 0.7;
+        // Modulación climática
+        const modClima = (climaIv - 0.45) * 0.3 * (h / 8);
+        const zPred = z0 + acumTendencia + modClima;
+
+        // Dispersión sigma según horizonte h
+        const sigma = 0.18 + h * 0.045;
+        const med = Math.max(0, Math.round(Math.exp(zPred) - 1));
+        const b50Low = Math.max(
+          0,
+          Math.round(Math.exp(zPred - 0.674 * sigma) - 1),
+        );
+        const b50High = Math.max(
+          0,
+          Math.round(Math.exp(zPred + 0.674 * sigma) - 1),
+        );
+        const b95Low = Math.max(
+          0,
+          Math.round(Math.exp(zPred - 1.96 * sigma) - 1),
+        );
+        const b95High = Math.max(
+          0,
+          Math.round(Math.exp(zPred + 1.96 * sigma) - 1),
+        );
+
+        predicciones.push({ h, med, b50Low, b50High, b95Low, b95High });
+      }
+
+      // Actualizar tarjetas de texto de resultados
+      const p1 = predicciones[0];
+      const p4 = predicciones[3];
+      const p8 = predicciones[7];
+
+      if (resS1 && p1)
+        resS1.textContent = `${p1.med} [${p1.b95Low}-${p1.b95High}]`;
+      if (resS4 && p4)
+        resS4.textContent = `${p4.med} [${p4.b95Low}-${p4.b95High}]`;
+      if (resS8 && p8)
+        resS8.textContent = `${p8.med} [${p8.b95Low}-${p8.b95High}]`;
+
+      // Mapeo a coordenadas SVG (x: 140..430, y: 170 (piso 0) .. 25 (pico 450))
+      const yMaxRef = Math.max(300, (p8 ? p8.b95High : 200) * 1.15);
+      const mapearY = (val: number) => {
+        const norm = Math.min(1, Math.max(0, val / yMaxRef));
+        return 170 - norm * 145;
+      };
+
+      const yOrigin = mapearY(y0);
+      const yHistPrev = mapearY(Math.max(0, y0 * (1 - (impulso / 100) * 0.6)));
+
+      if (circleT) {
+        circleT.setAttribute('cy', yOrigin.toFixed(1));
+      }
+      if (pathHist) {
+        pathHist.setAttribute(
+          'd',
+          `M 40 ${mapearY(y0 * 0.85).toFixed(1)} Q 90 ${yHistPrev.toFixed(1)}, 140 ${yOrigin.toFixed(1)}`,
+        );
+      }
+
+      // Puntos del fan chart:
+      const yMed4 = mapearY(p4.med);
+      const yMed8 = mapearY(p8.med);
+      const y50Low8 = mapearY(p8.b50Low);
+      const y50High8 = mapearY(p8.b50High);
+      const y95Low8 = mapearY(p8.b95Low);
+      const y95High8 = mapearY(p8.b95High);
+
+      const y50Low4 = mapearY(p4.b50Low);
+      const y50High4 = mapearY(p4.b50High);
+      const y95Low4 = mapearY(p4.b95Low);
+      const y95High4 = mapearY(p4.b95High);
+
+      if (pathMediana) {
+        pathMediana.setAttribute(
+          'd',
+          `M 140 ${yOrigin.toFixed(1)} Q 260 ${yMed4.toFixed(1)}, 430 ${yMed8.toFixed(1)}`,
+        );
+      }
+      if (path50) {
+        path50.setAttribute(
+          'd',
+          `M 140 ${yOrigin.toFixed(1)} Q 260 ${y50High4.toFixed(1)}, 430 ${y50High8.toFixed(1)} L 430 ${y50Low8.toFixed(1)} Q 260 ${y50Low4.toFixed(1)}, 140 ${yOrigin.toFixed(1)} Z`,
+        );
+      }
+      if (path95) {
+        path95.setAttribute(
+          'd',
+          `M 140 ${yOrigin.toFixed(1)} Q 260 ${y95High4.toFixed(1)}, 430 ${y95High8.toFixed(1)} L 430 ${y95Low8.toFixed(1)} Q 260 ${y95Low4.toFixed(1)}, 140 ${yOrigin.toFixed(1)} Z`,
+        );
+      }
+    }
+
+    if (sliderCasos && sliderTendencia && sliderClima) {
+      sliderCasos.addEventListener('input', actualizarSimulador);
+      sliderTendencia.addEventListener('input', actualizarSimulador);
+      sliderClima.addEventListener('input', actualizarSimulador);
+      actualizarSimulador();
+    }
+  }
+
+  // Ejecutar al montar o al reingresar por ViewTransitions si aplican
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', inicializarFichaPredictiva);
+  } else {
+    inicializarFichaPredictiva();
+  }
+  document.addEventListener('astro:page-load', inicializarFichaPredictiva);
+</script>
+
+<style>
+  .escenario-panel {
+    display: none;
+    animation: fadeIn 0.35s ease-out both;
+  }
+  .escenario-panel.active {
+    display: block;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Respeto a usuarios con reducción de movimiento */
+  @media (prefers-reduced-motion: reduce) {
+    .escenario-panel {
+      animation: none !important;
+    }
+    circle animate,
+    circle animateTransform {
+      display: none !important;
+    }
+  }
+</style>

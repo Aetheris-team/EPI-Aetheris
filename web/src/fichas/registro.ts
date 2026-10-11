@@ -10,6 +10,7 @@ export interface MetadatosFicha {
   etiquetas: string[];
   descripcion: string;
   documentacion: { href: string; etiqueta: string };
+  disposicion?: 'centrada' | 'dividida';
 }
 
 export const FICHAS: MetadatosFicha[] = [
@@ -74,6 +75,27 @@ export const FICHAS: MetadatosFicha[] = [
       href: '/biblioteca/03-funciones#m4-integridad-de-la-vigilancia',
       etiqueta: 'Ver documentación de M4',
     },
+  },
+  {
+    slug: 'modelo-predictivo',
+    titulo: 'Modelo predictivo de dengue (Nowcast)',
+    subtitulo:
+      'Cómo los datos históricos de El Salvador, el clima departamental y 23 cuantiles de incertidumbre proyectan las próximas 8 semanas.',
+    etiquetas: [
+      'Nowcast',
+      'Gradient Boosting',
+      '23 cuantiles CDC/OPS',
+      'Calibración CQR-r',
+      'Regla de tendencia',
+      'Horizonte a 8 semanas',
+    ],
+    descripcion:
+      'Recorrido visual completo desde los insumos territoriales de El Salvador hasta el abanico probabilístico futuro. A la izquierda, formalidades, explicaciones detalladas y fórmulas matemáticas crudas; a la derecha, un escenario interactivo con barra de progreso y animaciones vívidas del flujo de variables y resultados.',
+    documentacion: {
+      href: '/biblioteca/05-sensibilidad-y-honestidad#predicción-de-casos-a-corto-plazo',
+      etiqueta: 'Ver documentación formal de la predicción',
+    },
+    disposicion: 'dividida',
   },
 ];
 

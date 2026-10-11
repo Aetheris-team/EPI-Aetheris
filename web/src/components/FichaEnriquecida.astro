@@ -23,6 +23,8 @@ interface Props {
   /** Fichas vecinas en el orden del registro, para pasar de una a otra. */
   anterior?: { href: string; titulo: string };
   siguiente?: { href: string; titulo: string };
+  /** 'centrada' (por omisión, max-w-5xl) o 'dividida' (ancho extendido, dos columnas). */
+  disposicion?: 'centrada' | 'dividida';
 }
 
 const {
@@ -33,13 +35,16 @@ const {
   documentacion,
   anterior,
   siguiente,
+  disposicion = 'centrada',
 } = Astro.props;
 ---
 
 <Layout title={`EPI-Aetheris — ${titulo}`} descripcion={descripcion}>
   <main
     id="contenido-principal"
-    class="mx-auto max-w-5xl px-4 py-8 sm:px-8 sm:py-10"
+    class={disposicion === 'dividida'
+      ? 'mx-auto max-w-[1680px] px-4 py-8 sm:px-6 lg:px-8'
+      : 'mx-auto max-w-5xl px-4 py-8 sm:px-8 sm:py-10'}
   >
     <a
       href="/biblioteca"
@@ -48,39 +53,15 @@ const {
       <span aria-hidden="true">←</span> Volver a la biblioteca
     </a>
 
-    <article class="ficha" data-ficha>
-      <header class="ficha-cabecera">
-        <div class="ficha-cabecera-texto">
-          <h1 class="ficha-titulo">{titulo}</h1>
-          <p class="ficha-subtitulo">{subtitulo}</p>
-        </div>
-        <ul class="ficha-etiquetas" aria-label="Etiquetas">
-          {etiquetas.map((etiqueta) => <li>{etiqueta}</li>)}
-        </ul>
-      </header>
-
-      <div class="ficha-cuerpo">
-        <p class="ficha-descripcion">{descripcion}</p>
-
-        <div class="ficha-hilo" data-ficha-hilo>
-          <div class="ficha-hilo-linea" aria-hidden="true">
-            <div class="ficha-hilo-relleno"></div>
-          </div>
+    {
+      disposicion === 'dividida' ? (
+        <div class="ficha-dividida-layout" data-ficha-dividida>
           <slot />
-        </div>
-
-        <aside class="ficha-pie" aria-label="Documentación relacionada">
-          <p>
-            Esta ficha explica el cálculo con ejemplos. La descripción formal,
-            con todas las constantes y los límites, está en el documento del
-            módulo.
-          </p>
-          <a href={documentacion.href}>{documentacion.etiqueta}</a>
-        </aside>
-
-        {
-          (anterior || siguiente) && (
-            <nav class="ficha-vecinas" aria-label="Otras fichas">
+          {(anterior || siguiente) && (
+            <nav
+              class="ficha-vecinas mt-12 pt-6 border-t border-border"
+              aria-label="Otras fichas"
+            >
               {anterior && (
                 <a href={anterior.href} rel="prev">
                   <span aria-hidden="true">←</span> {anterior.titulo}
@@ -92,10 +73,59 @@ const {
                 </a>
               )}
             </nav>
-          )
-        }
-      </div>
-    </article>
+          )}
+        </div>
+      ) : (
+        <article class="ficha" data-ficha>
+          <header class="ficha-cabecera">
+            <div class="ficha-cabecera-texto">
+              <h1 class="ficha-titulo">{titulo}</h1>
+              <p class="ficha-subtitulo">{subtitulo}</p>
+            </div>
+            <ul class="ficha-etiquetas" aria-label="Etiquetas">
+              {etiquetas.map((etiqueta) => (
+                <li>{etiqueta}</li>
+              ))}
+            </ul>
+          </header>
+
+          <div class="ficha-cuerpo">
+            <p class="ficha-descripcion">{descripcion}</p>
+
+            <div class="ficha-hilo" data-ficha-hilo>
+              <div class="ficha-hilo-linea" aria-hidden="true">
+                <div class="ficha-hilo-relleno" />
+              </div>
+              <slot />
+            </div>
+
+            <aside class="ficha-pie" aria-label="Documentación relacionada">
+              <p>
+                Esta ficha explica el cálculo con ejemplos. La descripción
+                formal, con todas las constantes y los límites, está en el
+                documento del módulo.
+              </p>
+              <a href={documentacion.href}>{documentacion.etiqueta}</a>
+            </aside>
+
+            {(anterior || siguiente) && (
+              <nav class="ficha-vecinas" aria-label="Otras fichas">
+                {anterior && (
+                  <a href={anterior.href} rel="prev">
+                    <span aria-hidden="true">←</span> {anterior.titulo}
+                  </a>
+                )}
+                {siguiente && (
+                  <a href={siguiente.href} rel="next" class="ficha-siguiente">
+                    {siguiente.titulo} <span aria-hidden="true">→</span>
+                  </a>
+                )}
+              </nav>
+            )}
+          </div>
+        </article>
+      )
+    }
   </main>
 </Layout>
 
@@ -243,10 +273,13 @@ const {
   }
   .ficha-hilo-relleno {
     width: 100%;
-    height: calc(var(--progreso) * 100%);
+    height: 100%;
     background: var(--color-termino);
-    transition: height 0.12s linear;
+    transform-origin: top;
+    transform: scaleY(var(--progreso, 1));
+    transition: transform 0.12s linear;
   }
+
   .paso {
     position: relative;
     padding: 0 0 2.75rem 3.25rem;

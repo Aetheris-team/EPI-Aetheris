@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import NavSecciones from '../components/NavSecciones.astro';
 import PanelNowcastDengue from '../components/nowcast/PanelNowcastDengue.astro';
 import ContrasteNowcastDengue from '../components/nowcast/ContrasteNowcastDengue.astro';
 import MetricasModelo from '../components/MetricasModelo.astro';
@@ -27,33 +28,136 @@ import { RUTA_SENSIBILIDAD } from '../lib/enlaces';
   <main
     id="contenido-principal"
     data-pagina-prediccion
-    class="mx-auto max-w-[1100px] px-4 py-8 sm:px-8 sm:py-10 lg:px-12"
+    class="mx-auto max-w-[1600px] px-4 py-8 sm:px-8 sm:py-10 lg:px-12"
   >
-    <h1 class="font-display text-2xl font-semibold text-ink sm:text-3xl">
-      Predicción de dengue a corto plazo
-    </h1>
-    <p
-      class="mt-3 max-w-[70ch] font-sans text-sm leading-relaxed text-ink-muted"
+    <header
+      class="mb-8 grid grid-cols-1 items-start gap-6 lg:grid-cols-12"
+      data-cabecera-prediccion
     >
-      Conteo nacional de casos para las próximas 1 a 8 semanas. Para explorar
-      los casos por departamento está el <a
-        href="/dengue"
-        class="font-medium text-accent underline underline-offset-2"
-        >análisis de dengue</a
-      >. El método y sus límites están en la <a
-        href={`${RUTA_SENSIBILIDAD}#predicción-de-casos-a-corto-plazo`}
-        class="font-medium text-accent underline underline-offset-2"
-        >Biblioteca</a
-      >.
-    </p>
+      <div class="lg:col-span-8">
+        <div
+          class="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 font-sans text-xs font-semibold text-accent"
+        >
+          <span class="h-2 w-2 rounded-full bg-accent" aria-hidden="true"
+          ></span>
+          <span>Modelo predictivo Nowcast CQR-r · MINSAL</span>
+        </div>
+        <h1
+          class="mt-3 font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl"
+        >
+          Predicción de dengue a corto plazo
+        </h1>
+        <p
+          class="mt-3 max-w-3xl font-sans text-sm leading-relaxed text-ink-muted sm:text-base"
+        >
+          Conteo nacional de casos para las próximas 1 a 8 semanas con bandas de
+          incertidumbre (50 % y 95 %) a partir de la última semana observada.
+          Para explorar los casos por departamento está el{' '}
+          <a
+            href="/dengue"
+            class="font-medium text-accent underline underline-offset-4 transition-colors hover:text-accent/80"
+            >análisis de dengue</a
+          >. El método y sus límites están en la{' '}
+          <a
+            href={`${RUTA_SENSIBILIDAD}#predicción-de-casos-a-corto-plazo`}
+            class="font-medium text-accent underline underline-offset-4 transition-colors hover:text-accent/80"
+            >Biblioteca técnica</a
+          >.
+        </p>
+        <div class="mt-4 flex flex-wrap items-center gap-4 font-sans text-sm">
+          <a
+            href="/dengue"
+            class="inline-flex items-center gap-1.5 font-medium text-accent underline underline-offset-4 transition-colors hover:text-accent/80"
+          >
+            <span>← Volver al análisis departamental</span>
+          </a>
+          <a
+            href="/alertas?tipo=dengue"
+            class="inline-flex items-center gap-1.5 font-medium text-ink-muted underline underline-offset-4 transition-colors hover:text-ink"
+          >
+            <span>Consultar alertas de dengue activas</span>
+          </a>
+        </div>
+      </div>
 
-    <div class="mt-6" data-bloque-prediccion>
+      <div
+        class="flex flex-col gap-3 rounded-2xl border border-border bg-surface/60 p-4 shadow-2xs backdrop-blur-xs lg:col-span-4"
+      >
+        <div
+          class="flex items-center justify-between border-b border-border/60 pb-2.5"
+        >
+          <span
+            class="font-sans text-xs font-semibold uppercase tracking-wider text-ink-muted"
+          >
+            Especificación del modelo
+          </span>
+          <span
+            class="inline-flex items-center gap-1 font-mono text-[11px] text-accent"
+          >
+            <span
+              class="h-1.5 w-1.5 animate-pulse rounded-full bg-accent"
+              aria-hidden="true"></span>
+            En producción
+          </span>
+        </div>
+        <dl class="grid grid-cols-2 gap-2 font-sans text-xs">
+          <div class="rounded-lg border border-border/40 bg-bg/80 p-2">
+            <dt class="text-[11px] text-ink-muted">Horizonte</dt>
+            <dd class="mt-0.5 font-mono text-sm font-semibold text-ink">
+              1 a 8 semanas
+            </dd>
+          </div>
+          <div class="rounded-lg border border-border/40 bg-bg/80 p-2">
+            <dt class="text-[11px] text-ink-muted">Incertidumbre</dt>
+            <dd class="mt-0.5 font-mono text-sm font-semibold text-ink">
+              50 % y 95 %
+            </dd>
+          </div>
+          <div class="rounded-lg border border-border/40 bg-bg/80 p-2">
+            <dt class="text-[11px] text-ink-muted">Método central</dt>
+            <dd class="mt-0.5 font-mono text-sm font-semibold text-ink">
+              CQR-r + mezcla
+            </dd>
+          </div>
+          <div class="rounded-lg border border-border/40 bg-bg/80 p-2">
+            <dt class="text-[11px] text-ink-muted">Referencia</dt>
+            <dd class="mt-0.5 font-mono text-sm font-semibold text-ink">
+              Persistencia
+            </dd>
+          </div>
+        </dl>
+      </div>
+    </header>
+
+    <NavSecciones
+      class="mb-6"
+      etiqueta="Secciones de la predicción"
+      enlaces={[
+        { href: '#prediccion-activa', etiqueta: 'Estimación hacia adelante' },
+        { href: '#contraste', etiqueta: 'Contraste retrospectivo' },
+        { href: '#clasificador', etiqueta: 'Clasificador histórico' },
+      ]}
+    />
+
+    <div
+      id="prediccion-activa"
+      class="mt-6 scroll-mt-[calc(var(--alto-header)+1rem)]"
+      data-bloque-prediccion
+    >
       <PanelNowcastDengue variante="completo" />
     </div>
-    <div class="mt-6" data-bloque-contraste>
+    <div
+      id="contraste"
+      class="mt-8 scroll-mt-[calc(var(--alto-header)+1rem)]"
+      data-bloque-contraste
+    >
       <ContrasteNowcastDengue />
     </div>
-    <div class="mt-6" data-bloque-clasificador>
+    <div
+      id="clasificador"
+      class="mt-8 scroll-mt-[calc(var(--alto-header)+1rem)]"
+      data-bloque-clasificador
+    >
       <MetricasModelo />
     </div>
   </main>
@@ -74,8 +178,8 @@ import { RUTA_SENSIBILIDAD } from '../lib/enlaces';
     flex-direction: column;
     justify-content: center;
   }
-  html.demo-presentacion body > main > h1,
-  html.demo-presentacion body > main > p,
+  html.demo-presentacion [data-cabecera-prediccion],
+  html.demo-presentacion body > main > nav,
   html.demo-presentacion [data-bloque-contraste],
   html.demo-presentacion [data-bloque-clasificador] {
     display: none !important;

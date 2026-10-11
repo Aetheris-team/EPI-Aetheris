@@ -17,6 +17,7 @@ import {
 } from '../lib/integridad';
 import CuadriculaDepartamentos from './CuadriculaDepartamentos.astro';
 import MapaDepartamentoFicha from './MapaDepartamentoFicha.astro';
+import SelectorSemanaEpi from './SelectorSemanaEpi.astro';
 import '../styles/laboratorio.css';
 
 const CODIGO_INICIAL = 'SV-SS';
@@ -59,9 +60,17 @@ const ESTADOS: EstadoIntegridad[] = ['sin_dato', 'presente', 'no_cuadra'];
         </select>
       </label>
 
-      <div class="lab-par">
-        <label class="lab-numero">
-          <span>Semana</span>
+      <div class="flex flex-col gap-2">
+        <label class="lab-numero flex flex-col gap-1">
+          <span>Semana epidemiológica</span>
+          <SelectorSemanaEpi
+            id="lab-integridad-selector-semana"
+            semana={30}
+            anio={2023}
+            mostrarRangoFechas={true}
+            etiqueta="Semana epidemiológica evaluada"
+            class="w-full"
+          />
           <input
             type="number"
             min="1"
@@ -69,6 +78,7 @@ const ESTADOS: EstadoIntegridad[] = ['sin_dato', 'presente', 'no_cuadra'];
             step="1"
             value="30"
             data-lab-semana
+            class="sr-only"
           />
         </label>
         <label class="lab-campo">

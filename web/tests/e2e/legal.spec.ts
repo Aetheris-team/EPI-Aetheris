@@ -82,7 +82,68 @@ test('la política de privacidad nombra las transferencias reales a terceros', a
   // la delate. Si alguien reescribe la política, esto lo frena.
   await expect(documento).toContainText('OpenStreetMap');
   await expect(documento).toContainText('Render');
-  await expect(documento).toContainText('no usa cookies');
+  await expect(documento).toContainText('no recibe cookies');
+});
+
+test('la política de privacidad declara los datos y los encargados de las cuentas', async ({
+  page,
+}) => {
+  await page.goto('/legal/privacidad');
+  const documento = page.locator('.doc-texto');
+  // Con cuentas hay más encargados que Render y OSM, y una cookie de sesión.
+  // Si alguien quita un proveedor del texto sin quitarlo del sistema, esto lo
+  // frena. Las cuentas se describen aunque estén apagadas: la política es la
+  // condición para la primera invitación (ADR 0024).
+  await expect(documento).toContainText('Resend');
+  await expect(documento).toContainText('Cloudflare');
+  await expect(documento).toContainText('Have I Been Pwned');
+  await expect(documento).toContainText('__Host-epi_sid');
+  await expect(documento).toContainText('72 horas');
+  await expect(documento).toContainText('Agencia de Ciberseguridad del Estado');
+});
+
+test('la política y los términos no dejan marcadores pendientes a la vista', async ({
+  page,
+}) => {
+  // Los marcadores «PENDIENTE_…» señalan datos que solo el responsable puede
+  // dar. Con el plazo de las copias ya decidido no queda ninguno: si vuelve a
+  // aparecer uno, este test falla antes de publicar.
+  for (const ruta of ['/legal/privacidad', '/legal/terminos']) {
+    await page.goto(ruta);
+    await expect(page.locator('.doc-texto')).not.toContainText('PENDIENTE_');
+  }
+});
+
+test('los términos fijan los deberes de quien publica con una cuenta', async ({
+  page,
+}) => {
+  await page.goto('/legal/terminos');
+  await page.getByRole('button', { name: 'Expandir todo' }).click();
+  const documento = page.locator('.doc-texto');
+  await expect(
+    documento.getByRole('heading', {
+      level: 2,
+      name: /Deberes de quien publica/,
+    }),
+  ).toBeVisible();
+  await expect(documento).toContainText('Sin datos personales de pacientes');
+  await expect(documento).toContainText('Firma con nombre e institución');
+  await expect(documento).toContainText('ese motivo es público');
+  await expect(
+    documento.getByRole('link', { name: 'aviso de sensibilidad' }).first(),
+  ).toHaveAttribute('href', '/biblioteca/05-sensibilidad-y-honestidad');
+});
+
+test('los términos y el aviso legal no presentan violaciones automáticas WCAG A o AA', async ({
+  page,
+}) => {
+  for (const ruta of ['/legal/terminos', '/legal/aviso-legal', '/legal']) {
+    await page.goto(ruta);
+    const resultados = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .analyze();
+    expect(resultados.violations, ruta).toEqual([]);
+  }
 });
 
 test('la 404 mantiene la navegación y sale del índice', async ({ page }) => {
@@ -171,6 +232,7 @@ test('la documentación no usa la etiqueta code en el texto', async ({
     '/biblioteca/03-funciones',
     '/biblioteca/04-fuentes-de-datos',
     '/legal/privacidad',
+    '/legal/terminos',
   ]) {
     await page.goto(ruta);
     await expect(page.locator('.doc-texto :not(pre) > code')).toHaveCount(0);

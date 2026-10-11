@@ -1,0 +1,313 @@
+---
+import CuentaPagina from '../../components/CuentaPagina.astro';
+import {
+  CLASE_AYUDA,
+  CLASE_BOTON_PRINCIPAL,
+  CLASE_CAMPO,
+  CLASE_ENLACE,
+  CLASE_ETIQUETA,
+  CLASE_TARJETA,
+} from '../../lib/cuenta-estilos';
+---
+
+<CuentaPagina
+  titulo="Aceptar invitación"
+  descripcion="Crea tu cuenta de EPI-Aetheris. El siguiente paso es registrar cómo verificarás tu identidad al ingresar."
+>
+  <div data-pagina-aceptar aria-busy="true">
+    <section data-estado="cargando" class={CLASE_TARJETA}>
+      <p role="status" class={CLASE_AYUDA}>Comprobando la invitación…</p>
+    </section>
+
+    <section data-estado="invalida" hidden class={CLASE_TARJETA}>
+      <h2 class="font-sans text-lg font-bold text-ink">
+        La invitación no es válida
+      </h2>
+      <p
+        data-motivo
+        class="mt-2 font-sans text-sm leading-relaxed text-ink-muted"
+      >
+      </p>
+      <p class="mt-3 font-sans text-sm leading-relaxed text-ink-muted">
+        Pide a quien te invitó que envíe una invitación nueva.
+      </p>
+    </section>
+
+    <section data-estado="formulario" hidden class="flex flex-col gap-6">
+      <div class={CLASE_TARJETA}>
+        <h2 class="font-sans text-lg font-bold text-ink">Tu invitación</h2>
+        <dl
+          class="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 font-sans text-sm"
+        >
+          <dt class="text-ink-muted">Correo</dt>
+          <dd data-dato="correo" class="break-all text-ink"></dd>
+          <dt class="text-ink-muted">Rol</dt>
+          <dd data-dato="roles" class="text-ink"></dd>
+          <dt class="text-ink-muted">Institución</dt>
+          <dd data-dato="institucion" class="text-ink"></dd>
+        </dl>
+      </div>
+
+      <form
+        data-form-aceptar
+        class={`${CLASE_TARJETA} flex flex-col gap-4`}
+        novalidate
+      >
+        <label class="flex flex-col gap-1.5">
+          <span class={CLASE_ETIQUETA}>Nombre</span>
+          <input
+            type="text"
+            name="nombre"
+            autocomplete="name"
+            required
+            maxlength="120"
+            class={CLASE_CAMPO}
+          />
+        </label>
+        <label class="flex flex-col gap-1.5">
+          <span class={CLASE_ETIQUETA}>Cargo (opcional)</span>
+          <input
+            type="text"
+            name="cargo"
+            autocomplete="organization-title"
+            maxlength="120"
+            class={CLASE_CAMPO}
+          />
+        </label>
+        <label class="flex flex-col gap-1.5">
+          <span class={CLASE_ETIQUETA}>Contraseña</span>
+          <input
+            type="password"
+            name="contrasena"
+            autocomplete="new-password"
+            required
+            maxlength="256"
+            aria-describedby="requisitos-contrasena"
+            class={CLASE_CAMPO}
+          />
+        </label>
+        <label class="flex flex-col gap-1.5">
+          <span class={CLASE_ETIQUETA}>Repite la contraseña</span>
+          <input
+            type="password"
+            name="repetir"
+            autocomplete="new-password"
+            required
+            maxlength="256"
+            class={CLASE_CAMPO}
+          />
+        </label>
+        <div>
+          <p class={CLASE_ETIQUETA} id="titulo-requisitos">
+            Requisitos de la contraseña
+          </p>
+          <ul
+            id="requisitos-contrasena"
+            data-requisitos
+            aria-labelledby="titulo-requisitos"
+            class="mt-1 space-y-0.5 font-sans text-xs"
+          >
+          </ul>
+        </div>
+        <label class="flex items-center gap-2 font-sans text-sm text-ink">
+          <input
+            type="checkbox"
+            data-mostrar
+            class="h-4 w-4 accent-[var(--color-accent)]"
+          />
+          <span>Mostrar contraseña</span>
+        </label>
+        <label class="flex items-start gap-2 font-sans text-sm text-ink">
+          <input
+            type="checkbox"
+            name="terminos"
+            required
+            class="mt-0.5 h-4 w-4 accent-[var(--color-accent)]"
+          />
+          <span>
+            Acepto los <a href="/legal/terminos" class={CLASE_ENLACE}
+              >términos de uso</a
+            > y la <a href="/legal/privacidad" class={CLASE_ENLACE}
+              >política de privacidad</a
+            > (versión <span data-version></span>).
+          </span>
+        </label>
+        <label class="flex items-start gap-2 font-sans text-sm text-ink">
+          <input
+            type="checkbox"
+            name="firma"
+            required
+            class="mt-0.5 h-4 w-4 accent-[var(--color-accent)]"
+          />
+          <span>
+            Acepto que lo que publique lleve mi nombre y mi institución a la
+            vista de cualquier persona, y que esa firma se conserve aunque
+            después me dé de baja.
+          </span>
+        </label>
+        <label class="flex items-start gap-2 font-sans text-sm text-ink">
+          <input
+            type="checkbox"
+            name="transferencia"
+            required
+            class="mt-0.5 h-4 w-4 accent-[var(--color-accent)]"
+          />
+          <span>
+            Acepto que mis datos de cuenta se traten en servidores y servicios
+            de correo ubicados en Estados Unidos, como describe la <a
+              href="/legal/privacidad"
+              class={CLASE_ENLACE}>política de privacidad</a
+            >.
+          </span>
+        </label>
+        <div data-aviso tabindex="-1" hidden></div>
+        <div>
+          <button type="submit" class={CLASE_BOTON_PRINCIPAL}
+            >Crear cuenta y continuar</button
+          >
+        </div>
+      </form>
+    </section>
+  </div>
+</CuentaPagina>
+
+<script>
+  import {
+    ErrorCuenta,
+    aceptarInvitacion,
+    verInvitacion,
+  } from '../../lib/cuenta-api';
+  import { contrasenaCumple } from '../../lib/contrasena-requisitos';
+  import {
+    conCarga,
+    etiquetaRol,
+    leerTokenDelFragmento,
+    limpiarAviso,
+    mensajeDeError,
+    mostrarAviso,
+    pedirElemento,
+    vincularMostrarContrasena,
+    vincularRequisitos,
+  } from '../../lib/cuenta-ui';
+  import { fijarSesion } from '../../lib/sesion-state';
+  import type { InvitacionVista } from '../../lib/tipos-cuenta';
+
+  const raiz = document.querySelector<HTMLElement>('[data-pagina-aceptar]');
+  if (raiz) void iniciar(raiz);
+
+  function estado(raiz: HTMLElement, nombre: string): void {
+    for (const seccion of raiz.querySelectorAll<HTMLElement>('[data-estado]')) {
+      seccion.hidden = seccion.dataset.estado !== nombre;
+    }
+    raiz.removeAttribute('aria-busy');
+  }
+
+  function invalida(raiz: HTMLElement, motivo: string): void {
+    pedirElemento<HTMLElement>(raiz, '[data-motivo]').textContent = motivo;
+    estado(raiz, 'invalida');
+  }
+
+  async function iniciar(raiz: HTMLElement): Promise<void> {
+    // El token se lee una sola vez y se borra de la barra de direcciones.
+    const token = leerTokenDelFragmento();
+    if (!token) {
+      invalida(
+        raiz,
+        'El enlace está incompleto. Ábrelo de nuevo desde el correo.',
+      );
+      return;
+    }
+
+    let invitacion: InvitacionVista;
+    try {
+      invitacion = await verInvitacion(token);
+    } catch (error) {
+      invalida(
+        raiz,
+        error instanceof ErrorCuenta && error.status === 410
+          ? error.message
+          : mensajeDeError(error),
+      );
+      return;
+    }
+
+    pedirElemento(raiz, '[data-dato="correo"]').textContent = invitacion.correo;
+    pedirElemento(raiz, '[data-dato="roles"]').textContent = invitacion.roles
+      .map(etiquetaRol)
+      .join(', ');
+    pedirElemento(raiz, '[data-dato="institucion"]').textContent =
+      invitacion.institucion ?? 'Sin institución asignada';
+    pedirElemento(raiz, '[data-version]').textContent =
+      invitacion.terminos_version;
+    estado(raiz, 'formulario');
+
+    const form = pedirElemento<HTMLFormElement>(raiz, '[data-form-aceptar]');
+    const nombre = pedirElemento<HTMLInputElement>(form, '[name="nombre"]');
+    const cargo = pedirElemento<HTMLInputElement>(form, '[name="cargo"]');
+    const contrasena = pedirElemento<HTMLInputElement>(
+      form,
+      '[name="contrasena"]',
+    );
+    const repetir = pedirElemento<HTMLInputElement>(form, '[name="repetir"]');
+    const terminos = pedirElemento<HTMLInputElement>(form, '[name="terminos"]');
+    const firma = pedirElemento<HTMLInputElement>(form, '[name="firma"]');
+    const transferencia = pedirElemento<HTMLInputElement>(
+      form,
+      '[name="transferencia"]',
+    );
+    const aviso = pedirElemento<HTMLElement>(form, '[data-aviso]');
+    const datos = () => ({ nombre: nombre.value, correo: invitacion.correo });
+
+    vincularRequisitos(
+      contrasena,
+      pedirElemento(form, '[data-requisitos]'),
+      datos,
+    );
+    vincularMostrarContrasena(pedirElemento(form, '[data-mostrar]'), [
+      contrasena,
+      repetir,
+    ]);
+
+    form.addEventListener('submit', (evento) => {
+      evento.preventDefault();
+      limpiarAviso(aviso);
+      const faltante = !nombre.value.trim()
+        ? 'Escribe tu nombre.'
+        : !contrasenaCumple(contrasena.value, datos())
+          ? 'La contraseña no cumple los requisitos.'
+          : contrasena.value !== repetir.value
+            ? 'Las contraseñas no coinciden.'
+            : !terminos.checked
+              ? 'Para continuar hay que aceptar los términos de uso y la política de privacidad.'
+              : !firma.checked
+                ? 'Para continuar hay que aceptar la firma pública de lo que publiques.'
+                : !transferencia.checked
+                  ? 'Para continuar hay que aceptar el tratamiento de tus datos en Estados Unidos.'
+                  : null;
+      if (faltante) {
+        mostrarAviso(aviso, 'error', faltante);
+        return;
+      }
+      const boton = pedirElemento<HTMLButtonElement>(form, '[type="submit"]');
+      void conCarga(boton, async () => {
+        try {
+          const sesion = await aceptarInvitacion({
+            token,
+            nombre_visible: nombre.value.trim(),
+            cargo: cargo.value.trim() || null,
+            contrasena: contrasena.value,
+            terminos_version: invitacion.terminos_version,
+          });
+          fijarSesion(sesion);
+          location.assign('/cuenta/alta');
+        } catch (error) {
+          if (error instanceof ErrorCuenta && error.status === 410) {
+            invalida(raiz, error.message);
+            return;
+          }
+          mostrarAviso(aviso, 'error', mensajeDeError(error));
+        }
+      });
+    });
+  }
+</script>

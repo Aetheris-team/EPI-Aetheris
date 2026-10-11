@@ -22,6 +22,9 @@ import type {
 } from './tipos-analisis';
 
 const API_BASE = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8000';
+/** Archivos completos de clima y dengue, enlazados desde el menú «Exportar». */
+export const URL_CLIMA_POR_ANIO = `${API_BASE}/api/clima-dengue/por-anio`;
+export const URL_CLIMA_MULTIPAIS = `${API_BASE}/api/clima-dengue/multipais`;
 const cachePorAnio = new Map<
   AnioAnalisisDengue,
   Promise<DatasetAnaliticoDengue>
@@ -456,7 +459,7 @@ export function obtenerClimaDengueAnio(): Promise<
 > {
   if (!cacheClimaDengueAnio) {
     cacheClimaDengueAnio = registrarPeticion(
-      fetch(`${API_BASE}/api/clima-dengue/por-anio`)
+      fetch(URL_CLIMA_POR_ANIO)
         .then(async (respuesta) => {
           if (!respuesta.ok) {
             throw new Error(
@@ -495,7 +498,7 @@ export function obtenerClimaDengueMultipais(): Promise<
 > {
   if (!cacheClimaDengueMultipais) {
     cacheClimaDengueMultipais = registrarPeticion(
-      fetch(`${API_BASE}/api/clima-dengue/multipais`)
+      fetch(URL_CLIMA_MULTIPAIS)
         .then(async (respuesta) => {
           if (!respuesta.ok) {
             throw new Error(

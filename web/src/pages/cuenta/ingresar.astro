@@ -1,0 +1,391 @@
+---
+import CuentaPagina from '../../components/CuentaPagina.astro';
+import {
+  CLASE_AYUDA,
+  CLASE_BOTON_PRINCIPAL,
+  CLASE_BOTON_SECUNDARIO,
+  CLASE_CAMPO,
+  CLASE_ENLACE,
+  CLASE_ETIQUETA,
+  CLASE_TARJETA,
+} from '../../lib/cuenta-estilos';
+---
+
+<CuentaPagina
+  titulo="Ingresar"
+  descripcion="Acceso para personas con cuenta de EPI-Aetheris. Las cuentas se crean solo por invitación."
+>
+  <div data-pagina-ingresar aria-busy="true">
+    <section data-paso="clave" hidden class={CLASE_TARJETA}>
+      <form data-form-clave class="flex flex-col gap-4" novalidate>
+        <label class="flex flex-col gap-1.5">
+          <span class={CLASE_ETIQUETA}>Correo</span>
+          <input
+            type="email"
+            name="correo"
+            autocomplete="username"
+            required
+            maxlength="254"
+            class={CLASE_CAMPO}
+          />
+        </label>
+        <label class="flex flex-col gap-1.5">
+          <span class={CLASE_ETIQUETA}>Contraseña</span>
+          <input
+            type="password"
+            name="contrasena"
+            autocomplete="current-password"
+            required
+            maxlength="256"
+            class={CLASE_CAMPO}
+          />
+        </label>
+        <div data-aviso tabindex="-1" hidden></div>
+        <div class="flex flex-wrap items-center gap-4">
+          <button type="submit" class={CLASE_BOTON_PRINCIPAL}>Continuar</button>
+          <a href="/cuenta/olvide" class={`${CLASE_ENLACE} text-sm`}
+            >¿Olvidaste tu contraseña?</a
+          >
+        </div>
+      </form>
+    </section>
+
+    <section
+      data-paso="segundo-factor"
+      hidden
+      aria-labelledby="titulo-segundo-factor"
+      class={`${CLASE_TARJETA} flex flex-col gap-6`}
+    >
+      <div>
+        <h2
+          id="titulo-segundo-factor"
+          tabindex="-1"
+          class="font-sans text-lg font-bold text-ink focus:outline-hidden"
+        >
+          Verificación en dos pasos
+        </h2>
+        <p class={`mt-1 ${CLASE_AYUDA}`}>
+          Confirma que eres tú con el segundo factor de tu cuenta.
+        </p>
+      </div>
+
+      <div data-aviso-factor tabindex="-1" hidden></div>
+
+      <form data-form-totp class="flex flex-col gap-3" hidden novalidate>
+        <label class="flex flex-col gap-1.5">
+          <span class={CLASE_ETIQUETA}>Código de tu aplicación</span>
+          <input
+            type="text"
+            name="codigo"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            maxlength="9"
+            required
+            aria-describedby="ayuda-totp"
+            class={`${CLASE_CAMPO} font-mono tracking-widest`}
+          />
+          <span id="ayuda-totp" class={CLASE_AYUDA}>
+            Seis dígitos. Cambian cada 30 segundos.
+          </span>
+        </label>
+        <div>
+          <button type="submit" class={CLASE_BOTON_PRINCIPAL}>Verificar</button>
+        </div>
+      </form>
+
+      <div data-bloque-llave hidden class="flex flex-col gap-2">
+        <p class={CLASE_ETIQUETA}>Llave de acceso</p>
+        <p class={CLASE_AYUDA}>
+          Usa la huella, el rostro, el PIN o la llave física que registraste.
+        </p>
+        <div>
+          <button type="button" data-boton-llave class={CLASE_BOTON_SECUNDARIO}
+            >Usar mi llave de acceso</button
+          >
+        </div>
+      </div>
+
+      <details class="rounded-xl border border-border p-4">
+        <summary class="cursor-pointer font-sans text-sm font-semibold text-ink"
+          >Usar un código de recuperación</summary
+        >
+        <form
+          data-form-recuperacion
+          class="mt-4 flex flex-col gap-3"
+          novalidate
+        >
+          <label class="flex flex-col gap-1.5">
+            <span class={CLASE_ETIQUETA}>Código de recuperación</span>
+            <input
+              type="text"
+              name="codigo"
+              autocomplete="off"
+              autocapitalize="characters"
+              maxlength="32"
+              required
+              aria-describedby="ayuda-recuperacion"
+              class={`${CLASE_CAMPO} font-mono tracking-wider`}
+            />
+            <span id="ayuda-recuperacion" class={CLASE_AYUDA}>
+              Cada código sirve una sola vez. Se enviará un aviso a tu correo.
+            </span>
+          </label>
+          <div>
+            <button type="submit" class={CLASE_BOTON_SECUNDARIO}
+              >Verificar código</button
+            >
+          </div>
+        </form>
+      </details>
+
+      <p class={CLASE_AYUDA}>
+        <a href="/cuenta/ingresar" data-reiniciar class={CLASE_ENLACE}
+          >Empezar de nuevo con otra cuenta</a
+        >
+      </p>
+    </section>
+
+    <section data-paso="ya-ingreso" hidden class={CLASE_TARJETA}>
+      <p class="font-sans text-sm text-ink">Ya tienes una sesión abierta.</p>
+      <p class="mt-3">
+        <a href="/cuenta" class={CLASE_ENLACE}>Ir a mi cuenta</a>
+      </p>
+    </section>
+
+    <section data-paso="error-red" hidden></section>
+  </div>
+</CuentaPagina>
+
+<script>
+  import {
+    ErrorCuenta,
+    ingresar,
+    ingresarConLlave,
+    ingresarConRecuperacion,
+    ingresarConTotp,
+    opcionesLlaveIngreso,
+    salir,
+  } from '../../lib/cuenta-api';
+  import {
+    conCarga,
+    limpiarAviso,
+    mensajeDeError,
+    mostrarAviso,
+    pedirElemento,
+    rutaSiguiente,
+  } from '../../lib/cuenta-ui';
+  import {
+    cargarSesion,
+    fijarSesion,
+    olvidarSesion,
+  } from '../../lib/sesion-state';
+  import type { SesionActiva } from '../../lib/tipos-cuenta';
+  import { renderErrorFuente } from '../../components/estado-async';
+  import { soportaLlaves, usarLlave } from '../../lib/webauthn-cliente';
+
+  const raiz = document.querySelector<HTMLElement>('[data-pagina-ingresar]');
+  if (raiz) void iniciar(raiz);
+
+  function paso(raiz: HTMLElement, nombre: string): void {
+    for (const seccion of raiz.querySelectorAll<HTMLElement>('[data-paso]')) {
+      seccion.hidden = seccion.dataset.paso !== nombre;
+    }
+  }
+
+  async function iniciar(raiz: HTMLElement): Promise<void> {
+    const formClave = pedirElemento<HTMLFormElement>(raiz, '[data-form-clave]');
+    const avisoClave = pedirElemento<HTMLElement>(formClave, '[data-aviso]');
+
+    const mostrarSegundoFactor = (sesion: SesionActiva): void => {
+      paso(raiz, 'segundo-factor');
+      const tieneTotp = sesion.factores.some((f) => f.tipo === 'totp');
+      const tieneLlave = sesion.factores.some((f) => f.tipo === 'webauthn');
+      pedirElemento<HTMLElement>(raiz, '[data-form-totp]').hidden = !tieneTotp;
+      const bloqueLlave = pedirElemento<HTMLElement>(
+        raiz,
+        '[data-bloque-llave]',
+      );
+      bloqueLlave.hidden = !tieneLlave;
+      const botonLlave = pedirElemento<HTMLButtonElement>(
+        raiz,
+        '[data-boton-llave]',
+      );
+      if (tieneLlave && !soportaLlaves()) {
+        botonLlave.disabled = true;
+        const aviso = pedirElemento<HTMLElement>(raiz, '[data-aviso-factor]');
+        mostrarAviso(
+          aviso,
+          'info',
+          'Este navegador no admite llaves de acceso. Usa el código de tu aplicación o un código de recuperación.',
+        );
+      }
+      pedirElemento<HTMLElement>(raiz, '#titulo-segundo-factor').focus();
+    };
+
+    const avanzar = (sesion: SesionActiva): void => {
+      fijarSesion(sesion);
+      if (sesion.nivel === 'segundo_factor') mostrarSegundoFactor(sesion);
+      else if (sesion.nivel === 'alta_pendiente')
+        location.assign('/cuenta/alta');
+      else location.assign(rutaSiguiente());
+    };
+
+    // Primer paso.
+    formClave.addEventListener('submit', (evento) => {
+      evento.preventDefault();
+      const boton = pedirElemento<HTMLButtonElement>(
+        formClave,
+        '[type="submit"]',
+      );
+      const correo = pedirElemento<HTMLInputElement>(
+        formClave,
+        '[name="correo"]',
+      );
+      const contrasena = pedirElemento<HTMLInputElement>(
+        formClave,
+        '[name="contrasena"]',
+      );
+      if (!correo.value.trim() || !contrasena.value) {
+        mostrarAviso(avisoClave, 'error', 'Escribe tu correo y tu contraseña.');
+        return;
+      }
+      limpiarAviso(avisoClave);
+      void conCarga(boton, async () => {
+        try {
+          const sesion = await ingresar(correo.value.trim(), contrasena.value);
+          contrasena.value = '';
+          avanzar(sesion);
+        } catch (error) {
+          mostrarAviso(avisoClave, 'error', mensajeDeError(error));
+        }
+      });
+    });
+
+    // Segundo paso: código de la aplicación.
+    const formTotp = pedirElemento<HTMLFormElement>(raiz, '[data-form-totp]');
+    const avisoFactor = pedirElemento<HTMLElement>(raiz, '[data-aviso-factor]');
+    formTotp.addEventListener('submit', (evento) => {
+      evento.preventDefault();
+      const codigo = pedirElemento<HTMLInputElement>(
+        formTotp,
+        '[name="codigo"]',
+      );
+      const boton = pedirElemento<HTMLButtonElement>(
+        formTotp,
+        '[type="submit"]',
+      );
+      if (!codigo.value.trim()) {
+        mostrarAviso(
+          avisoFactor,
+          'error',
+          'Escribe el código de seis dígitos.',
+        );
+        return;
+      }
+      limpiarAviso(avisoFactor);
+      void conCarga(boton, async () => {
+        try {
+          avanzar(await ingresarConTotp(codigo.value));
+        } catch (error) {
+          codigo.select();
+          mostrarAviso(avisoFactor, 'error', mensajeDeError(error));
+        }
+      });
+    });
+
+    // Segundo paso: código de recuperación.
+    const formRecuperacion = pedirElemento<HTMLFormElement>(
+      raiz,
+      '[data-form-recuperacion]',
+    );
+    formRecuperacion.addEventListener('submit', (evento) => {
+      evento.preventDefault();
+      const codigo = pedirElemento<HTMLInputElement>(
+        formRecuperacion,
+        '[name="codigo"]',
+      );
+      const boton = pedirElemento<HTMLButtonElement>(
+        formRecuperacion,
+        '[type="submit"]',
+      );
+      if (!codigo.value.trim()) {
+        mostrarAviso(
+          avisoFactor,
+          'error',
+          'Escribe un código de recuperación.',
+        );
+        return;
+      }
+      limpiarAviso(avisoFactor);
+      void conCarga(boton, async () => {
+        try {
+          avanzar(await ingresarConRecuperacion(codigo.value));
+        } catch (error) {
+          codigo.select();
+          mostrarAviso(avisoFactor, 'error', mensajeDeError(error));
+        }
+      });
+    });
+
+    // Segundo paso: llave de acceso.
+    const botonLlave = pedirElemento<HTMLButtonElement>(
+      raiz,
+      '[data-boton-llave]',
+    );
+    botonLlave.addEventListener('click', () => {
+      limpiarAviso(avisoFactor);
+      void conCarga(botonLlave, async () => {
+        try {
+          const credencial = await usarLlave(await opcionesLlaveIngreso());
+          avanzar(await ingresarConLlave(credencial));
+        } catch (error) {
+          mostrarAviso(avisoFactor, 'error', mensajeDeError(error));
+        }
+      });
+    });
+
+    // Quien quiere probar con otra cuenta cierra la sesión intermedia.
+    pedirElemento<HTMLAnchorElement>(raiz, '[data-reiniciar]').addEventListener(
+      'click',
+      (evento) => {
+        evento.preventDefault();
+        void salir()
+          .catch(() => undefined)
+          .finally(() => {
+            olvidarSesion();
+            location.assign('/cuenta/ingresar');
+          });
+      },
+    );
+
+    // Estado inicial: una recarga a mitad del ingreso retoma el segundo paso.
+    const cargar = async (): Promise<void> => {
+      raiz.setAttribute('aria-busy', 'true');
+      try {
+        const sesion = await cargarSesion(true);
+        if (!sesion.autenticada) paso(raiz, 'clave');
+        else if (sesion.nivel === 'segundo_factor')
+          mostrarSegundoFactor(sesion);
+        else if (sesion.nivel === 'alta_pendiente')
+          location.assign('/cuenta/alta');
+        else paso(raiz, 'ya-ingreso');
+      } catch (error) {
+        // Sin conexión o sin cuentas en el servidor: el formulario sigue
+        // disponible y el error aparece al enviarlo.
+        if (error instanceof ErrorCuenta && error.status === 0) {
+          paso(raiz, 'error-red');
+          renderErrorFuente(
+            pedirElemento<HTMLElement>(raiz, '[data-paso="error-red"]'),
+            () => void cargar(),
+            error.message,
+          );
+        } else {
+          paso(raiz, 'clave');
+        }
+      } finally {
+        raiz.removeAttribute('aria-busy');
+      }
+    };
+    await cargar();
+  }
+</script>

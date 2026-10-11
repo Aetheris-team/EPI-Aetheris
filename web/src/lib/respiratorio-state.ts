@@ -96,6 +96,20 @@ export function aplicarFiltrosAParametros(
   poner('toWeek', String(filtros.semanaHasta), String(pred.semanaHasta));
 }
 
+/** True si entre dos estados cambió solo el departamento seleccionado. */
+export function soloCambiaDepartamento(
+  anterior: FiltrosRespiratorio | null,
+  actual: FiltrosRespiratorio,
+): boolean {
+  if (!anterior || anterior.departamento === actual.departamento) {
+    return false;
+  }
+  return (
+    JSON.stringify({ ...anterior, departamento: '' }) ===
+    JSON.stringify({ ...actual, departamento: '' })
+  );
+}
+
 export function filtrosRespiratorioIguales(
   a: FiltrosRespiratorio,
   b: FiltrosRespiratorio,

@@ -1,5 +1,6 @@
 ---
 import AyudaTermino from './AyudaTermino.astro';
+import SelectorSemanaEpi from './SelectorSemanaEpi.astro';
 import { aniosClimaPresentacion } from '../lib/tipos-analisis';
 ---
 
@@ -88,13 +89,29 @@ import { aniosClimaPresentacion } from '../lib/tipos-analisis';
               </select>
             </label>
 
-            <label
+            <div
               class="flex flex-col gap-2 rounded-xl border border-border bg-bg p-3 font-sans text-xs font-medium text-ink-muted md:col-span-6"
             >
-              Semana activa: <output
-                id="analisis-semana-valor"
-                class="font-sans tabular-nums text-ink">SE01</output
-              >
+              <div class="flex items-center justify-between gap-2">
+                <span>Semana activa:</span>
+                <output
+                  id="analisis-semana-valor"
+                  class="font-sans tabular-nums text-ink font-semibold"
+                  >SE01</output
+                >
+              </div>
+
+              <!-- Selector en calendario epidemiológico -->
+              <SelectorSemanaEpi
+                id="filtros-selector-semana"
+                sincronizarAnalisis={true}
+                mostrarRangoFechas={true}
+                class="w-full"
+              />
+
+              <label class="sr-only" for="analisis-semana">
+                Deslizador de semana epidemiológica activa
+              </label>
               <input
                 id="analisis-semana"
                 type="range"
@@ -104,21 +121,35 @@ import { aniosClimaPresentacion } from '../lib/tipos-analisis';
                 aria-valuetext="Semana epidemiológica 1"
                 class="w-full accent-accent"
               />
-            </label>
+            </div>
 
             <fieldset
-              class="grid grid-cols-2 gap-3 rounded-xl border border-border bg-bg p-3 md:col-span-12"
+              class="grid grid-cols-1 md:grid-cols-2 gap-3 rounded-xl border border-border bg-bg p-3 md:col-span-12"
             >
               <legend class="px-1 font-sans text-xs font-medium text-ink-muted">
                 Rango de comparación
               </legend>
-              <label
-                class="flex flex-col gap-1 font-sans text-xs font-medium text-ink-muted"
+              <div
+                class="flex flex-col gap-2 font-sans text-xs font-medium text-ink-muted"
               >
-                Desde: <output
-                  id="analisis-desde-valor"
-                  class="font-sans tabular-nums text-ink">SE01</output
-                >
+                <div class="flex items-center justify-between">
+                  <span>Desde:</span>
+                  <output
+                    id="analisis-desde-valor"
+                    class="font-sans tabular-nums text-ink font-semibold"
+                    >SE01</output
+                  >
+                </div>
+                <SelectorSemanaEpi
+                  id="filtros-selector-desde"
+                  semana={1}
+                  mostrarRangoFechas={true}
+                  etiqueta="Semana inicial de comparación"
+                  class="w-full"
+                />
+                <label class="sr-only" for="analisis-desde">
+                  Deslizador semana inicial de comparación
+                </label>
                 <input
                   id="analisis-desde"
                   type="range"
@@ -128,14 +159,28 @@ import { aniosClimaPresentacion } from '../lib/tipos-analisis';
                   aria-valuetext="Semana epidemiológica 1"
                   class="w-full accent-accent"
                 />
-              </label>
-              <label
-                class="flex flex-col gap-1 font-sans text-xs font-medium text-ink-muted"
+              </div>
+              <div
+                class="flex flex-col gap-2 font-sans text-xs font-medium text-ink-muted"
               >
-                Hasta: <output
-                  id="analisis-hasta-valor"
-                  class="font-sans tabular-nums text-ink">SE53</output
-                >
+                <div class="flex items-center justify-between">
+                  <span>Hasta:</span>
+                  <output
+                    id="analisis-hasta-valor"
+                    class="font-sans tabular-nums text-ink font-semibold"
+                    >SE53</output
+                  >
+                </div>
+                <SelectorSemanaEpi
+                  id="filtros-selector-hasta"
+                  semana={53}
+                  mostrarRangoFechas={true}
+                  etiqueta="Semana final de comparación"
+                  class="w-full"
+                />
+                <label class="sr-only" for="analisis-hasta">
+                  Deslizador semana final de comparación
+                </label>
                 <input
                   id="analisis-hasta"
                   type="range"
@@ -145,7 +190,7 @@ import { aniosClimaPresentacion } from '../lib/tipos-analisis';
                   aria-valuetext="Semana epidemiológica 53"
                   class="w-full accent-accent"
                 />
-              </label>
+              </div>
             </fieldset>
           </div>
         </fieldset>
@@ -336,6 +381,9 @@ import { aniosClimaPresentacion } from '../lib/tipos-analisis';
     'analisis-limpiar-filtros',
   ) as HTMLButtonElement | null;
 
+  const selectorDesde = document.getElementById('filtros-selector-desde');
+  const selectorHasta = document.getElementById('filtros-selector-hasta');
+
   const etiquetaSemana = (valor: number) =>
     `SE${String(valor).padStart(2, '0')}`;
   let cargaActual = 0;
@@ -384,6 +432,16 @@ import { aniosClimaPresentacion } from '../lib/tipos-analisis';
     if (semanaValor) semanaValor.value = etiquetaSemana(filtros.semana);
     if (desdeValor) desdeValor.value = etiquetaSemana(filtros.semanaDesde);
     if (hastaValor) hastaValor.value = etiquetaSemana(filtros.semanaHasta);
+    selectorDesde?.dispatchEvent(
+      new CustomEvent('ajustar-semana', {
+        detail: { anio: filtros.anio, semana: filtros.semanaDesde },
+      }),
+    );
+    selectorHasta?.dispatchEvent(
+      new CustomEvent('ajustar-semana', {
+        detail: { anio: filtros.anio, semana: filtros.semanaHasta },
+      }),
+    );
     if (semana)
       semana.setAttribute(
         'aria-valuetext',
@@ -479,6 +537,16 @@ import { aniosClimaPresentacion } from '../lib/tipos-analisis';
   hasta?.addEventListener('input', () =>
     actualizarFiltrosAnalisis({ semanaHasta: Number(hasta.value) }),
   );
+  selectorDesde?.addEventListener('cambio-semana', ((
+    ev: CustomEvent<{ semana: number }>,
+  ) => {
+    actualizarFiltrosAnalisis({ semanaDesde: ev.detail.semana });
+  }) as EventListener);
+  selectorHasta?.addEventListener('cambio-semana', ((
+    ev: CustomEvent<{ semana: number }>,
+  ) => {
+    actualizarFiltrosAnalisis({ semanaHasta: ev.detail.semana });
+  }) as EventListener);
   document
     .querySelectorAll<HTMLInputElement>('input[name="analisis-serie"]')
     .forEach((radio) => {

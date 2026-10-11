@@ -2,6 +2,7 @@
 import { DESCRIPCIONES_PRESETS } from '../../lib/analisis-layout-state';
 import { aniosClimaPresentacion } from '../../lib/tipos-analisis';
 import BarraActividad from '../BarraActividad.astro';
+import SelectorSemanaEpi from '../SelectorSemanaEpi.astro';
 ---
 
 <div
@@ -11,13 +12,16 @@ import BarraActividad from '../BarraActividad.astro';
   <section
     id="toolbar-analisis"
     aria-label="Controles del workspace analítico"
-    class="relative overflow-hidden rounded-2xl border border-border bg-surface/95 p-3 shadow-sm backdrop-blur sm:p-4"
+    class="relative rounded-2xl border border-border bg-surface/95 p-3 shadow-sm backdrop-blur sm:p-4"
   >
-    <BarraActividad
-      id="toolbar-actividad-barra"
-      class="absolute inset-x-0 top-0"
-      etiqueta="Actualizando datos del análisis…"
-    />
+    <div
+      class="pointer-events-none absolute inset-x-0 top-0 overflow-hidden rounded-t-2xl"
+    >
+      <BarraActividad
+        id="toolbar-actividad-barra"
+        etiqueta="Actualizando datos del análisis…"
+      />
+    </div>
     <div
       class="flex flex-col gap-2.5 2xl:flex-row 2xl:items-center 2xl:justify-between 2xl:gap-4"
     >
@@ -294,14 +298,14 @@ import BarraActividad from '../BarraActividad.astro';
               1x
             </button>
 
-            <!-- Badge de semana activa -->
-            <span
-              id="analisis-reproductor-badge"
-              class="inline-flex min-h-[44px] items-center rounded-lg border border-accent/30 bg-accent/10 px-3 py-1.5 font-mono text-xs font-bold text-accent"
-              aria-hidden="true"
-            >
-              SE01
-            </span>
+            <!-- Selector interactivo de semana epidemiológica (calendario y reproductor) -->
+            <SelectorSemanaEpi
+              id="toolbar-selector-semana"
+              badgeId="analisis-reproductor-badge"
+              sincronizarAnalisis={true}
+              mostrarRangoFechas={true}
+              etiqueta="Semana epidemiológica activa"
+            />
           </div>
 
           <!-- Pista temporal -->

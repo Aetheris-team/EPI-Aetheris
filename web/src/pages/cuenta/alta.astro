@@ -1,0 +1,457 @@
+---
+import CuentaPagina from '../../components/CuentaPagina.astro';
+import {
+  CLASE_AYUDA,
+  CLASE_BOTON_PRINCIPAL,
+  CLASE_BOTON_SECUNDARIO,
+  CLASE_CAMPO,
+  CLASE_ETIQUETA,
+  CLASE_TARJETA,
+} from '../../lib/cuenta-estilos';
+---
+
+<CuentaPagina
+  titulo="Protege tu cuenta"
+  descripcion="Registra cómo verificarás tu identidad cada vez que ingreses."
+  ancho="max-w-2xl"
+>
+  <div data-pagina-alta aria-busy="true" class="flex flex-col gap-6">
+    <p data-cargando role="status" class={CLASE_AYUDA}>Cargando…</p>
+
+    <div data-contenido hidden class="flex flex-col gap-6">
+      <p
+        data-requisito-admin
+        hidden
+        class={`${CLASE_TARJETA} font-sans text-sm leading-relaxed text-ink`}
+      >
+        Tu rol de administrador exige una llave de acceso (huella, rostro, PIN
+        del dispositivo o llave física). La aplicación de autenticación es
+        opcional y se suma a la llave.
+      </p>
+
+      <section
+        aria-labelledby="titulo-factores"
+        class={`${CLASE_TARJETA} flex flex-col gap-3`}
+      >
+        <h2 id="titulo-factores" class="font-sans text-lg font-bold text-ink">
+          Factores registrados
+        </h2>
+        <p data-sin-factores class={CLASE_AYUDA}>
+          Todavía no has registrado ninguno.
+        </p>
+        <ul data-lista-factores class="space-y-1 font-sans text-sm text-ink">
+        </ul>
+      </section>
+
+      <div data-bloque-registro class="flex flex-col gap-6">
+        <section
+          aria-labelledby="titulo-totp"
+          class={`${CLASE_TARJETA} flex flex-col gap-4`}
+        >
+          <div>
+            <h2 id="titulo-totp" class="font-sans text-lg font-bold text-ink">
+              Aplicación de autenticación
+            </h2>
+            <p class={`mt-1 ${CLASE_AYUDA}`}>
+              Funciona con cualquier aplicación que genere códigos de seis
+              dígitos (TOTP).
+            </p>
+          </div>
+          <div>
+            <button
+              type="button"
+              data-iniciar-totp
+              class={CLASE_BOTON_SECUNDARIO}>Configurar aplicación</button
+            >
+          </div>
+          <div data-totp-config hidden class="flex flex-col gap-4">
+            <p class="font-sans text-sm leading-relaxed text-ink">
+              Escanea el código QR con tu aplicación o escribe la clave a mano.
+            </p>
+            <div
+              data-qr
+              class="flex h-48 w-48 items-center justify-center rounded-xl border border-border bg-white p-2"
+            >
+            </div>
+            <p class="font-sans text-sm text-ink">
+              Clave para escribir a mano:
+              <span
+                data-secreto
+                class="select-all break-all font-mono text-sm font-semibold tracking-wider"
+              ></span>
+            </p>
+            <form data-form-totp class="flex flex-col gap-3" novalidate>
+              <label class="flex flex-col gap-1.5">
+                <span class={CLASE_ETIQUETA}>Código de seis dígitos</span>
+                <input
+                  type="text"
+                  name="codigo"
+                  inputmode="numeric"
+                  autocomplete="one-time-code"
+                  maxlength="9"
+                  required
+                  class={`${CLASE_CAMPO} max-w-48 font-mono tracking-widest`}
+                />
+              </label>
+              <div>
+                <button type="submit" class={CLASE_BOTON_PRINCIPAL}
+                  >Confirmar aplicación</button
+                >
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <section
+          aria-labelledby="titulo-llave"
+          class={`${CLASE_TARJETA} flex flex-col gap-4`}
+        >
+          <div>
+            <h2 id="titulo-llave" class="font-sans text-lg font-bold text-ink">
+              Llave de acceso
+            </h2>
+            <p class={`mt-1 ${CLASE_AYUDA}`}>
+              Usa la huella, el rostro o el PIN de este dispositivo, o una llave
+              física.
+            </p>
+          </div>
+          <p data-sin-soporte hidden class={CLASE_AYUDA}></p>
+          <form data-form-llave class="flex flex-col gap-3" novalidate>
+            <label class="flex flex-col gap-1.5">
+              <span class={CLASE_ETIQUETA}>Nombre de la llave (opcional)</span>
+              <input
+                type="text"
+                name="etiqueta"
+                maxlength="60"
+                placeholder="Por ejemplo, Llave del portátil"
+                class={`${CLASE_CAMPO} max-w-xs`}
+              />
+            </label>
+            <div>
+              <button type="submit" class={CLASE_BOTON_SECUNDARIO}
+                >Registrar llave de acceso</button
+              >
+            </div>
+          </form>
+        </section>
+      </div>
+
+      <div data-aviso tabindex="-1" hidden></div>
+
+      <section
+        data-bloque-codigos
+        hidden
+        aria-labelledby="titulo-codigos"
+        class={`${CLASE_TARJETA} flex flex-col gap-4`}
+      >
+        <div>
+          <h2
+            id="titulo-codigos"
+            tabindex="-1"
+            class="font-sans text-lg font-bold text-ink focus:outline-hidden"
+          >
+            Códigos de recuperación
+          </h2>
+          <p class="mt-1 font-sans text-sm leading-relaxed text-ink">
+            Guárdalos ahora. Esta es la única vez que se muestran. Cada código
+            sirve una vez y reemplaza a tu segundo factor si pierdes el
+            dispositivo.
+          </p>
+        </div>
+        <ol
+          data-codigos
+          class="grid grid-cols-1 gap-x-8 gap-y-1 font-mono text-sm tracking-wider text-ink sm:grid-cols-2"
+        >
+        </ol>
+        <div class="flex flex-wrap gap-3">
+          <button type="button" data-copiar class={CLASE_BOTON_SECUNDARIO}
+            >Copiar códigos</button
+          >
+          <button type="button" data-descargar class={CLASE_BOTON_SECUNDARIO}
+            >Descargar como texto</button
+          >
+        </div>
+        <p data-estado-copia role="status" class={CLASE_AYUDA}></p>
+        <label class="flex items-start gap-2 font-sans text-sm text-ink">
+          <input
+            type="checkbox"
+            data-guardados
+            class="mt-0.5 h-4 w-4 accent-[var(--color-accent)]"
+          />
+          <span>Guardé los códigos en un lugar seguro.</span>
+        </label>
+      </section>
+
+      <div data-bloque-terminar hidden>
+        <button
+          type="button"
+          data-terminar
+          disabled
+          class={CLASE_BOTON_PRINCIPAL}>Terminar y entrar a mi cuenta</button
+        >
+      </div>
+    </div>
+  </div>
+</CuentaPagina>
+
+<script>
+  import {
+    completarAlta,
+    confirmarTotp,
+    iniciarTotp,
+    opcionesLlaveRegistro,
+    registrarLlave,
+  } from '../../lib/cuenta-api';
+  import {
+    conCarga,
+    limpiarAviso,
+    mensajeDeError,
+    mostrarAviso,
+    pedirElemento,
+    pintarQr,
+  } from '../../lib/cuenta-ui';
+  import { cargarSesion, fijarSesion } from '../../lib/sesion-state';
+  import type { ResultadoFactor, SesionActiva } from '../../lib/tipos-cuenta';
+  import {
+    MENSAJE_SIN_SOPORTE,
+    crearLlave,
+    soportaLlaves,
+  } from '../../lib/webauthn-cliente';
+
+  const raiz = document.querySelector<HTMLElement>('[data-pagina-alta]');
+  if (raiz) void iniciar(raiz);
+
+  async function iniciar(raiz: HTMLElement): Promise<void> {
+    const aviso = pedirElemento<HTMLElement>(raiz, '[data-aviso]');
+    const contenido = pedirElemento<HTMLElement>(raiz, '[data-contenido]');
+
+    let sesion: SesionActiva;
+    try {
+      const estado = await cargarSesion(true);
+      if (!estado.autenticada) {
+        location.assign('/cuenta/ingresar');
+        return;
+      }
+      if (estado.nivel !== 'alta_pendiente') {
+        location.assign(
+          estado.nivel === 'completo' ? '/cuenta' : '/cuenta/ingresar',
+        );
+        return;
+      }
+      sesion = estado;
+    } catch (error) {
+      pedirElemento(raiz, '[data-cargando]').textContent =
+        mensajeDeError(error);
+      raiz.removeAttribute('aria-busy');
+      return;
+    }
+    pedirElemento(raiz, '[data-cargando]').hidden = true;
+    contenido.hidden = false;
+    raiz.removeAttribute('aria-busy');
+
+    const esAdmin = sesion.roles.includes('administrador');
+    pedirElemento<HTMLElement>(raiz, '[data-requisito-admin]').hidden =
+      !esAdmin;
+
+    const bloqueCodigos = pedirElemento<HTMLElement>(
+      raiz,
+      '[data-bloque-codigos]',
+    );
+    const bloqueTerminar = pedirElemento<HTMLElement>(
+      raiz,
+      '[data-bloque-terminar]',
+    );
+    const botonTerminar = pedirElemento<HTMLButtonElement>(
+      raiz,
+      '[data-terminar]',
+    );
+    const guardados = pedirElemento<HTMLInputElement>(raiz, '[data-guardados]');
+    const estadoCopia = pedirElemento<HTMLElement>(raiz, '[data-estado-copia]');
+    let codigosEnPantalla: string[] = [];
+
+    const pintarFactores = (): void => {
+      const lista = pedirElemento<HTMLElement>(raiz, '[data-lista-factores]');
+      lista.replaceChildren(
+        ...sesion.factores.map((factor) => {
+          const li = document.createElement('li');
+          li.textContent = `${factor.tipo === 'webauthn' ? 'Llave de acceso' : 'Aplicación de autenticación'}: ${factor.etiqueta}`;
+          return li;
+        }),
+      );
+      pedirElemento<HTMLElement>(raiz, '[data-sin-factores]').hidden =
+        sesion.factores.length > 0;
+    };
+    const refrescar = async (): Promise<void> => {
+      const estado = await cargarSesion(true);
+      if (estado.autenticada) sesion = estado;
+      pintarFactores();
+    };
+    pintarFactores();
+
+    const alActivarse = (resultado: ResultadoFactor): void => {
+      if (!resultado.activada) return;
+      if (resultado.codigos_recuperacion) {
+        codigosEnPantalla = resultado.codigos_recuperacion;
+        pedirElemento<HTMLElement>(raiz, '[data-codigos]').replaceChildren(
+          ...codigosEnPantalla.map((codigo) => {
+            const li = document.createElement('li');
+            li.textContent = codigo;
+            return li;
+          }),
+        );
+        bloqueCodigos.hidden = false;
+        pedirElemento<HTMLElement>(raiz, '#titulo-codigos').focus();
+        botonTerminar.disabled = true;
+        guardados.checked = false;
+      } else if (bloqueCodigos.hidden) {
+        botonTerminar.disabled = false;
+      }
+      bloqueTerminar.hidden = false;
+    };
+
+    guardados.addEventListener('change', () => {
+      botonTerminar.disabled = !guardados.checked;
+    });
+
+    pedirElemento<HTMLButtonElement>(raiz, '[data-copiar]').addEventListener(
+      'click',
+      () => {
+        void navigator.clipboard
+          .writeText(codigosEnPantalla.join('\n'))
+          .then(() => {
+            estadoCopia.textContent = 'Códigos copiados.';
+          })
+          .catch(() => {
+            estadoCopia.textContent = 'No se pudo copiar. Usa la descarga.';
+          });
+      },
+    );
+    pedirElemento<HTMLButtonElement>(raiz, '[data-descargar]').addEventListener(
+      'click',
+      () => {
+        const texto = `Códigos de recuperación de EPI-Aetheris (${sesion.usuario.correo})\nCada código sirve una sola vez.\n\n${codigosEnPantalla.join('\n')}\n`;
+        const url = URL.createObjectURL(
+          new Blob([texto], { type: 'text/plain;charset=utf-8' }),
+        );
+        const enlace = document.createElement('a');
+        enlace.href = url;
+        enlace.download = 'codigos-recuperacion-epi-aetheris.txt';
+        enlace.click();
+        URL.revokeObjectURL(url);
+        estadoCopia.textContent = 'Archivo descargado.';
+      },
+    );
+
+    // Aplicación de autenticación.
+    const botonIniciarTotp = pedirElemento<HTMLButtonElement>(
+      raiz,
+      '[data-iniciar-totp]',
+    );
+    const configTotp = pedirElemento<HTMLElement>(raiz, '[data-totp-config]');
+    const formTotp = pedirElemento<HTMLFormElement>(raiz, '[data-form-totp]');
+    let factorTotpId = '';
+    botonIniciarTotp.addEventListener('click', () => {
+      limpiarAviso(aviso);
+      void conCarga(botonIniciarTotp, async () => {
+        try {
+          const totp = await iniciarTotp();
+          factorTotpId = totp.factor_id;
+          const qr = pedirElemento<HTMLElement>(raiz, '[data-qr]');
+          const valido = pintarQr(
+            qr,
+            totp.qr_svg,
+            'Código QR para la aplicación de autenticación. Si no puedes escanearlo, usa la clave escrita debajo.',
+          );
+          if (!valido) qr.textContent = 'No se pudo mostrar el código QR.';
+          pedirElemento(raiz, '[data-secreto]').textContent = totp.secreto;
+          configTotp.hidden = false;
+          pedirElemento<HTMLInputElement>(formTotp, '[name="codigo"]').focus();
+        } catch (error) {
+          mostrarAviso(aviso, 'error', mensajeDeError(error));
+        }
+      });
+    });
+    formTotp.addEventListener('submit', (evento) => {
+      evento.preventDefault();
+      const codigo = pedirElemento<HTMLInputElement>(
+        formTotp,
+        '[name="codigo"]',
+      );
+      const boton = pedirElemento<HTMLButtonElement>(
+        formTotp,
+        '[type="submit"]',
+      );
+      if (!codigo.value.trim()) {
+        mostrarAviso(aviso, 'error', 'Escribe el código de seis dígitos.');
+        return;
+      }
+      limpiarAviso(aviso);
+      void conCarga(boton, async () => {
+        try {
+          const resultado = await confirmarTotp(factorTotpId, codigo.value);
+          codigo.value = '';
+          configTotp.hidden = true;
+          await refrescar();
+          mostrarAviso(
+            aviso,
+            'ok',
+            resultado.activada
+              ? 'Aplicación confirmada.'
+              : 'Aplicación confirmada. Falta registrar una llave de acceso para activar la cuenta.',
+          );
+          alActivarse(resultado);
+        } catch (error) {
+          codigo.select();
+          mostrarAviso(aviso, 'error', mensajeDeError(error));
+        }
+      });
+    });
+
+    // Llave de acceso.
+    const formLlave = pedirElemento<HTMLFormElement>(raiz, '[data-form-llave]');
+    const sinSoporte = pedirElemento<HTMLElement>(raiz, '[data-sin-soporte]');
+    const botonLlave = pedirElemento<HTMLButtonElement>(
+      formLlave,
+      '[type="submit"]',
+    );
+    if (!soportaLlaves()) {
+      sinSoporte.hidden = false;
+      sinSoporte.textContent = MENSAJE_SIN_SOPORTE;
+      botonLlave.disabled = true;
+    }
+    formLlave.addEventListener('submit', (evento) => {
+      evento.preventDefault();
+      limpiarAviso(aviso);
+      const etiqueta = pedirElemento<HTMLInputElement>(
+        formLlave,
+        '[name="etiqueta"]',
+      );
+      void conCarga(botonLlave, async () => {
+        try {
+          const credencial = await crearLlave(await opcionesLlaveRegistro());
+          const resultado = await registrarLlave(
+            credencial,
+            etiqueta.value.trim(),
+          );
+          etiqueta.value = '';
+          await refrescar();
+          mostrarAviso(aviso, 'ok', 'Llave de acceso registrada.');
+          alActivarse(resultado);
+        } catch (error) {
+          mostrarAviso(aviso, 'error', mensajeDeError(error));
+        }
+      });
+    });
+
+    botonTerminar.addEventListener('click', () => {
+      void conCarga(botonTerminar, async () => {
+        try {
+          fijarSesion(await completarAlta());
+          location.assign('/cuenta');
+        } catch (error) {
+          mostrarAviso(aviso, 'error', mensajeDeError(error));
+        }
+      });
+    });
+  }
+</script>

@@ -1,26 +1,10 @@
 import { obtenerDatasetAnalitico } from './analisis-api';
+import { descargarCsv, lineaCsv } from './exportar-csv';
 import {
   esAnioAnalisisDengue,
   notaAnioSoloClima,
   type FiltrosAnalisis,
 } from './tipos-analisis';
-
-function celdaCsv(valor: string | number | null): string {
-  if (valor === null) return '';
-  const texto = String(valor);
-  return /[",\n]/.test(texto) ? `"${texto.replaceAll('"', '""')}"` : texto;
-}
-
-function descargar(nombre: string, contenido: string): void {
-  const enlace = document.createElement('a');
-  const url = URL.createObjectURL(
-    new Blob([contenido], { type: 'text/csv;charset=utf-8' }),
-  );
-  enlace.href = url;
-  enlace.download = nombre;
-  enlace.click();
-  URL.revokeObjectURL(url);
-}
 
 export async function exportarAnalisisCsv(
   filtros: FiltrosAnalisis,
@@ -64,7 +48,7 @@ export async function exportarAnalisisCsv(
         .map((semana) => {
           const casos = semana[filtros.serie];
           const presion = semana[`presion_${filtros.serie}`];
-          return [
+          return lineaCsv([
             filtros.anio,
             semana.semana_epi,
             departamento.codigo,
@@ -79,13 +63,11 @@ export async function exportarAnalisisCsv(
             presion.p75_baseline,
             presion.n_obs_baseline,
             presion.anios_baseline,
-          ]
-            .map(celdaCsv)
-            .join(',');
+          ]);
         }),
     );
   const sufijoDepartamentos = codigos.length === 1 ? `-${codigos[0]}` : '';
-  descargar(
+  descargarCsv(
     `epi-aetheris-dengue-${filtros.anio}-${filtros.serie}-se${String(filtros.semanaDesde).padStart(2, '0')}-se${String(filtros.semanaHasta).padStart(2, '0')}${sufijoDepartamentos}.csv`,
     `\uFEFF${[encabezado.join(','), ...filas].join('\n')}\n`,
   );

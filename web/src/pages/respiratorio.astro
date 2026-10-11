@@ -16,98 +16,366 @@ import PanelVirus from '../components/PanelVirus.astro';
     id="contenido-principal"
     class="mx-auto max-w-[1600px] px-4 py-8 sm:px-8 sm:py-10 lg:px-12"
   >
-    <header class="mb-8 max-w-3xl">
-      <p
-        class="font-sans text-xs font-semibold uppercase tracking-wider text-accent"
-      >
-        Observatorio respiratorio · MINSAL
-      </p>
-      <h1
-        class="mt-1 font-display text-2xl font-semibold tracking-tight text-ink sm:text-[1.75rem]"
-      >
-        Observatorio respiratorio (MINSAL)
-      </h1>
-      <p class="mt-3 font-sans text-sm leading-relaxed text-ink-muted">
-        IRA y neumonías son conteos clínicos notificados: nacionales desde 2025,
-        del tablero de MINSAL, y por departamento de 2018 a 2023, de los
-        boletines. Influenza, VSR y SARS-CoV-2 son vigilancia laboratorial
-        nacional (muestras, detecciones, positividad). Cada serie conserva su
-        unidad.
-        <AyudaTermino clave="conteo-notificado" />
-        <AyudaTermino clave="positividad" />
-      </p>
-      <p class="mt-4 font-sans text-sm">
-        <a
-          href="/alertas?tipo=respiratorio"
-          data-enlace-alertas="respiratorio"
-          class="font-medium text-accent underline underline-offset-2"
-          >¿Alerta activa? →</a
+    <header class="mb-8 grid grid-cols-1 items-start gap-6 lg:grid-cols-12">
+      <div class="lg:col-span-8">
+        <div
+          class="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 font-sans text-xs font-semibold text-accent"
         >
-      </p>
+          <span class="h-2 w-2 rounded-full bg-accent" aria-hidden="true"
+          ></span>
+          <span>Observatorio respiratorio · MINSAL</span>
+        </div>
+        <h1
+          class="mt-3 font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl"
+        >
+          Observatorio respiratorio
+        </h1>
+        <p
+          class="mt-3 max-w-3xl font-sans text-sm leading-relaxed text-ink-muted sm:text-base"
+        >
+          IRA y neumonías son conteos clínicos notificados: nacionales desde
+          2025, del tablero de MINSAL, y por departamento de 2018 a 2023, de los
+          boletines. Influenza, VSR y SARS-CoV-2 son vigilancia laboratorial
+          nacional (muestras, detecciones, positividad). Cada serie conserva su
+          unidad.
+          <AyudaTermino clave="conteo-notificado" />
+          <AyudaTermino clave="positividad" />
+        </p>
+        <div class="mt-4 flex flex-wrap items-center gap-4 font-sans text-sm">
+          <a
+            href="/alertas?tipo=respiratorio"
+            data-enlace-alertas="respiratorio"
+            class="font-medium text-accent underline underline-offset-4 transition-colors hover:text-accent/80"
+            >¿Alerta activa? →</a
+          >
+        </div>
+      </div>
+
+      <div
+        class="flex flex-col gap-3 rounded-2xl border border-border bg-surface/60 p-4 shadow-2xs backdrop-blur-xs lg:col-span-4"
+      >
+        <div
+          class="flex items-center justify-between border-b border-border/60 pb-2.5"
+        >
+          <span
+            class="font-sans text-xs font-semibold uppercase tracking-wider text-ink-muted"
+          >
+            Panel de control
+          </span>
+          <span
+            class="inline-flex items-center gap-1 font-mono text-[11px] text-accent"
+          >
+            <span
+              class="h-1.5 w-1.5 animate-pulse rounded-full bg-accent"
+              aria-hidden="true"></span>
+            Vigilancia activa
+          </span>
+        </div>
+
+        <dl class="grid grid-cols-2 gap-2 font-sans text-xs">
+          <div class="rounded-lg border border-border/40 bg-bg/80 p-2">
+            <dt class="text-[11px] text-ink-muted">Cobertura territorial</dt>
+            <dd class="mt-0.5 font-mono text-sm font-semibold text-ink">
+              14 deptos.
+            </dd>
+          </div>
+          <div class="rounded-lg border border-border/40 bg-bg/80 p-2">
+            <dt class="text-[11px] text-ink-muted">Alcance histórico</dt>
+            <dd class="mt-0.5 font-mono text-sm font-semibold text-ink">
+              2018–2026
+            </dd>
+          </div>
+        </dl>
+
+        <div class="pt-1">
+          <button
+            type="button"
+            data-copiar-enlace
+            aria-describedby="copiar-estado-respiratorio"
+            class="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 font-sans text-xs font-semibold text-ink shadow-xs transition-colors hover:border-accent/60 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          >
+            <Icono nombre="clipboard-list" class="h-4 w-4 text-ink-muted" />
+            <span>Copiar enlace a esta vista</span>
+          </button>
+          <p
+            id="copiar-estado-respiratorio"
+            data-copiar-estado
+            role="status"
+            aria-live="polite"
+            class="mt-1.5 min-h-4 text-center font-sans text-[11px] text-ink-muted"
+          >
+          </p>
+        </div>
+      </div>
     </header>
 
-    <div class="mb-4 flex flex-wrap items-center gap-3 font-sans text-xs">
-      <button
-        type="button"
-        data-copiar-enlace
-        class="flex min-h-[44px] items-center rounded-lg border border-border bg-bg px-3 py-2 font-semibold text-ink transition-colors hover:border-accent/50 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+    <!-- Resumen Situacional: 3 ejes del observatorio -->
+    <div class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <a
+        href="#ira"
+        class="group relative flex flex-col justify-between rounded-xl border border-border bg-surface p-4 transition-all hover:border-accent/40 hover:shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       >
-        Copiar enlace a esta vista
-      </button>
-      <p data-copiar-estado role="status" class="min-h-4 text-ink-muted"></p>
+        <div>
+          <div class="flex items-center justify-between">
+            <span
+              class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-accent/10 text-accent transition-colors group-hover:bg-accent group-hover:text-accent-ink"
+            >
+              <Icono nombre="lungs" class="h-5 w-5" />
+            </span>
+            <span class="font-mono text-[11px] font-medium text-ink-muted"
+              >2018–2026</span
+            >
+          </div>
+          <h2
+            class="mt-3 font-display text-base font-semibold text-ink group-hover:text-accent"
+          >
+            Infecciones Respiratorias Agudas
+          </h2>
+          <p class="mt-1 font-sans text-xs leading-relaxed text-ink-muted">
+            Vigilancia clínica sindrómica. Serie nacional del tablero MINSAL y
+            análisis desacumulado por departamento.
+          </p>
+        </div>
+        <div
+          class="mt-3 flex items-center gap-1 font-sans text-xs font-medium text-accent"
+        >
+          <span>Explorar serie y mapa</span>
+          <Icono
+            nombre="arrow-right"
+            class="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"
+          />
+        </div>
+      </a>
+
+      <a
+        href="#neumonias"
+        class="group relative flex flex-col justify-between rounded-xl border border-border bg-surface p-4 transition-all hover:border-accent/40 hover:shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+      >
+        <div>
+          <div class="flex items-center justify-between">
+            <span
+              class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-accent/10 text-accent transition-colors group-hover:bg-accent group-hover:text-accent-ink"
+            >
+              <Icono nombre="lungs" class="h-5 w-5" />
+            </span>
+            <span class="font-mono text-[11px] font-medium text-ink-muted"
+              >14 Deptos × 52 SE</span
+            >
+          </div>
+          <h2
+            class="mt-3 font-display text-base font-semibold text-ink group-hover:text-accent"
+          >
+            Neumonías & Matriz Térmica
+          </h2>
+          <p class="mt-1 font-sans text-xs leading-relaxed text-ink-muted">
+            Seguimiento de gravedad clínica, mapa de distribución acumulada y
+            matriz temporal de 52 semanas.
+          </p>
+        </div>
+        <div
+          class="mt-3 flex items-center gap-1 font-sans text-xs font-medium text-accent"
+        >
+          <span>Explorar neumonías</span>
+          <Icono
+            nombre="arrow-right"
+            class="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"
+          />
+        </div>
+      </a>
+
+      <a
+        href="#virus"
+        class="group relative flex flex-col justify-between rounded-xl border border-border bg-surface p-4 transition-all hover:border-accent/40 hover:shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+      >
+        <div>
+          <div class="flex items-center justify-between">
+            <span
+              class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-accent/10 text-accent transition-colors group-hover:bg-accent group-hover:text-accent-ink"
+            >
+              <Icono nombre="virus" class="h-5 w-5" />
+            </span>
+            <span class="font-mono text-[11px] font-medium text-ink-muted"
+              >Centinela nacional</span
+            >
+          </div>
+          <h2
+            class="mt-3 font-display text-base font-semibold text-ink group-hover:text-accent"
+          >
+            Vigilancia de Virus Respiratorios
+          </h2>
+          <p class="mt-1 font-sans text-xs leading-relaxed text-ink-muted">
+            Laboratorio nacional de referencia: positividad y detecciones de
+            Influenza, VSR, SARS-CoV-2 y otros virus.
+          </p>
+        </div>
+        <div
+          class="mt-3 flex items-center gap-1 font-sans text-xs font-medium text-accent"
+        >
+          <span>Ver circulación viral</span>
+          <Icono
+            nombre="arrow-right"
+            class="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"
+          />
+        </div>
+      </a>
     </div>
 
-    <NavSecciones
-      etiqueta="Serie respiratoria"
-      enlaces={[
-        { href: '#cobertura', etiqueta: 'Cobertura' },
-        { href: '#ira', etiqueta: 'IRA' },
-        { href: '#neumonias', etiqueta: 'Neumonías' },
-        { href: '#virus', etiqueta: 'Virus (nacional)' },
-      ]}
-    />
-
-    <section id="cobertura" class="mb-10">
-      <PanelCobertura />
-    </section>
-
-    <section id="ira" class="mb-10 grid grid-cols-1 gap-6">
-      <h2
-        class="flex items-center gap-2.5 font-display text-xl font-semibold text-ink"
+    <!-- Barra sticky de secciones con scrollspy -->
+    <div
+      class="sticky top-[var(--alto-header)] z-30 -mx-4 mb-8 border-y border-border/80 bg-bg/95 px-4 py-2 backdrop-blur-md sm:-mx-8 sm:px-8 lg:-mx-12 lg:px-12"
+      data-nav-respiratorio-sticky
+    >
+      <div
+        class="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-3"
       >
-        <Icono nombre="lungs" class="h-6 w-6 text-accent" />
-        IRA — conteo notificado
-      </h2>
+        <NavSecciones
+          class="mb-0"
+          etiqueta="Serie respiratoria"
+          enlaces={[
+            { href: '#ira', etiqueta: 'IRA' },
+            { href: '#neumonias', etiqueta: 'Neumonías' },
+            { href: '#virus', etiqueta: 'Virus (nacional)' },
+            { href: '#cobertura', etiqueta: 'Cobertura' },
+          ]}
+        />
+        <div
+          class="hidden items-center gap-2 font-sans text-xs text-ink-muted sm:flex"
+        >
+          <span
+            class="inline-block h-2 w-2 rounded-full bg-accent"
+            aria-hidden="true"></span>
+          <span>Interacción territorial sincronizada</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sección 1: IRA (Infecciones Respiratorias Agudas) -->
+    <section
+      id="ira"
+      class="mb-14 scroll-mt-[calc(var(--alto-header)+1.5rem)] space-y-6"
+    >
+      <header
+        class="flex flex-col gap-2 border-b border-border/80 pb-3 sm:flex-row sm:items-center sm:justify-between"
+      >
+        <h2
+          class="flex items-center gap-2.5 font-display text-xl font-semibold text-ink"
+        >
+          <Icono nombre="lungs" class="h-6 w-6 text-accent" />
+          <span>IRA — conteo notificado</span>
+        </h2>
+        <div class="flex items-center gap-2 font-mono text-xs text-ink-muted">
+          <span class="rounded-md border border-border bg-surface px-2.5 py-1"
+            >Nacional: 2025–2026</span
+          >
+          <span class="rounded-md border border-border bg-surface px-2.5 py-1"
+            >Departamental: 2018–2023</span
+          >
+        </div>
+      </header>
+
       <CurvaRespiratoriaNacional evento="ira" />
-      <div class="rounded-[28px] bg-deep p-2 sm:p-3">
-        <MapaIRA evento="ira" />
+
+      <div class="grid grid-cols-1 items-start gap-6 lg:grid-cols-12">
+        <div
+          class="lg:sticky lg:top-[calc(var(--alto-header)+4.5rem)] lg:col-span-5"
+        >
+          <MapaIRA evento="ira" />
+        </div>
+        <div class="lg:col-span-7">
+          <CurvaIRADepartamental evento="ira" />
+        </div>
       </div>
-      <CurvaIRADepartamental evento="ira" />
     </section>
 
-    <section id="neumonias" class="mb-10 grid grid-cols-1 gap-6">
-      <h2
-        class="flex items-center gap-2.5 font-display text-xl font-semibold text-ink"
+    <!-- Sección 2: Neumonías -->
+    <section
+      id="neumonias"
+      class="mb-14 scroll-mt-[calc(var(--alto-header)+1.5rem)] space-y-6"
+    >
+      <header
+        class="flex flex-col gap-2 border-b border-border/80 pb-3 sm:flex-row sm:items-center sm:justify-between"
       >
-        <Icono nombre="lungs" class="h-6 w-6 text-accent" />
-        Neumonías — conteo notificado
-      </h2>
+        <h2
+          class="flex items-center gap-2.5 font-display text-xl font-semibold text-ink"
+        >
+          <Icono nombre="lungs" class="h-6 w-6 text-accent" />
+          <span>Neumonías — conteo notificado</span>
+        </h2>
+        <div class="flex items-center gap-2 font-mono text-xs text-ink-muted">
+          <span class="rounded-md border border-border bg-surface px-2.5 py-1"
+            >Gravedad clínica</span
+          >
+          <span class="rounded-md border border-border bg-surface px-2.5 py-1"
+            >14 Deptos × 52 SE</span
+          >
+        </div>
+      </header>
+
       <CurvaRespiratoriaNacional evento="neumonias" />
-      <div class="rounded-[28px] bg-deep p-2 sm:p-3">
-        <MapaIRA evento="neumonias" />
+
+      <div class="grid grid-cols-1 items-start gap-6 lg:grid-cols-12">
+        <div
+          class="lg:sticky lg:top-[calc(var(--alto-header)+4.5rem)] lg:col-span-5"
+        >
+          <MapaIRA evento="neumonias" />
+        </div>
+        <div class="lg:col-span-7">
+          <CurvaIRADepartamental evento="neumonias" />
+        </div>
       </div>
-      <CurvaIRADepartamental evento="neumonias" />
-      <HeatmapNeumonias />
+
+      <div class="w-full">
+        <HeatmapNeumonias />
+      </div>
     </section>
 
-    <section id="virus" class="mb-10 grid grid-cols-1 gap-6">
-      <h2
-        class="flex items-center gap-2.5 font-display text-xl font-semibold text-ink"
+    <!-- Sección 3: Virus (laboratorio nacional) -->
+    <section
+      id="virus"
+      class="mb-14 scroll-mt-[calc(var(--alto-header)+1.5rem)] space-y-6"
+    >
+      <header
+        class="flex flex-col gap-2 border-b border-border/80 pb-3 sm:flex-row sm:items-center sm:justify-between"
       >
-        <Icono nombre="virus" class="h-6 w-6 text-accent" />
-        Influenza, VSR y SARS-CoV-2 — laboratorio nacional
-      </h2>
+        <h2
+          class="flex items-center gap-2.5 font-display text-xl font-semibold text-ink"
+        >
+          <Icono nombre="virus" class="h-6 w-6 text-accent" />
+          <span>Influenza, VSR y SARS-CoV-2 — laboratorio nacional</span>
+        </h2>
+        <div class="flex items-center gap-2 font-mono text-xs text-ink-muted">
+          <span class="rounded-md border border-border bg-surface px-2.5 py-1"
+            >Vigilancia centinela</span
+          >
+          <span class="rounded-md border border-border bg-surface px-2.5 py-1"
+            >RT-PCR</span
+          >
+        </div>
+      </header>
       <PanelVirus />
+    </section>
+
+    <!-- Sección 4: Cobertura técnica y procedencia de datos -->
+    <section
+      id="cobertura"
+      class="mb-14 scroll-mt-[calc(var(--alto-header)+1.5rem)] space-y-6"
+    >
+      <header
+        class="flex flex-col gap-2 border-b border-border/80 pb-3 sm:flex-row sm:items-center sm:justify-between"
+      >
+        <h2
+          class="flex items-center gap-2.5 font-display text-xl font-semibold text-ink"
+        >
+          <Icono nombre="database" class="h-6 w-6 text-accent" />
+          <span>Cobertura técnica y procedencia de datos</span>
+        </h2>
+        <div class="flex items-center gap-2 font-mono text-xs text-ink-muted">
+          <span class="rounded-md border border-border bg-surface px-2.5 py-1"
+            >Auditoría de integridad</span
+          >
+        </div>
+      </header>
+      <PanelCobertura />
     </section>
   </main>
 </Layout>
@@ -127,4 +395,31 @@ import PanelVirus from '../components/PanelVirus.astro';
           'No se pudo copiar el enlace. Cópialo desde la barra de direcciones.';
     }
   });
+
+  // Scrollspy: destacar enlace activo en NavSecciones al desplazarse
+  const secciones = document.querySelectorAll<HTMLElement>('section[id]');
+  const enlacesNav = document.querySelectorAll<HTMLAnchorElement>(
+    '[data-nav-secciones] a',
+  );
+  if ('IntersectionObserver' in window && enlacesNav.length > 0) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const id = entry.target.id;
+            enlacesNav.forEach((enlace) => {
+              const coincide = enlace.getAttribute('href') === `#${id}`;
+              enlace.classList.toggle('!bg-accent', coincide);
+              enlace.classList.toggle('!text-accent-ink', coincide);
+              enlace.classList.toggle('!border-accent', coincide);
+              if (coincide) enlace.setAttribute('aria-current', 'true');
+              else enlace.removeAttribute('aria-current');
+            });
+          }
+        }
+      },
+      { rootMargin: '-15% 0px -65% 0px' },
+    );
+    secciones.forEach((s) => observer.observe(s));
+  }
 </script>

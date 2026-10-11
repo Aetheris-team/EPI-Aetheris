@@ -29,159 +29,523 @@ const filtroRespiratorio = tipoPedido === 'respiratorio';
     id="contenido-principal"
     class="mx-auto max-w-[1600px] px-4 py-8 sm:px-8 sm:py-10 lg:px-12"
   >
-    <header class="mb-8 max-w-3xl">
+    {
+      /* ZONA 1: Cabecera principal y contexto de vigilancia (Estática / Persistente) */
+    }
+    <header data-zona="cabecera" class="max-w-4xl">
+      <div class="flex flex-wrap items-center gap-2">
+        <div
+          class="inline-flex items-center gap-2 rounded-full border border-accent/25 bg-accent/5 px-3 py-1 font-mono text-xs font-semibold text-accent shadow-2xs"
+        >
+          <span class="relative flex h-2 w-2">
+            <span
+              class="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"
+            ></span>
+            <span class="relative inline-flex rounded-full h-2 w-2 bg-accent"
+            ></span>
+          </span>
+          <span>Vigilancia sindrómica y comunitaria · El Salvador</span>
+        </div>
+        <span
+          class="rounded-full bg-secondary/80 px-2.5 py-0.5 font-mono text-[11px] font-medium text-secondary-ink"
+        >
+          Equipo 4 · INSAMT
+        </span>
+      </div>
+
+      <h1 class="titular-hero mt-3 text-ink">Alertas de campo</h1>
+
       <p
-        class="font-sans text-xs font-semibold uppercase tracking-wider text-accent"
+        class="mt-3 font-sans text-base leading-relaxed text-ink-muted sm:text-lg max-w-3xl"
       >
-        Alertas de campo · equipo de vigilancia
+        Avisos priorizados y orientaciones operativas para el personal de salud
+        ante variaciones inusuales en dengue e infecciones respiratorias agudas.
+        Información descriptiva para apoyar la respuesta oportuna en la red de
+        atención primaria.
       </p>
-      <h1
-        class="mt-1 font-display text-2xl font-semibold tracking-tight text-ink sm:text-[1.75rem]"
+
+      {/* Barra de herramientas y acciones rápidas */}
+      <div
+        class="mt-6 flex flex-wrap items-center justify-between gap-3 border-y border-border/80 py-3 print:hidden"
       >
-        Alertas de campo
-      </h1>
-      <aside
-        data-aviso-honestidad
-        class="mt-4 rounded-2xl border border-border bg-surface p-4 font-sans text-sm leading-relaxed text-ink"
-      >
-        <p>
-          {AVISO_HONESTIDAD_ALERTAS_INTRO}{' '}
-          <strong>{AVISO_HONESTIDAD_ALERTAS_CLINICO}</strong>
-        </p>
-      </aside>
-      <p class="sr-only">{AVISO_HONESTIDAD_ALERTAS}</p>
-      <section
-        data-niveles-leyenda
-        class="mt-4 rounded-2xl border border-border bg-surface p-4 font-sans text-sm leading-relaxed text-ink"
-      >
-        <h2 class="font-sans text-sm font-semibold text-ink">Niveles</h2>
-        <dl class="mt-2 space-y-2">
-          {
-            NIVELES_ALERTA.map((clave) => (
-              <div data-nivel-leyenda={clave}>
-                <dt class="font-semibold">{ETIQUETAS_NIVEL[clave]}</dt>
-                <dd class="text-ink-muted">{SIGNIFICADO_NIVEL[clave]}</dd>
-              </div>
-            ))
-          }
-        </dl>
-      </section>
+        <div class="flex items-center gap-2">
+          <Icono nombre="clock" class="h-4 w-4 text-accent" />
+          <p
+            data-sello-frescura
+            class="font-sans text-xs text-ink-muted font-medium"
+            role="status"
+          >
+          </p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            data-imprimir
+            class="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3.5 py-1.5 font-sans text-xs font-medium text-ink transition-all hover:border-accent hover:bg-bg shadow-2xs"
+          >
+            <Icono nombre="printer" class="h-4 w-4 text-accent" />
+            <span>Imprimir cartel</span>
+          </button>
+          <a
+            href={urlFeed}
+            data-enlace-feed
+            class="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3.5 py-1.5 font-sans text-xs font-medium text-ink transition-all hover:border-accent hover:bg-bg shadow-2xs"
+          >
+            <Icono nombre="rss" class="h-4 w-4 text-accent" />
+            <span>Canal Atom</span>
+          </a>
+          <a
+            href="/alertas/archivo"
+            class="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3.5 py-1.5 font-sans text-xs font-medium text-ink transition-all hover:border-accent hover:bg-bg shadow-2xs"
+          >
+            <Icono nombre="history" class="h-4 w-4 text-accent" />
+            <span>Historial emitido</span>
+          </a>
+          <a
+            href="/alertas/nueva"
+            class="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3.5 py-1.5 font-sans text-xs font-semibold text-accent transition-all hover:bg-accent hover:text-accent-ink shadow-2xs"
+          >
+            <Icono nombre="send" class="h-4 w-4" />
+            <span>Nueva alerta</span>
+          </a>
+        </div>
+      </div>
     </header>
 
-    <nav
-      class="mb-6 flex flex-wrap gap-2 font-sans text-sm"
-      aria-label="Filtrar alertas por tipo"
+    {
+      /* ZONA 2: Resumen Ejecutivo / Tarjetas KPI (Métricas reactivas localizadas) */
+    }
+    <section
+      data-zona="kpis"
+      aria-label="Resumen de situación epidemiológica"
+      class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:gap-4 print:hidden"
     >
-      <a
-        href="/alertas"
-        data-filtro-tipo="todas"
-        aria-current={tipoPedido ? undefined : 'page'}
-        class:list={[
-          'rounded-full border px-3 py-1.5',
-          tipoPedido
-            ? 'border-border bg-surface'
-            : 'border-accent bg-accent text-accent-ink',
-        ]}>Todas</a
+      <div
+        class="card-elevated flex flex-col justify-between rounded-2xl border border-border bg-surface p-4 sm:p-5"
       >
-      <a
-        href="/alertas?tipo=dengue"
-        data-filtro-tipo="dengue"
-        aria-current={filtroDengue ? 'page' : undefined}
-        class:list={[
-          'rounded-full border px-3 py-1.5',
-          filtroDengue
-            ? 'border-accent bg-accent text-accent-ink'
-            : 'border-border bg-surface',
-        ]}>Dengue</a
-      >
-      <a
-        href="/alertas?tipo=respiratorio"
-        data-filtro-tipo="respiratorio"
-        aria-current={filtroRespiratorio ? 'page' : undefined}
-        class:list={[
-          'rounded-full border px-3 py-1.5',
-          filtroRespiratorio
-            ? 'border-accent bg-accent text-accent-ink'
-            : 'border-border bg-surface',
-        ]}>Respiratorio</a
-      >
-      <a
-        href="/alertas/archivo"
-        class="rounded-full border border-border bg-surface px-3 py-1.5"
-        >Archivo de alertas emitidas</a
-      >
-      <a
-        href={urlFeed}
-        data-enlace-feed
-        class="rounded-full border border-border bg-surface px-3 py-1.5"
-        >Suscribirse por feed (Atom)</a
-      >
-    </nav>
+        <div class="flex items-center justify-between">
+          <span class="font-sans text-xs font-semibold text-ink-muted"
+            >Alertas vigentes</span
+          >
+          <span
+            class="flex h-8 w-8 items-center justify-center rounded-full bg-accent/10 text-accent"
+          >
+            <Icono nombre="bell" class="h-4 w-4" />
+          </span>
+        </div>
+        <div class="mt-3">
+          <span
+            data-kpi-total
+            class="font-mono text-2xl font-bold tracking-tight text-ink sm:text-3xl"
+            >0</span
+          >
+          <p class="mt-0.5 font-sans text-[11px] text-ink-muted">
+            Monitoreo activo
+          </p>
+        </div>
+      </div>
 
-    <div class="mb-4 font-sans text-sm print:hidden">
-      <label class="inline-flex flex-wrap items-center gap-2">
-        <span class="font-semibold text-ink">Departamento</span>
-        <select
-          data-filtro-departamento
-          class="rounded-lg border border-border bg-surface px-3 py-1.5"
+      <div
+        class="card-elevated flex flex-col justify-between rounded-2xl border border-border bg-surface p-4 sm:p-5"
+      >
+        <div class="flex items-center justify-between">
+          <span class="font-sans text-xs font-semibold text-ink-muted"
+            >Foco en dengue</span
+          >
+          <span
+            class="flex h-8 w-8 items-center justify-center rounded-full bg-accent/10 text-accent"
+          >
+            <Icono nombre="bug" class="h-4 w-4" />
+          </span>
+        </div>
+        <div class="mt-3">
+          <span
+            data-kpi-dengue
+            class="font-mono text-2xl font-bold tracking-tight text-ink sm:text-3xl"
+            >0</span
+          >
+          <p class="mt-0.5 font-sans text-[11px] text-ink-muted">
+            Casos y vectores
+          </p>
+        </div>
+      </div>
+
+      <div
+        class="card-elevated flex flex-col justify-between rounded-2xl border border-border bg-surface p-4 sm:p-5"
+      >
+        <div class="flex items-center justify-between">
+          <span class="font-sans text-xs font-semibold text-ink-muted"
+            >Afección respiratoria</span
+          >
+          <span
+            class="flex h-8 w-8 items-center justify-center rounded-full bg-accent/10 text-accent"
+          >
+            <Icono nombre="lungs" class="h-4 w-4" />
+          </span>
+        </div>
+        <div class="mt-3">
+          <span
+            data-kpi-respiratorio
+            class="font-mono text-2xl font-bold tracking-tight text-ink sm:text-3xl"
+            >0</span
+          >
+          <p class="mt-0.5 font-sans text-[11px] text-ink-muted">
+            IRA y neumonías
+          </p>
+        </div>
+      </div>
+
+      <div
+        class="card-elevated flex flex-col justify-between rounded-2xl border border-border bg-surface p-4 sm:p-5"
+      >
+        <div class="flex items-center justify-between">
+          <span class="font-sans text-xs font-semibold text-ink-muted"
+            >Nivel prevalente</span
+          >
+          <span
+            class="flex h-8 w-8 items-center justify-center rounded-full bg-accent/10 text-accent"
+          >
+            <Icono nombre="shield-exclamation" class="h-4 w-4" />
+          </span>
+        </div>
+        <div class="mt-3">
+          <span
+            data-kpi-prioridad
+            class="inline-block rounded-full bg-secondary px-2.5 py-0.5 font-mono text-xs font-bold text-secondary-ink"
+            >Informativo</span
+          >
+          <p class="mt-0.5 font-sans text-[11px] text-ink-muted">
+            Protocolo de red
+          </p>
+        </div>
+      </div>
+    </section>
+
+    {/* Distribución en 2 Columnas: Flujo de Alertas y Panel de Orientación */}
+    <div class="mt-8 grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
+      {/* Columna Principal: Filtros y Tarjetas de Alerta */}
+      <section
+        class="lg:col-span-8 flex flex-col gap-6"
+        aria-label="Listado de alertas activas"
+      >
+        {
+          /* ZONA 3: Barra de controles y filtros (Interactiva en cliente sin recarga de página) */
+        }
+        <div
+          data-zona="filtros"
+          class="card-elevated rounded-2xl border border-border bg-surface p-4 sm:p-5 print:hidden"
         >
-          <option value="">Todos</option>
-          {
-            DEPARTAMENTOS.map((d) => (
-              <option value={d.codigo}>{d.nombre}</option>
-            ))
-          }
-        </select>
-      </label>
-      <p class="mt-1 text-xs text-ink-muted">
-        Muestra las alertas nacionales y las de ese departamento.
-      </p>
-    </div>
+          <div
+            class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+          >
+            {/* Filtro por síndrome */}
+            <nav
+              class="flex flex-wrap items-center gap-2 font-sans text-xs sm:text-sm"
+              aria-label="Filtrar alertas por tipo"
+            >
+              <a
+                href="/alertas"
+                data-filtro-tipo="todas"
+                aria-current={tipoPedido ? undefined : 'page'}
+                class:list={[
+                  'inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 font-medium transition-all shadow-2xs',
+                  tipoPedido
+                    ? 'border-border bg-surface hover:bg-bg hover:border-accent/40 text-ink'
+                    : 'border-accent bg-accent text-accent-ink',
+                ]}
+              >
+                <Icono nombre="layout-grid" class="h-3.5 w-3.5" />
+                <span>Todas</span>
+              </a>
+              <a
+                href="/alertas?tipo=dengue"
+                data-filtro-tipo="dengue"
+                aria-current={filtroDengue ? 'page' : undefined}
+                class:list={[
+                  'inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 font-medium transition-all shadow-2xs',
+                  filtroDengue
+                    ? 'border-accent bg-accent text-accent-ink'
+                    : 'border-border bg-surface hover:bg-bg hover:border-accent/40 text-ink',
+                ]}
+              >
+                <Icono nombre="bug" class="h-3.5 w-3.5" />
+                <span>Dengue</span>
+              </a>
+              <a
+                href="/alertas?tipo=respiratorio"
+                data-filtro-tipo="respiratorio"
+                aria-current={filtroRespiratorio ? 'page' : undefined}
+                class:list={[
+                  'inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 font-medium transition-all shadow-2xs',
+                  filtroRespiratorio
+                    ? 'border-accent bg-accent text-accent-ink'
+                    : 'border-border bg-surface hover:bg-bg hover:border-accent/40 text-ink',
+                ]}
+              >
+                <Icono nombre="lungs" class="h-3.5 w-3.5" />
+                <span>Respiratorio</span>
+              </a>
+            </nav>
 
-    <div
-      class="mb-4 flex flex-wrap items-center justify-between gap-3 print:hidden"
-    >
-      <p
-        data-sello-frescura
-        class="font-sans text-xs text-ink-muted"
-        role="status"
-      >
-      </p>
-      <button
-        type="button"
-        data-imprimir
-        class="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-4 py-1.5 font-sans text-sm font-medium text-ink transition-colors hover:border-accent/40"
-      >
-        <Icono nombre="printer" class="h-4 w-4 text-accent" />
-        Imprimir cartel
-      </button>
-    </div>
+            {/* Filtro por departamento */}
+            <div class="flex items-center gap-2">
+              <label
+                for="selector-departamento-alertas"
+                class="font-sans text-xs font-semibold text-ink flex items-center gap-1 shrink-0"
+              >
+                <Icono nombre="map-pin" class="h-3.5 w-3.5 text-accent" />
+                <span>Departamento:</span>
+              </label>
+              <select
+                id="selector-departamento-alertas"
+                data-filtro-departamento
+                class="rounded-lg border border-border bg-bg px-3 py-1.5 font-sans text-xs font-medium text-ink focus:border-accent focus:outline-hidden"
+              >
+                <option value="">Nacional y todos</option>
+                {
+                  DEPARTAMENTOS.map((d) => (
+                    <option value={d.codigo}>{d.nombre}</option>
+                  ))
+                }
+              </select>
+            </div>
+          </div>
+        </div>
 
-    <div data-alertas>
-      <p
-        data-alertas-carga
-        class="font-sans text-sm text-ink-muted"
-        role="status"
+        {
+          /* ZONA 4: Contenedor reactivo de alertas (Única zona que actualiza su contenido o muestra carga localizada) */
+        }
+        <div data-alertas data-zona="alertas" class="space-y-4">
+          {/* Estado de carga con esqueletos animados */}
+          <div data-alertas-carga class="space-y-4" role="status">
+            <p class="font-sans text-xs text-ink-muted flex items-center gap-2">
+              <span
+                class="inline-block h-2 w-2 rounded-full bg-accent animate-ping"
+              ></span>
+              Cargando alertas…
+            </p>
+            <div
+              class="card-elevated rounded-2xl border border-border bg-surface p-6 space-y-4 animate-pulse"
+            >
+              <div class="flex gap-2">
+                <div class="h-6 w-24 rounded-full skeleton"></div>
+                <div class="h-6 w-28 rounded-full skeleton"></div>
+              </div>
+              <div class="h-7 w-3/4 rounded-lg skeleton"></div>
+              <div class="h-4 w-1/2 rounded-md skeleton"></div>
+              <div class="h-16 w-full rounded-xl skeleton"></div>
+            </div>
+            <div
+              class="card-elevated rounded-2xl border border-border bg-surface p-6 space-y-4 animate-pulse"
+            >
+              <div class="flex gap-2">
+                <div class="h-6 w-24 rounded-full skeleton"></div>
+                <div class="h-6 w-28 rounded-full skeleton"></div>
+              </div>
+              <div class="h-7 w-2/3 rounded-lg skeleton"></div>
+              <div class="h-4 w-1/3 rounded-md skeleton"></div>
+            </div>
+          </div>
+
+          {/* Estado de error */}
+          <div
+            data-alertas-error
+            hidden
+            class="rounded-2xl border border-secondary bg-secondary/25 p-5 font-sans text-sm text-ink flex items-start gap-3 shadow-xs"
+            role="status"
+          >
+            <Icono
+              nombre="alert-triangle"
+              class="h-5 w-5 text-accent shrink-0 mt-0.5"
+            />
+            <div>
+              <h3 class="font-semibold text-ink">
+                No se pudieron cargar las alertas.
+              </h3>
+              <p class="mt-1 text-ink-muted text-xs leading-relaxed">
+                Verifica la conectividad con la API o recarga la página. Si
+                estás sin conexión, se mostrarán las alertas guardadas en caché.
+              </p>
+              <button
+                type="button"
+                onclick="window.location.reload()"
+                class="mt-3 inline-flex items-center gap-2 rounded-full border border-accent bg-accent px-3.5 py-1 text-xs font-semibold text-accent-ink"
+              >
+                Reintentar
+              </button>
+            </div>
+          </div>
+
+          {/* Estado vacío */}
+          <div
+            data-alertas-vacio
+            hidden
+            class="card-elevated rounded-2xl border border-border bg-surface p-6 font-sans text-sm leading-relaxed text-ink shadow-xs"
+            role="status"
+          >
+            No hay alertas activas. Última revisión del equipo:
+          </div>
+
+          {/* Lista inyectada de tarjetas */}
+          <div data-alertas-lista class="flex flex-col gap-5"></div>
+        </div>
+      </section>
+
+      {
+        /* ZONA 1 (Lateral): Marco Institucional y Criterios Operativos (Estática / Persistente) */
+      }
+      <aside
+        data-zona="institucional"
+        class="lg:col-span-4 flex flex-col gap-6 sticky top-24 print:hidden"
+        aria-label="Información institucional y niveles de alerta"
       >
-        Cargando alertas…
-      </p>
-      <p
-        data-alertas-error
-        hidden
-        class="rounded-lg border border-secondary bg-secondary/25 p-3 font-sans text-sm text-ink"
-        role="status"
-      >
-        No se pudieron cargar las alertas.
-      </p>
-      <p
-        data-alertas-vacio
-        hidden
-        class="rounded-2xl border border-border bg-surface p-5 font-sans text-sm leading-relaxed text-ink"
-        role="status"
-      >
-        No hay alertas activas. Última revisión del equipo:
-      </p>
-      <div data-alertas-lista class="flex flex-col gap-4"></div>
+        {/* Aviso de honestidad y alcance institucional */}
+        <div
+          data-aviso-honestidad
+          class="card-elevated rounded-2xl border border-border bg-surface p-5 font-sans text-sm leading-relaxed text-ink"
+        >
+          <div class="flex items-center gap-2 text-accent">
+            <Icono nombre="shield-check" class="h-5 w-5" />
+            <h2 class="font-sans text-xs font-bold uppercase tracking-wider">
+              Marco institucional
+            </h2>
+          </div>
+          <p class="mt-3 text-xs leading-relaxed text-ink">
+            {AVISO_HONESTIDAD_ALERTAS_INTRO}{' '}
+            <strong>{AVISO_HONESTIDAD_ALERTAS_CLINICO}</strong>
+          </p>
+        </div>
+        <p class="sr-only">{AVISO_HONESTIDAD_ALERTAS}</p>
+
+        {/* Clasificación de niveles operativos */}
+        <section
+          data-niveles-leyenda
+          class="card-elevated rounded-2xl border border-border bg-surface p-5 font-sans text-sm leading-relaxed text-ink"
+          aria-labelledby="niveles-leyenda-titulo"
+        >
+          <div class="flex items-center gap-2 text-accent">
+            <Icono nombre="alert-triangle" class="h-5 w-5" />
+            <h2
+              id="niveles-leyenda-titulo"
+              class="font-sans text-xs font-bold uppercase tracking-wider"
+            >
+              Niveles de alerta
+            </h2>
+          </div>
+          <p class="mt-2 text-xs text-ink-muted">
+            Escala operativa para orientar la intensidad de respuesta en
+            terreno:
+          </p>
+          <dl class="mt-4 space-y-3">
+            {
+              NIVELES_ALERTA.map((clave) => {
+                const badgeClass =
+                  clave === 'intensificacion'
+                    ? 'border-red-600 bg-red-600 text-white'
+                    : clave === 'atencion'
+                      ? 'border-amber-700 bg-amber-700 text-white'
+                      : 'border-teal-700 bg-teal-700 text-white';
+                return (
+                  <div
+                    data-nivel-leyenda={clave}
+                    class="rounded-xl border border-border/70 bg-bg/50 p-3"
+                  >
+                    <dt class="flex items-center justify-between">
+                      <span class="font-semibold text-xs text-ink">
+                        {ETIQUETAS_NIVEL[clave]}
+                      </span>
+                      <span
+                        class:list={[
+                          'rounded-full border px-2 py-0.5 font-mono text-[10px] font-bold uppercase shadow-2xs',
+                          badgeClass,
+                        ]}
+                      >
+                        {clave}
+                      </span>
+                    </dt>
+                    <dd class="mt-1 text-xs text-ink-muted leading-relaxed">
+                      {SIGNIFICADO_NIVEL[clave]}
+                    </dd>
+                  </div>
+                );
+              })
+            }
+          </dl>
+        </section>
+
+        {/* Protocolo de actuación rápida para la unidad */}
+        <div
+          class="card-elevated rounded-2xl border border-border bg-surface p-5 font-sans text-xs leading-relaxed text-ink"
+        >
+          <div class="flex items-center gap-2 text-accent">
+            <Icono nombre="stethoscope" class="h-5 w-5" />
+            <h3 class="font-bold uppercase tracking-wider">
+              Pautas para personal clínico
+            </h3>
+          </div>
+          <ul class="mt-3 space-y-2 text-ink-muted">
+            <li class="flex items-start gap-2">
+              <span class="text-accent font-bold">1.</span>
+              <span
+                ><strong class="text-ink">Sospecha de dengue:</strong> no usar AINE
+                ni intramusculares en febriles sin diagnóstico.</span
+              >
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-accent font-bold">2.</span>
+              <span
+                ><strong class="text-ink">Signos de alarma:</strong> vigilar dolor
+                abdominal continuo, vómitos persistentes y sangrado.</span
+              >
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-accent font-bold">3.</span>
+              <span
+                ><strong class="text-ink">Vía respiratoria:</strong> documentar oximetría
+                de pulso en toda dificultad respiratoria.</span
+              >
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-accent font-bold">4.</span>
+              <span
+                ><strong class="text-ink">Notificación:</strong> coordinar de inmediato
+                con la jefatura SIBASI correspondiente.</span
+              >
+            </li>
+          </ul>
+        </div>
+
+        {/* Enlaces de consulta epidemiológica relacionada */}
+        <div
+          class="rounded-2xl border border-border/80 bg-bg p-5 font-sans text-xs text-ink-muted space-y-2.5"
+        >
+          <p class="font-semibold text-ink">Exploración de datos de base</p>
+          <div class="flex flex-col gap-2">
+            <a
+              href="/dengue"
+              class="inline-flex items-center justify-between rounded-lg border border-border bg-surface px-3 py-2 text-ink hover:border-accent hover:text-accent transition-colors"
+            >
+              <span>Vigilancia analítica de dengue</span>
+              <Icono nombre="arrow-right" class="h-4 w-4 text-accent" />
+            </a>
+            <a
+              href="/respiratorio"
+              class="inline-flex items-center justify-between rounded-lg border border-border bg-surface px-3 py-2 text-ink hover:border-accent hover:text-accent transition-colors"
+            >
+              <span>Vigilancia respiratoria (IRA y virus)</span>
+              <Icono nombre="arrow-right" class="h-4 w-4 text-accent" />
+            </a>
+            <a
+              href="/biblioteca"
+              class="inline-flex items-center justify-between rounded-lg border border-border bg-surface px-3 py-2 text-ink hover:border-accent hover:text-accent transition-colors"
+            >
+              <span>Biblioteca y marco metodológico</span>
+              <Icono nombre="arrow-right" class="h-4 w-4 text-accent" />
+            </a>
+          </div>
+        </div>
+      </aside>
     </div>
   </main>
 </Layout>
@@ -194,6 +558,7 @@ const filtroRespiratorio = tipoPedido === 'respiratorio';
     leerAlertasVistas,
     type PayloadAlertas,
     type PintarAlertas,
+    type AlertaPublica,
   } from '../../lib/vista-alertas';
   import { alertaAplicaA } from '../../lib/alcance-alertas';
   import { DEPARTAMENTOS_POR_CODIGO } from '../../lib/departamentos';
@@ -243,92 +608,238 @@ const filtroRespiratorio = tipoPedido === 'respiratorio';
     sello.setAttribute('data-desde-cache', desdeCache ? '1' : '0');
   }
 
+  // Actualizador de tarjetas KPI en el encabezado
+  function actualizarKpis(alertasVisibles: AlertaPublica[]): void {
+    const kpiTotal = document.querySelector<HTMLElement>('[data-kpi-total]');
+    const kpiDengue = document.querySelector<HTMLElement>('[data-kpi-dengue]');
+    const kpiResp = document.querySelector<HTMLElement>(
+      '[data-kpi-respiratorio]',
+    );
+    const kpiPrioridad = document.querySelector<HTMLElement>(
+      '[data-kpi-prioridad]',
+    );
+
+    const total = alertasVisibles.length;
+    const dengue = alertasVisibles.filter((a) => a.tipo === 'dengue').length;
+    const resp = alertasVisibles.filter(
+      (a) => a.tipo === 'respiratorio',
+    ).length;
+
+    if (kpiTotal) kpiTotal.textContent = String(total);
+    if (kpiDengue) kpiDengue.textContent = String(dengue);
+    if (kpiResp) kpiResp.textContent = String(resp);
+
+    if (kpiPrioridad) {
+      if (alertasVisibles.some((a) => a.nivel === 'intensificacion')) {
+        kpiPrioridad.textContent = 'Intensificación';
+        kpiPrioridad.className =
+          'inline-block rounded-full border border-red-600 bg-red-600 px-2.5 py-0.5 font-mono text-xs font-bold text-white shadow-2xs';
+      } else if (alertasVisibles.some((a) => a.nivel === 'atencion')) {
+        kpiPrioridad.textContent = 'Atención';
+        kpiPrioridad.className =
+          'inline-block rounded-full border border-amber-700 bg-amber-700 px-2.5 py-0.5 font-mono text-xs font-bold text-white shadow-2xs';
+      } else if (total > 0) {
+        kpiPrioridad.textContent = 'Informativo';
+        kpiPrioridad.className =
+          'inline-block rounded-full border border-teal-700 bg-teal-700 px-2.5 py-0.5 font-mono text-xs font-bold text-white shadow-2xs';
+      } else {
+        kpiPrioridad.textContent = 'Sin alertas';
+        kpiPrioridad.className =
+          'inline-block rounded-full bg-secondary px-2.5 py-0.5 font-mono text-xs font-bold text-secondary-ink';
+      }
+    }
+  }
+
   if (root) {
     const selectorDepartamento = document.querySelector<HTMLSelectElement>(
       '[data-filtro-departamento]',
     );
+    const enlacesTipo =
+      document.querySelectorAll<HTMLAnchorElement>('[data-filtro-tipo]');
+
     // El departamento viene de ?dept= y, si falta, del recordado en este
-    // dispositivo. El filtro es solo de vista: se filtra en el cliente sobre la
-    // respuesta completa para que también funcione desde el cache sin conexión.
+    // dispositivo. El filtro es de vista en cliente para que funcione sin conexión.
     const deptUrl = new URLSearchParams(window.location.search).get('dept');
     const deptInicial =
       deptUrl !== null ? deptUrl : (leerDepartamentoRecordado() ?? '');
     if (selectorDepartamento && DEPARTAMENTOS_POR_CODIGO[deptInicial]) {
       selectorDepartamento.value = deptInicial;
     }
-    let ultimoPayload: PayloadAlertas | null = null;
 
-    const pintar: PintarAlertas = (payload) => {
-      ultimoPayload = payload;
-      const vistas = leerAlertasVistas();
-      const nuevas = calcularNuevas(payload.alertas, vistas);
+    // Almacén en memoria: evita recargas completas de página y llamadas redundantes
+    let payloadGlobal: PayloadAlertas | null = null;
+    let ultimoPayload: PayloadAlertas | null = null;
+    let cargando = false;
+
+    // ZONA 3: Sincronización visual accesible de los botones de filtro
+    const CLASE_ACTIVO = 'border-accent bg-accent text-accent-ink';
+    const CLASE_INACTIVO =
+      'border-border bg-surface hover:bg-bg hover:border-accent/40 text-ink';
+
+    function actualizarBotonesFiltro(tipoActual?: string): void {
+      enlacesTipo.forEach((el) => {
+        const valor = el.getAttribute('data-filtro-tipo');
+        const esActivo =
+          (tipoActual === undefined && valor === 'todas') ||
+          valor === tipoActual;
+        el.setAttribute('aria-current', esActivo ? 'page' : 'false');
+        if (!esActivo) el.removeAttribute('aria-current');
+        el.className = `inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 font-medium transition-all shadow-2xs ${esActivo ? CLASE_ACTIVO : CLASE_INACTIVO}`;
+      });
+    }
+
+    function leerTipoDesdeUrl(): 'dengue' | 'respiratorio' | undefined {
+      const tipoPedido = new URLSearchParams(window.location.search).get(
+        'tipo',
+      );
+      return tipoPedido === 'dengue' || tipoPedido === 'respiratorio'
+        ? tipoPedido
+        : undefined;
+    }
+
+    // Renderiza la vista combinando tipo y departamento en memoria sin recargar la página
+    function renderizar(animar = false): void {
+      if (!ultimoPayload) return;
+      const tipo = leerTipoDesdeUrl();
+      actualizarBotonesFiltro(tipo);
+
       const dept = selectorDepartamento?.value ?? '';
+      const vistas = leerAlertasVistas();
+      const todas = ultimoPayload.alertas;
+
+      // Filtrado en memoria: tipo y territorio
+      const porTipo = tipo ? todas.filter((a) => a.tipo === tipo) : todas;
       const visibles = dept
-        ? payload.alertas.filter((a) => alertaAplicaA(a, dept))
-        : payload.alertas;
+        ? porTipo.filter((a) => alertaAplicaA(a, dept))
+        : porTipo;
+
+      const nuevas = calcularNuevas(visibles, vistas);
       const textoVacio = dept
         ? `No hay alertas vigentes para ${DEPARTAMENTOS_POR_CODIGO[dept]?.nombre ?? dept}.`
         : undefined;
+
+      // ZONA 4: Solo se actualiza la lista de alertas (sin tocar cabecera ni aside)
       aplicarVistaAlertas(
         root,
-        { ...payload, alertas: visibles },
+        { ...ultimoPayload, alertas: visibles },
         nuevas,
         textoVacio,
+        animar,
       );
-      // Union, no reemplazo: payload.alertas viene filtrado por `tipo`. Con
-      // reemplazo, entrar por /alertas?tipo=dengue borraría del historial las
-      // respiratorias ya vistas y al volver a /alertas saldrían como "Nueva".
-      // Se guardan todas las recibidas, no solo las del departamento visible.
-      guardarAlertasVistas([...vistas, ...payload.alertas.map((a) => a.id)]);
-      // Ancla #alerta-<id> de un enlace compartido: las tarjetas se pintan
-      // después de la carga, así que el salto nativo del navegador ya pasó.
+
+      // ZONA 2: Se actualizan los KPIs numéricos de forma atómica
+      actualizarKpis(visibles);
+
+      guardarAlertasVistas([...vistas, ...todas.map((a) => a.id)]);
+
+      // Ancla #alerta-<id>
       const ancla = window.location.hash.slice(1);
-      if (ancla) document.getElementById(ancla)?.scrollIntoView();
+      if (ancla) {
+        const objetivo = document.getElementById(ancla);
+        if (objetivo) {
+          objetivo.scrollIntoView({ behavior: 'smooth' });
+          objetivo.classList.add('ring-2', 'ring-accent');
+          window.setTimeout(
+            () => objetivo.classList.remove('ring-2', 'ring-accent'),
+            3000,
+          );
+        }
+      }
+    }
+
+    const pintar: PintarAlertas = (payload) => {
+      ultimoPayload = payload;
+      if (
+        !payloadGlobal ||
+        payload.alertas.length >= payloadGlobal.alertas.length
+      ) {
+        payloadGlobal = payload;
+      }
+      renderizar(false);
     };
     (root as HTMLElement & { pintarAlertas?: PintarAlertas }).pintarAlertas =
       pintar;
 
+    // ZONA 3: Cambio de departamento (actualiza URL y renderiza en memoria)
     selectorDepartamento?.addEventListener('change', () => {
       const url = new URL(window.location.href);
       if (selectorDepartamento.value)
         url.searchParams.set('dept', selectorDepartamento.value);
-      else url.searchParams.set('dept', '');
+      else url.searchParams.delete('dept');
       history.replaceState(null, '', url);
-      if (ultimoPayload) pintar(ultimoPayload);
+      renderizar(false);
     });
 
-    const tipoPedido = new URLSearchParams(window.location.search).get('tipo');
-    const tipo =
-      tipoPedido === 'dengue' || tipoPedido === 'respiratorio'
-        ? tipoPedido
-        : undefined;
+    // ZONA 3: Interceptar clics en enlaces de síndrome para navegación cliente (soft navigation)
+    enlacesTipo.forEach((enlace) => {
+      enlace.addEventListener('click', (evento) => {
+        // Respetar combinaciones de teclas para abrir en nueva pestaña (Ctrl, Cmd, etc.)
+        if (
+          evento.metaKey ||
+          evento.ctrlKey ||
+          evento.shiftKey ||
+          evento.altKey ||
+          evento.button !== 0
+        ) {
+          return;
+        }
+        evento.preventDefault();
+        const valor = enlace.getAttribute('data-filtro-tipo');
+        const nuevoTipo =
+          valor === 'dengue' || valor === 'respiratorio' ? valor : undefined;
 
-    const activo = 'border-accent bg-accent text-accent-ink';
-    const inactivo = 'border-border bg-surface';
-    document
-      .querySelectorAll<HTMLAnchorElement>('[data-filtro-tipo]')
-      .forEach((el) => {
-        const valor = el.getAttribute('data-filtro-tipo');
-        const esActivo =
-          (tipo === undefined && valor === 'todas') || valor === tipo;
-        el.setAttribute('aria-current', esActivo ? 'page' : 'false');
-        if (!esActivo) el.removeAttribute('aria-current');
-        el.className = `rounded-full border px-3 py-1.5 ${esActivo ? activo : inactivo}`;
+        const url = new URL(window.location.href);
+        if (nuevoTipo) {
+          url.searchParams.set('tipo', nuevoTipo);
+        } else {
+          url.searchParams.delete('tipo');
+        }
+        history.pushState(null, '', url);
+
+        // Si ya tenemos los datos cargados en memoria, actualización inmediata en 0ms
+        if (payloadGlobal) {
+          ultimoPayload = payloadGlobal;
+          renderizar(false);
+        } else {
+          void cargarDatos();
+        }
       });
-    const url = tipo
-      ? `${API_BASE}/api/alertas?tipo=${encodeURIComponent(tipo)}`
-      : `${API_BASE}/api/alertas`;
+    });
 
-    fetch(url)
-      .then(async (respuesta) => {
+    // Soporte para historial del navegador (Atrás / Adelante)
+    window.addEventListener('popstate', () => {
+      const params = new URLSearchParams(window.location.search);
+      const deptEnUrl = params.get('dept') ?? '';
+      if (selectorDepartamento && selectorDepartamento.value !== deptEnUrl) {
+        selectorDepartamento.value = deptEnUrl;
+      }
+      if (payloadGlobal) {
+        ultimoPayload = payloadGlobal;
+        renderizar(false);
+      } else {
+        void cargarDatos();
+      }
+    });
+
+    async function cargarDatos(): Promise<void> {
+      if (cargando) return;
+      cargando = true;
+
+      // ZONA 4: Estado de carga localizado exclusivamente en el contenedor de alertas
+      const carga = root.querySelector<HTMLElement>('[data-alertas-carga]');
+      const error = root.querySelector<HTMLElement>('[data-alertas-error]');
+      if (!ultimoPayload && carga) carga.hidden = false;
+      if (error) error.hidden = true;
+      root.setAttribute('aria-busy', 'true');
+
+      const url = `${API_BASE}/api/alertas`;
+
+      try {
+        const respuesta = await fetch(url);
         if (!respuesta.ok) {
           throw new Error(String(respuesta.status));
         }
         const datos: unknown = await respuesta.json();
-        // El service worker marca lo servido desde su cache con `_desde_cache`
-        // en el cuerpo (ver web/public/sw.js). Va en el cuerpo y no en una
-        // cabecera porque la API es de otro origen y el navegador filtra por
-        // CORS las cabeceras propias. El backend nunca emite este campo.
         marcarFrescura(
           typeof datos === 'object' &&
             datos !== null &&
@@ -341,17 +852,25 @@ const filtroRespiratorio = tipoPedido === 'respiratorio';
         ) {
           throw new Error('contrato');
         }
-        pintar(datos as PayloadAlertas);
-      })
-      .catch(() => {
-        const carga = root.querySelector<HTMLElement>('[data-alertas-carga]');
-        const error = root.querySelector<HTMLElement>('[data-alertas-error]');
+        payloadGlobal = datos as PayloadAlertas;
+        ultimoPayload = payloadGlobal;
+        renderizar(true);
+      } catch {
         if (carga) carga.hidden = true;
         if (error) error.hidden = false;
         if (sello) sello.textContent = '';
         root.setAttribute('data-cargado', '1');
         root.setAttribute('data-estado', 'error');
-      });
+      } finally {
+        cargando = false;
+        root.setAttribute('aria-busy', 'false');
+      }
+    }
+
+    // Inicialización al montar
+    const tipoInicial = leerTipoDesdeUrl();
+    actualizarBotonesFiltro(tipoInicial);
+    void cargarDatos();
   }
 </script>
 
@@ -362,12 +881,22 @@ const filtroRespiratorio = tipoPedido === 'respiratorio';
   @media print {
     :global(header[class*='sticky']),
     :global(footer),
-    nav[aria-label='Filtrar alertas por tipo'] {
+    header [data-imprimir],
+    header [data-enlace-feed],
+    header a[href*='/alertas/archivo'],
+    header a[href*='/alertas/nueva'],
+    nav[aria-label='Filtrar alertas por tipo'],
+    aside,
+    section[aria-label='Resumen de situación epidemiológica'],
+    div[class*='card-elevated']:has(
+        nav[aria-label='Filtrar alertas por tipo']
+      ) {
       display: none !important;
     }
     :global([data-alerta]) {
       page-break-inside: avoid;
-      border: 1px solid #999;
+      border: 1px solid #999 !important;
+      box-shadow: none !important;
     }
   }
 </style>

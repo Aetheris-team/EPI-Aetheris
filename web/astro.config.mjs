@@ -73,12 +73,15 @@ export default defineConfig({
     icon({ include: { tabler: ['*'], 'simple-icons': ['*'] } }),
     // Sitemap a partir de `site`. Quedan fuera las rutas que no son
     // contenido público: /alertas/nueva (formulario de operadores, además
-    // marcado noindex en su propia página), /demos (recorridos animados para
+    // marcado noindex en su propia página), /cuenta y /admin (pantallas de
+    // cuentas, también noindex), /demos (recorridos animados para
     // enseñar o grabar, también noindex) y /panel, que no es una página sino
     // la redirección generada por `redirects` a /dengue.
     sitemap({
       filter: (pagina) =>
         !pagina.includes('/alertas/nueva') &&
+        !pagina.includes('/cuenta') &&
+        !pagina.includes('/admin') &&
         !pagina.includes('/panel') &&
         !pagina.endsWith('/biblioteca/fichas/') &&
         !pagina.includes('/configuracion') &&

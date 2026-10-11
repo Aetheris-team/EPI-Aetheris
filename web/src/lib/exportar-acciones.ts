@@ -1,6 +1,6 @@
-// Acciones de exportar e incrustar compartidas por los botones sueltos
-// (BotonExportarGrafico, BotonIncrustar) y por el menú «Exportar»
-// (MenuExportar). Cada una devuelve el mensaje que se anuncia al usuario.
+// Acciones de exportar e incrustar compartidas por el menú «Exportar»
+// (MenuExportar) y por el botón «Incrustar» (BotonIncrustar). Cada una
+// devuelve el mensaje que se anuncia al usuario.
 import { obtenerFiltrosAnalisis } from './analisis-state';
 import { encontrarGrafico, exportarPng, exportarSvg } from './exportar-grafico';
 import { codigoIncrustacion } from './incrustar';

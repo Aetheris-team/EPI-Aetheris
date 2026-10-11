@@ -4,6 +4,7 @@ import FichaM1 from '../../../fichas/FichaM1.astro';
 import FichaM2 from '../../../fichas/FichaM2.astro';
 import FichaM3 from '../../../fichas/FichaM3.astro';
 import FichaM4 from '../../../fichas/FichaM4.astro';
+import FichaModeloPredictivo from '../../../fichas/FichaModeloPredictivo.astro';
 import { FICHAS, rutaFicha } from '../../../fichas/registro';
 
 export function getStaticPaths() {
@@ -23,6 +24,7 @@ const CONTENIDO = {
   'm2-anomalia-climatica': FichaM2,
   'm3-presion-epidemiologica': FichaM3,
   'm4-integridad-vigilancia': FichaM4,
+  'modelo-predictivo': FichaModeloPredictivo,
 } as const;
 
 const ficha = Astro.props;
@@ -43,6 +45,7 @@ if (!Contenido) {
   documentacion={ficha.documentacion}
   anterior={ficha.anterior}
   siguiente={ficha.siguiente}
+  disposicion={ficha.disposicion}
 >
   <Contenido />
 </FichaEnriquecida>

@@ -1,6 +1,7 @@
 ---
 import PanelWorkspace from '../analisis/PanelWorkspace.astro';
-import BotonExportarGrafico from '../BotonExportarGrafico.astro';
+import { URL_CLIMA_POR_ANIO } from '../../lib/analisis-api';
+import MenuExportar from '../MenuExportar.astro';
 // Asociación entre el clima y el crecimiento de los casos, año por año
 // (A3, A4 y A5 de GET /api/clima-dengue/por-anio). Correlación de Pearson
 // entre la anomalía climática de las 4 semanas previas y la anomalía del
@@ -55,10 +56,17 @@ import BotonExportarGrafico from '../BotonExportarGrafico.astro';
       miden lo mismo con dos unidades.
     </p>
 
-    <BotonExportarGrafico
+    <MenuExportar
       class="mt-3"
+      alineacion="izquierda"
       titulo="Clima y crecimiento de los casos de dengue, por año"
       fuente="EPI-Aetheris · OpenDengue y Open-Meteo, 2014 a 2023"
+      enlaces={[
+        {
+          texto: 'El Salvador por año, completo (JSON)',
+          href: URL_CLIMA_POR_ANIO,
+        },
+      ]}
     />
 
     <details class="mt-3 rounded-xl border border-border bg-bg p-3">

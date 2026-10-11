@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
+import { simularClimaDengue } from './clima-dengue-mock';
 
 const casos = Array.from({ length: 30 }, (_, i) => ({
   anio: 2025,
@@ -107,4 +108,62 @@ test('el menú abierto no presenta violaciones WCAG A y AA', async ({
     .include('section:has(#curva-epidemica)')
     .analyze();
   expect(resultados.violations).toEqual([]);
+});
+
+const PANELES_CLIMA = [
+  'aporte',
+  'asociacion',
+  'ciclo',
+  'paises',
+  'pais-variable',
+] as const;
+
+test('cada panel de clima tiene un solo botón «Exportar» con la imagen y los datos completos', async ({
+  page,
+}) => {
+  await simularClimaDengue(page);
+  await page.goto('/analisis/clima');
+  for (const id of PANELES_CLIMA) {
+    const panel = page.locator(`[data-panel-clima="${id}"]`);
+    await panel.scrollIntoViewIfNeeded();
+    await expect(panel.locator('svg[role="img"]').first()).toBeVisible();
+    await expect(panel.getByRole('button', { name: /Descargar/ })).toHaveCount(
+      0,
+    );
+    const boton = panel.getByRole('button', { name: /Exportar/ });
+    await expect(boton).toHaveCount(1);
+    await boton.click();
+    const opciones = panel.getByRole('menuitem');
+    await expect(opciones).toHaveCount(3);
+    await expect(opciones.nth(0)).toHaveText('Imagen vectorial (SVG)');
+    await expect(opciones.nth(1)).toHaveText('Imagen (PNG)');
+    await expect(opciones.nth(2)).toHaveAttribute(
+      'href',
+      /\/api\/clima-dengue\/(por-anio|multipais)$/,
+    );
+    await page.keyboard.press('Escape');
+    await expect(boton).toHaveAttribute('aria-expanded', 'false');
+  }
+});
+
+test('la descarga de los dos archivos de clima va en un solo menú sin opciones de imagen', async ({
+  page,
+}) => {
+  await simularClimaDengue(page);
+  await page.goto('/analisis/clima');
+  const seccion = page.locator(
+    'section[aria-labelledby="clima-descargas-titulo"]',
+  );
+  await seccion.scrollIntoViewIfNeeded();
+  await expect(seccion.getByRole('link')).toHaveCount(0);
+  await seccion.getByRole('button', { name: /Exportar/ }).click();
+  await expect(seccion.getByRole('menuitem')).toHaveText([
+    'El Salvador por año (JSON)',
+    '18 países (JSON)',
+  ]);
+  // Las opciones de enlace también se recorren con el teclado.
+  await page.keyboard.press('ArrowDown');
+  await expect(
+    seccion.getByRole('menuitem', { name: '18 países (JSON)' }),
+  ).toBeFocused();
 });

@@ -40,9 +40,18 @@ test('el canal endémico se descarga como SVG con el pie de fuente y sin variabl
   const canal = page.locator('[data-canal-endemico]');
   await expect(canal.locator('[data-canal-grafica] svg').first()).toBeVisible();
 
+  // Un solo botón «Exportar» con las opciones de imagen en su menú.
+  await expect(canal.getByRole('button', { name: /^Descargar/ })).toHaveCount(
+    0,
+  );
+  await canal.getByRole('button', { name: /Exportar/ }).click();
+  await expect(canal.getByRole('menuitem')).toHaveText([
+    'Imagen vectorial (SVG)',
+    'Imagen (PNG)',
+  ]);
   const [descarga] = await Promise.all([
     page.waitForEvent('download'),
-    canal.locator('[data-exportar-formato="svg"]').click(),
+    canal.getByRole('menuitem', { name: /SVG/ }).click(),
   ]);
   expect(descarga.suggestedFilename()).toBe('canal-endemico.svg');
   const ruta = await descarga.path();
@@ -68,9 +77,10 @@ test('el canal endémico se descarga como PNG', async ({ page }) => {
   await page.goto('/departamento/SV-SS');
   const canal = page.locator('[data-canal-endemico]');
   await expect(canal.locator('[data-canal-grafica] svg').first()).toBeVisible();
+  await canal.getByRole('button', { name: /Exportar/ }).click();
   const [descarga] = await Promise.all([
     page.waitForEvent('download'),
-    canal.locator('[data-exportar-formato="png"]').click(),
+    canal.getByRole('menuitem', { name: /PNG/ }).click(),
   ]);
   expect(descarga.suggestedFilename()).toBe('canal-endemico.png');
 });
