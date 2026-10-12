@@ -1,5 +1,6 @@
 import csv
 import json
+import logging
 import os
 import threading
 from contextlib import contextmanager
@@ -392,6 +393,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 app.add_middleware(SecurityHeadersMiddleware)
 
+_registro_salud = logging.getLogger("uvicorn.error")
+
+
 @app.get("/health")
 @limiter.exempt
 def health_check(response: Response):
@@ -408,9 +412,19 @@ def health_check(response: Response):
             "service": "backend",
             "database": "connected"
         }
-    except Exception:
-        # Security: Do not log or leak the original connection error string to clients.
-        # Original error can contain credentials if improperly handled by the driver.
+    except Exception as exc:
+        # Al cliente nunca se le devuelve la causa. En el registro del servidor
+        # va la clase de la excepcion y, solo para OperationalError, el
+        # mensaje del servidor ("password authentication failed for user ...",
+        # "database ... does not exist"): ese texto no lleva credenciales. El
+        # mensaje de otras clases (un DSN mal formado, por ejemplo) puede
+        # repetir fragmentos de la URL con la clave, asi que no se registra.
+        detalle = str(exc).strip().splitlines()[0] if isinstance(exc, OperationalError) and str(exc).strip() else ""
+        _registro_salud.error(
+            "health: fallo la conexion a la base (%s)%s",
+            type(exc).__name__,
+            f": {detalle}" if detalle else "",
+        )
         raise HTTPException(
             status_code=500,
             detail="Error de conexión a la base de datos"
