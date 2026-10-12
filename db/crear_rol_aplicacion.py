@@ -67,12 +67,25 @@ def crear_o_rotar(conn, rol: str, clave: str) -> bool:
             cur.execute(sql.SQL("ALTER ROLE {} WITH LOGIN PASSWORD {}").format(nombre, sql.Literal(clave)))
         else:
             cur.execute(sql.SQL("CREATE ROLE {} WITH LOGIN PASSWORD {}").format(nombre, sql.Literal(clave)))
-        # Explicito: ningun atributo que permita alterar el esquema u otros roles.
+        # CREATE ROLE ya deja apagados SUPERUSER, CREATEDB, CREATEROLE,
+        # REPLICATION y BYPASSRLS. No se repiten con ALTER ROLE: Postgres exige
+        # ser superusuario para nombrar SUPERUSER, REPLICATION o BYPASSRLS, aun
+        # para negarlos, y el propietario de Render solo tiene CREATEROLE. Un rol
+        # que ya existia con alguno de esos atributos se rechaza en lugar de
+        # corregirlo.
         cur.execute(
-            sql.SQL(
-                "ALTER ROLE {} NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS INHERIT"
-            ).format(nombre)
+            "SELECT rolsuper OR rolcreatedb OR rolcreaterole OR rolreplication OR rolbypassrls "
+            "FROM pg_roles WHERE rolname = %s",
+            (rol,),
         )
+        if cur.fetchone()[0]:
+            conn.rollback()
+            sys.exit(
+                f"El rol {rol} existe con atributos que el rol de aplicacion no debe tener "
+                "(superusuario, crear bases, crear roles, replicacion o saltarse RLS). "
+                "No se hizo ningun cambio. Usa otro nombre con --rol o quita esos atributos "
+                "con un superusuario."
+            )
         cur.execute("SELECT current_database()")
         base = cur.fetchone()[0]
         cur.execute(sql.SQL("GRANT CONNECT ON DATABASE {} TO {}").format(sql.Identifier(base), nombre))
