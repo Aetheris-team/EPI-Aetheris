@@ -47,6 +47,21 @@ services:
     preDeployCommand: python db/aplicar_migraciones.py
     healthCheckPath: /health
     envVars:
+      # Roles de base de datos (ADR 0024, punto E; guia paso a paso en
+      # docs/seguridad/roles-de-base-de-datos.md). Los valores los pone una
+      # persona en el panel de Render; ninguno se versiona.
+      #   DATABASE_URL: rol de aplicacion (epi_app), el de la API. Sin
+      #     privilegios de esquema ni de modificacion de la auditoria.
+      #   DATABASE_URL_MIGRACIONES: rol propietario del esquema, que usa solo
+      #     el preDeployCommand. Si falta, el runner usa DATABASE_URL y, si
+      #     tampoco existe, las POSTGRES_* de abajo.
+      # Mientras DATABASE_URL no se defina, la API sigue con POSTGRES_*. Cuando
+      # el rol de aplicacion lleve un tiempo funcionando se retiran
+      # POSTGRES_USER y POSTGRES_PASSWORD de este bloque.
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_URL_MIGRACIONES
+        sync: false
       - key: POSTGRES_HOST
         fromDatabase:
           name: epi-aetheris-db
@@ -67,17 +82,15 @@ services:
         fromDatabase:
           name: epi-aetheris-db
           property: password
-      # Predicho como https://<name del static site>.onrender.com -- Render
-      # asigna ese subdominio exacto salvo colisión de nombre (namespace
-      # global de .onrender.com), en cuyo caso agrega un sufijo. Verificar
-      # la URL real del servicio "epi-aetheris-web" en el dashboard tras el
-      # primer deploy y corregir aquí si no coincide.
-      #
-      # Incluye también el segundo Static Site "Aetheris Nitor" (fork-vitrina
-      # de web/, ver ADR/decisión del fork), tanto su dominio propio
-      # epi-aetheris.dev como su URL directa de onrender.com.
+      # Orígenes desde los que el navegador puede llamar a la API: el sitio
+      # canónico (servicio estático "aetheris-nitor", que sincroniza web/) y su
+      # www, que Render redirige al dominio sin www. Las direcciones
+      # onrender.com del sitio ya no van aquí: el Layout las redirige al
+      # dominio canónico antes de que haga ninguna petición (ADR 0024, punto
+      # B). El control de Origin de las rutas de cuenta (AUTH_ORIGEN_CANONICO)
+      # solo acepta el dominio canónico.
       - key: CORS_ALLOWED_ORIGINS
-        value: https://epi-aetheris-web.onrender.com,https://epi-aetheris.dev,https://www.epi-aetheris.dev,https://aetheris-nitor.onrender.com
+        value: https://epi-aetheris.dev,https://www.epi-aetheris.dev
       # /docs, /redoc y /openapi.json apagados en producción (ADR 0024).
       - key: API_DOCS_ENABLED
         value: "false"
@@ -85,11 +98,15 @@ services:
       # se versiona un valor. Sin él, POST/PATCH responden 503.
       - key: ALERTAS_TOKEN
         sync: false
-      # Cuentas de usuario (ADR 0024). Apagadas hasta que existan las claves,
-      # el dominio de la API y el correo. Los valores los pone una persona en
-      # el panel de Render; ninguno se versiona.
+      # Cuentas de usuario (ADR 0024), activas desde 2026-10-04. Los secretos
+      # los pone una persona en el panel de Render; ninguno se versiona.
       - key: CUENTAS_HABILITADAS
-        value: "false"
+        value: "true"
+      # Proxies de confianza delante de la API. X-Forwarded-For llega con dos
+      # entradas (la persona y el Cloudflare de la plataforma): con 2 se toma la
+      # IP de la persona; con 1 se tomaba la de Cloudflare. Medido en /cuenta.
+      - key: TRUSTED_PROXY_DEPTH
+        value: "2"
       - key: AUTH_ORIGEN_CANONICO
         value: https://epi-aetheris.dev
       - key: AUTH_RP_ID
@@ -108,32 +125,3 @@ services:
         sync: false
       - key: SMTP_CLAVE
         sync: false
-
-  - type: web
-    name: epi-aetheris-web
-    runtime: static
-    rootDir: ./web
-    branch: main
-    buildCommand: pnpm install --frozen-lockfile && pnpm build
-    staticPublishPath: ./dist
-    # Sin CSP ni frame-ancestors a propósito: el sitio tiene scripts en línea y
-    # un código para incrustar gráficas en otras páginas; ambos se revisan
-    # aparte antes de endurecerlos.
-    headers:
-      - path: /*
-        name: X-Content-Type-Options
-        value: nosniff
-      - path: /*
-        name: Referrer-Policy
-        value: strict-origin-when-cross-origin
-      - path: /*
-        name: Permissions-Policy
-        value: camera=(), microphone=(), geolocation=()
-    envVars:
-      # Se embebe en el bundle del cliente en build-time (variable PUBLIC_*
-      # de Astro) -- por eso va como valor fijo, no como fromService: Astro
-      # ya generó el HTML/JS antes de que ese lookup pudiera resolverse.
-      # Mismo aviso que arriba: verificar contra la URL real de
-      # "epi-aetheris-backend" tras el primer deploy.
-      - key: PUBLIC_API_URL
-        value: https://epi-aetheris-backend.onrender.com

@@ -13,7 +13,15 @@ import os
 import psycopg2
 import pytest
 
+from api.cuentas import contrasenas
 from api.cuentas.config import ConfigCuentas
+
+
+@pytest.fixture(autouse=True)
+def _sin_presupuesto_global_de_hashes(monkeypatch):
+    """La suite calcula cientos de hashes seguidos; el presupuesto global por
+    minuto lo ejercitan solo las pruebas que lo fijan a propósito."""
+    monkeypatch.setattr(contrasenas, "POR_MINUTO_MAX", 0)
 
 
 def _clave(byte: int) -> bytes:

@@ -20,7 +20,7 @@ from urllib.parse import urlparse
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, Response
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from . import auditoria, correo, csrf, llaves, permisos, servicio, sesiones
+from . import auditoria, contrasenas, correo, csrf, llaves, permisos, servicio, sesiones
 from .config import COOKIE_SESION, ConfigCuentas
 from .servicio import CorreoPendiente, ErrorCuentas
 from .sesiones import Sesion
@@ -152,6 +152,18 @@ def _http(exc: ErrorCuentas) -> HTTPException:
     )
 
 
+def _http_saturado(exc: contrasenas.Saturado) -> HTTPException:
+    return HTTPException(
+        status_code=503,
+        detail={
+            "codigo": "servidor_ocupado",
+            "mensaje": "Hay muchas verificaciones en curso. Vuelve a intentarlo en unos segundos.",
+            "espera_s": exc.espera_s,
+        },
+        headers={"Retry-After": str(exc.espera_s)},
+    )
+
+
 def crear_router(
     *,
     limiter,
@@ -174,6 +186,10 @@ def crear_router(
             except ErrorCuentas as exc:
                 conn.commit()
                 raise _http(exc) from exc
+            except contrasenas.Saturado as exc:
+                # No es un intento fallido: no se registra nada.
+                conn.rollback()
+                raise _http_saturado(exc) from exc
             except BaseException:
                 conn.rollback()
                 raise
@@ -304,6 +320,10 @@ def crear_router(
     @limiter.limit(limite_auth)
     def ingresar(request: Request, response: Response, datos: IngresoIn, config: ConfigCuentas = Depends(_config)):
         response.headers["Cache-Control"] = "no-store"
+        try:
+            contrasenas.comprobar_cupo()
+        except contrasenas.Saturado as exc:
+            raise _http_saturado(exc) from exc
         with tx() as conn:
             token, _ = servicio.ingresar(
                 conn, config, correo=datos.correo, contrasena=datos.contrasena,
@@ -484,10 +504,40 @@ def crear_router(
         return {"mensaje": "Estado actualizado."}
 
     @admin.post("/usuarios/{usuario_id}/restablecer-factores")
-    def restablecer_factores(usuario_id: str, datos: MotivoIn, tareas: BackgroundTasks, sesion: Sesion = Depends(requerir("admin.restablecer_factores")), config: ConfigCuentas = Depends(_config)):
+    @limiter.limit(limite_auth)
+    def restablecer_factores(request: Request, response: Response, usuario_id: str, datos: MotivoIn, tareas: BackgroundTasks, sesion: Sesion = Depends(requerir("admin.restablecer_factores")), config: ConfigCuentas = Depends(_config)):
         with tx() as conn:
-            _enviar(tareas, conn, config, servicio.restablecer_factores(conn, usuario_id, actor=sesion, motivo=datos.motivo))
+            resultado = servicio.solicitar_restablecimiento_de_factores(conn, config, sesion, usuario_id, datos.motivo)
+            for pendiente in resultado.correos:
+                _enviar(tareas, conn, config, pendiente)
+        if resultado.hecho:
+            return {"mensaje": "Factores restablecidos."}
+        # Sobre un administrador queda esperando a que otro lo confirme.
+        response.status_code = 202
+        return {
+            "mensaje": "Solicitud creada. Otro administrador debe confirmarla antes de que caduque.",
+            "aprobacion": resultado.aprobacion,
+        }
+
+    @admin.get("/aprobaciones")
+    def aprobaciones(response: Response, sesion: Sesion = Depends(requerir("admin.ver_aprobaciones"))):
+        response.headers["Cache-Control"] = "no-store"
+        with abrir_conexion() as conn:
+            return {"aprobaciones": servicio.listar_aprobaciones(conn, sesion)}
+
+    @admin.post("/aprobaciones/{aprobacion_id}/confirmar")
+    @limiter.limit(limite_auth)
+    def confirmar_aprobacion(request: Request, aprobacion_id: str, tareas: BackgroundTasks, sesion: Sesion = Depends(requerir("admin.resolver_aprobaciones")), config: ConfigCuentas = Depends(_config)):
+        with tx() as conn:
+            _enviar(tareas, conn, config, servicio.confirmar_restablecimiento_de_factores(conn, sesion, aprobacion_id))
         return {"mensaje": "Factores restablecidos."}
+
+    @admin.post("/aprobaciones/{aprobacion_id}/rechazar")
+    @limiter.limit(limite_auth)
+    def rechazar_aprobacion(request: Request, aprobacion_id: str, sesion: Sesion = Depends(requerir("admin.resolver_aprobaciones"))):
+        with tx() as conn:
+            servicio.rechazar_restablecimiento_de_factores(conn, sesion, aprobacion_id)
+        return {"mensaje": "Solicitud resuelta sin cambios."}
 
     @admin.get("/instituciones")
     def instituciones(response: Response, sesion: Sesion = Depends(requerir("admin.gestionar_instituciones"))):

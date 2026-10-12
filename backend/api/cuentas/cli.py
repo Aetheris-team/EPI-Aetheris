@@ -7,29 +7,26 @@
 Se ejecutan con acceso a la base y al entorno del servicio (Render shell o un
 contenedor local); quien las usa ya tiene ese acceso, y cada una deja su fila
 en la auditoría como actor 'sistema'.
+
+`restablecer-factores` no pide la aprobación de un segundo administrador que
+sí exige la API sobre cuentas de administrador: es la salida cuando no queda
+otro administrador activo que pueda aprobar.
 """
 
 from __future__ import annotations
 
 import argparse
-import os
 import sys
 
 import psycopg2
 
+from ..conexion_db import parametros_conexion
 from . import auditoria, servicio
 from .config import cargar_config
 
 
 def _conectar():
-    return psycopg2.connect(
-        host=os.getenv("POSTGRES_HOST", "db"),
-        port=os.getenv("POSTGRES_PORT", "5432"),
-        dbname=os.getenv("POSTGRES_DB"),
-        user=os.getenv("POSTGRES_USER"),
-        password=os.getenv("POSTGRES_PASSWORD"),
-        connect_timeout=5,
-    )
+    return psycopg2.connect(**parametros_conexion(), connect_timeout=5)
 
 
 def _crear_admin(conn, args) -> int:

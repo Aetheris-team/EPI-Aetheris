@@ -68,6 +68,8 @@ class ConfigCuentas:
     caduca_restablecer_s: int = 30 * 60
     caduca_invitacion_s: int = 72 * 3600
     caduca_verificar_correo_s: int = 24 * 3600
+    # Plazo para que otro administrador confirme una acción que lo exige.
+    caduca_aprobacion_s: int = 24 * 3600
     max_fallos_cuenta: int = 5
     ventana_fallos_s: int = 15 * 60
     consultar_hibp: bool = True
