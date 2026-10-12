@@ -511,3 +511,80 @@ def test_script_que_crea_y_rota_el_rol(con_privilegios):
                     cur.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(rol)))
         finally:
             propietario.close()
+
+
+def test_script_con_propietario_sin_superusuario(entorno):
+    """Render da un propietario con CREATEROLE pero sin superusuario.
+
+    Postgres rechaza ALTER ROLE ... NOSUPERUSER a quien no es superusuario, así
+    que el script no puede nombrar esos atributos: los fija el CREATE ROLE.
+    """
+    sufijo = secrets.token_hex(4)
+    base = f"epi_prop_{sufijo}"
+    propietario_rol = f"epi_prop_{sufijo}"
+    rol = f"epi_app_{sufijo}_p"
+    clave_prop, clave_app = secrets.token_hex(16), secrets.token_hex(16)
+    admin = _conectar(os.getenv("POSTGRES_DB", "epi_aetheris"))
+    admin.autocommit = True
+    try:
+        with admin.cursor() as cur:
+            cur.execute(
+                sql.SQL("CREATE ROLE {} LOGIN CREATEROLE CREATEDB PASSWORD {}").format(
+                    sql.Identifier(propietario_rol), sql.Literal(clave_prop)
+                )
+            )
+            cur.execute(
+                sql.SQL("CREATE DATABASE {} OWNER {}").format(
+                    sql.Identifier(base), sql.Identifier(propietario_rol)
+                )
+            )
+        propietario = _conectar(base, propietario_rol, clave_prop)
+        propietario.autocommit = True
+        try:
+            with propietario.cursor() as cur:
+                cur.execute("SELECT rolsuper FROM pg_roles WHERE rolname = current_user")
+                assert cur.fetchone()[0] is False
+                for archivo in _archivos_migracion():
+                    cur.execute(archivo.read_text())
+        finally:
+            propietario.close()
+
+        entorno_script = {k: v for k, v in os.environ.items() if k not in _VARIABLES}
+        entorno_script.update(
+            EPI_APP_CLAVE=clave_app, POSTGRES_DB=base,
+            POSTGRES_HOST=os.getenv("POSTGRES_HOST", "localhost"),
+            POSTGRES_PORT=os.getenv("POSTGRES_PORT", "5432"),
+            POSTGRES_USER=propietario_rol, POSTGRES_PASSWORD=clave_prop,
+        )
+        corrida = subprocess.run(
+            [sys.executable, str(_RAIZ / "db" / "crear_rol_aplicacion.py"), "--rol", rol],
+            cwd=_RAIZ, env=entorno_script, capture_output=True, text=True, timeout=120,
+        )
+        assert corrida.returncode == 0, corrida.stderr
+        assert "creado" in corrida.stdout
+
+        conexion = _conectar(base, rol, clave_app)
+        try:
+            with conexion.cursor() as cur:
+                cur.execute(
+                    "SELECT rolsuper, rolcreatedb, rolcreaterole, rolreplication, rolbypassrls "
+                    "FROM pg_roles WHERE rolname = current_user"
+                )
+                assert cur.fetchone() == (False, False, False, False, False)
+                cur.execute("SELECT has_table_privilege(current_user, 'auditoria', 'UPDATE'), "
+                            "has_table_privilege(current_user, 'auditoria', 'INSERT')")
+                assert cur.fetchone() == (False, True)
+        finally:
+            conexion.close()
+
+        rotacion = subprocess.run(
+            [sys.executable, str(_RAIZ / "db" / "crear_rol_aplicacion.py"), "--rol", rol],
+            cwd=_RAIZ, env=entorno_script, capture_output=True, text=True, timeout=120,
+        )
+        assert rotacion.returncode == 0 and "clave rotada" in rotacion.stdout, rotacion.stderr
+    finally:
+        with admin.cursor() as cur:
+            cur.execute(sql.SQL("DROP DATABASE IF EXISTS {} WITH (FORCE)").format(sql.Identifier(base)))
+            for nombre in (rol, propietario_rol):
+                cur.execute(sql.SQL("DROP ROLE IF EXISTS {}").format(sql.Identifier(nombre)))
+        admin.close()
