@@ -234,30 +234,39 @@ import PanelWorkspace from './analisis/PanelWorkspace.astro';
         Record<string, [number, number][]>
       > = {};
       const anios = new Set<number>();
-      try {
-        // Las series se piden a la vez, no una tras otra: en serie, cada
-        // virus marcado sumaba un viaje completo a la API antes de pintar.
-        const unicos = [...new Set(virusConsulta)];
-        const respuestas = await Promise.all(
-          unicos.map((virus) =>
-            jsonOk(
-              `${API_BASE}/api/respiratorios/temporal?virus=${encodeURIComponent(virus)}&metrica=${encodeURIComponent(metrica)}`,
-            ),
+      // Las series se piden a la vez, no una tras otra: en serie, cada
+      // virus marcado sumaba un viaje completo a la API antes de pintar.
+      // Con allSettled, el error de un virus no tapa el "sin dato" de
+      // otro: se evalúan en el mismo orden que el fetch secuencial
+      // original, así que el primer virus con problema (disponible:false
+      // o error de red) es el que decide, igual que antes.
+      const unicos = [...new Set(virusConsulta)];
+      const resultados = await Promise.allSettled(
+        unicos.map((virus) =>
+          jsonOk(
+            `${API_BASE}/api/respiratorios/temporal?virus=${encodeURIComponent(virus)}&metrica=${encodeURIComponent(metrica)}`,
           ),
-        );
-        for (const [i, virus] of unicos.entries()) {
-          const datos = respuestas[i];
-          if (esNoDisponible(datos)) {
-            error.classList.add('hidden');
-            renderSinDato(heatmap, motivoNoDisponible(datos));
-            return;
-          }
-          const etiqueta =
-            virus === 'todos' ? 'Todos los virus / vigilancia total' : virus;
-          seriesPorVirus[etiqueta] = datos.series;
-          for (const a of datos.anios) anios.add(a);
+        ),
+      );
+      let huboError = false;
+      for (const [i, virus] of unicos.entries()) {
+        const resultado = resultados[i];
+        if (resultado.status === 'rejected') {
+          huboError = true;
+          break;
         }
-      } catch {
+        const datos = resultado.value;
+        if (esNoDisponible(datos)) {
+          error.classList.add('hidden');
+          renderSinDato(heatmap, motivoNoDisponible(datos));
+          return;
+        }
+        const etiqueta =
+          virus === 'todos' ? 'Todos los virus / vigilancia total' : virus;
+        seriesPorVirus[etiqueta] = datos.series;
+        for (const a of datos.anios) anios.add(a);
+      }
+      if (huboError) {
         error.classList.remove('hidden');
         heatmap.textContent = '';
         heatmap.removeAttribute('aria-busy');
