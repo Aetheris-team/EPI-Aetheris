@@ -1,0 +1,887 @@
+---
+/**
+ * Prototipo de Mapa Departamental Vectorial SVG puro (sin Leaflet ni OpenStreetMap).
+ *
+ * Ventajas evaluadas:
+ * - 0 peticiones HTTP a servidores de tiles externos.
+ * - 0 KB de librerías externas (sin Leaflet JS/CSS).
+ * - Renderizado instantáneo SSR en Astro (LCP óptimo).
+ * - 100% compatible con modo sin conexión (PWA/Offline).
+ * - Exportable nativamente a SVG y PNG (sin problemas de CORS).
+ * - Tema oscuro 100% nativo con variables CSS.
+ * - Sin secuestro de scroll con la rueda del ratón (UX natural).
+ */
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { proyectarDepartamentos, type GeoDepartamentos } from '../lib/geo-svg';
+import { DEPARTAMENTOS_POR_CODIGO } from '../lib/departamentos';
+import Icono from './Icono.astro';
+
+interface Props {
+  id?: string;
+  ancho?: number;
+  mostrarControles?: boolean;
+  mostrarExportar?: boolean;
+}
+
+const {
+  id = 'mapa-vectorial-svg',
+  ancho = 680,
+  mostrarControles = true,
+  mostrarExportar = true,
+} = Astro.props;
+
+// Proyección estática al compilar / renderizar en servidor
+const geo = JSON.parse(
+  readFileSync(join(process.cwd(), 'public/geo/slv-adm1.geojson'), 'utf8'),
+) as GeoDepartamentos;
+
+const mapa = proyectarDepartamentos(geo, ancho, 14, 0.4);
+---
+
+<div
+  class="mapa-svg-contenedor flex flex-col rounded-2xl border border-border bg-surface shadow-xs"
+  id={id}
+  data-mapa-svg-root
+>
+  {
+    mostrarControles && (
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-border p-4 bg-bg/50 rounded-t-2xl">
+        <div
+          class="flex flex-wrap items-center gap-1.5"
+          role="tablist"
+          aria-label="Capas del mapa vectorial"
+        >
+          <button
+            type="button"
+            data-capa-btn="minsal"
+            class="mapa-tab-btn activo inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-sans text-xs font-medium transition-all"
+            aria-selected="true"
+          >
+            <Icono nombre="activity" class="h-3.5 w-3.5" />
+            <span>Casos MINSAL</span>
+          </button>
+          <button
+            type="button"
+            data-capa-btn="iv"
+            class="mapa-tab-btn inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-sans text-xs font-medium transition-all"
+            aria-selected="false"
+          >
+            <Icono nombre="sun" class="h-3.5 w-3.5" />
+            <span>Idoneidad (Iv)</span>
+          </button>
+          <button
+            type="button"
+            data-capa-btn="anomalia"
+            class="mapa-tab-btn inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-sans text-xs font-medium transition-all"
+            aria-selected="false"
+          >
+            <Icono nombre="cloud-storm" class="h-3.5 w-3.5" />
+            <span>Anomalía (σ)</span>
+          </button>
+          <button
+            type="button"
+            data-capa-btn="presion"
+            class="mapa-tab-btn inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-sans text-xs font-medium transition-all"
+            aria-selected="false"
+          >
+            <Icono nombre="gauge" class="h-3.5 w-3.5" />
+            <span>Presión (M3)</span>
+          </button>
+          <button
+            type="button"
+            data-capa-btn="integridad"
+            class="mapa-tab-btn inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-sans text-xs font-medium transition-all"
+            aria-selected="false"
+          >
+            <Icono nombre="shield-check" class="h-3.5 w-3.5" />
+            <span>Integridad</span>
+          </button>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <label class="inline-flex cursor-pointer items-center gap-1.5 font-sans text-xs text-ink-muted hover:text-ink select-none">
+            <input
+              type="checkbox"
+              data-toggle-etiquetas
+              class="rounded border-border text-accent focus:ring-accent"
+              checked
+            />
+            <span>Etiquetas</span>
+          </label>
+          {mostrarExportar && (
+            <div class="flex items-center gap-1 border-l border-border pl-2">
+              <button
+                type="button"
+                data-btn-exportar-svg
+                title="Descargar como imagen vectorial SVG limpia"
+                class="inline-flex items-center gap-1 rounded-md border border-border bg-surface px-2 py-1 font-sans text-xs font-medium text-ink hover:bg-bg hover:border-accent transition-colors"
+              >
+                <Icono nombre="file-type-svg" class="h-3.5 w-3.5 text-accent" />
+                <span>SVG</span>
+              </button>
+              <button
+                type="button"
+                data-btn-exportar-png
+                title="Descargar como imagen ráster PNG de alta definición"
+                class="inline-flex items-center gap-1 rounded-md border border-border bg-surface px-2 py-1 font-sans text-xs font-medium text-ink hover:bg-bg hover:border-accent transition-colors"
+              >
+                <Icono nombre="photo" class="h-3.5 w-3.5 text-accent" />
+                <span>PNG</span>
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  <!-- Aviso explicativo de la capa activa -->
+  <div
+    class="flex items-start gap-2.5 border-b border-border bg-surface px-4 py-2.5 text-xs text-ink-muted"
+  >
+    <Icono nombre="info-circle" class="mt-0.5 h-4 w-4 shrink-0 text-accent" />
+    <p data-aviso-capa class="leading-relaxed font-sans">
+      Cargando capa descriptiva...
+    </p>
+  </div>
+
+  <!-- Lienzo interactivo SVG -->
+  <div class="relative w-full overflow-hidden bg-bg/30 p-2 sm:p-4">
+    <div class="relative mx-auto flex items-center justify-center">
+      <svg
+        viewBox={`0 0 ${mapa.ancho} ${mapa.alto}`}
+        data-svg-lienzo
+        role="region"
+        aria-label="Mapa departamental vectorial de El Salvador"
+        class="w-full h-auto max-h-[500px] select-none drop-shadow-sm transition-all"
+      >
+        <defs>
+          <filter
+            id="filtro-sombra-hover"
+            x="-10%"
+            y="-10%"
+            width="120%"
+            height="120%"
+          >
+            <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.25"
+            ></feDropShadow>
+          </filter>
+        </defs>
+
+        <!-- Polígonos de los 14 departamentos -->
+        <g class="mapa-svg-poligonos" role="group" aria-label="Departamentos">
+          {
+            mapa.departamentos.map((d) => {
+              const nombre =
+                d.nombre ??
+                DEPARTAMENTOS_POR_CODIGO[d.codigo]?.nombre ??
+                d.codigo;
+              return (
+                <path
+                  d={d.d}
+                  data-codigo={d.codigo}
+                  data-nombre={nombre}
+                  tabindex="0"
+                  role="button"
+                  aria-label={`${nombre}`}
+                  aria-pressed="false"
+                  class="mapa-depto-path cursor-pointer stroke-border focus:outline-none"
+                  style="fill: var(--color-surface); stroke-width: 1.2; stroke-linejoin: round; transition: fill 0.35s ease, stroke 0.2s ease, stroke-width 0.2s ease;"
+                />
+              );
+            })
+          }
+        </g>
+
+        <!-- Etiquetas de texto en los centroides calculados -->
+        <g class="mapa-svg-etiquetas pointer-events-none" data-capa-etiquetas>
+          {
+            mapa.departamentos.map((d) => {
+              const nombre =
+                d.nombre ??
+                DEPARTAMENTOS_POR_CODIGO[d.codigo]?.nombre ??
+                d.codigo;
+              const corta =
+                d.abreviatura ?? d.codigoCorto ?? d.codigo.replace(/^SV-/, '');
+              return (
+                <text
+                  x={d.centroX}
+                  y={d.centroY}
+                  data-etiqueta-codigo={d.codigo}
+                  data-etiqueta-nombre={nombre}
+                  data-etiqueta-corta={corta}
+                  text-anchor="middle"
+                  dominant-baseline="central"
+                  class="mapa-depto-etiqueta font-sans text-[10px] font-semibold tracking-tight transition-opacity duration-200 fill-ink"
+                  style="paint-order: stroke; stroke: var(--color-surface); stroke-width: 2.5px; stroke-linejoin: round;"
+                >
+                  <tspan class="etiqueta-nombre-largo">{nombre}</tspan>
+                  <tspan class="etiqueta-nombre-corto">{corta}</tspan>
+                </text>
+              );
+            })
+          }
+        </g>
+      </svg>
+
+      <!-- Tooltip flotante accesible -->
+      <div
+        data-mapa-tooltip
+        role="tooltip"
+        aria-hidden="true"
+        class="pointer-events-none absolute z-20 hidden -translate-x-1/2 -translate-y-full rounded-lg border border-border bg-surface px-3 py-2 text-xs font-sans shadow-md backdrop-blur-xs transition-opacity duration-150"
+      >
+        <p data-tooltip-titulo class="font-semibold text-ink text-xs"></p>
+        <p data-tooltip-valor class="text-ink-muted text-[11px] mt-0.5"></p>
+        <p
+          data-tooltip-extra
+          class="text-accent text-[10px] mt-0.5 font-medium"
+        >
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leyenda de colores interactiva -->
+  <div class="border-t border-border bg-surface p-3 sm:px-4">
+    <div
+      data-mapa-leyenda
+      class="flex flex-wrap items-center gap-2 text-xs font-sans text-ink-muted"
+    >
+    </div>
+  </div>
+
+  <!-- Detalle del departamento seleccionado -->
+  <div
+    data-panel-detalle
+    class="hidden border-t border-border bg-bg/40 p-4 transition-all"
+  >
+    <div class="flex items-start justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="inline-block h-2 w-2 rounded-full bg-accent"></span>
+          <h3
+            data-detalle-nombre
+            class="font-sans text-sm font-semibold text-ink"
+          >
+          </h3>
+          <span
+            data-detalle-codigo
+            class="font-mono text-[10px] text-ink-muted border border-border rounded px-1.5 py-0.5 bg-surface"
+          ></span>
+        </div>
+        <p data-detalle-resumen class="mt-1 text-xs text-ink-muted font-sans">
+        </p>
+      </div>
+      <button
+        type="button"
+        data-btn-cerrar-detalle
+        class="rounded p-1 text-ink-muted hover:text-ink hover:bg-surface transition-colors"
+        aria-label="Cerrar detalle de departamento"
+      >
+        <Icono nombre="x" class="h-4 w-4" />
+      </button>
+    </div>
+
+    <div
+      class="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4"
+      data-detalle-snapshot
+    >
+    </div>
+  </div>
+</div>
+
+<style>
+  .mapa-tab-btn {
+    border: 1px solid var(--color-border);
+    background-color: var(--color-surface);
+    color: var(--color-ink-muted);
+  }
+  .mapa-tab-btn:hover {
+    background-color: var(--color-bg);
+    color: var(--color-ink);
+  }
+  .mapa-tab-btn.activo {
+    background-color: var(--color-accent);
+    color: var(--color-accent-ink);
+    border-color: var(--color-accent);
+  }
+
+  .mapa-depto-path:hover {
+    filter: url(#filtro-sombra-hover) brightness(1.05);
+    stroke: var(--color-ink);
+    stroke-width: 1.8px;
+  }
+
+  .mapa-depto-path:focus-visible {
+    outline: none;
+    stroke: var(--color-accent);
+    stroke-width: 2.2px;
+    filter: drop-shadow(0 0 4px var(--focus-ring));
+  }
+
+  .mapa-depto-path.seleccionado {
+    stroke: var(--color-ink) !important;
+    stroke-width: 2.4px !important;
+    filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.3));
+  }
+
+  :global(:root[data-theme='dark']) .mapa-depto-path:hover {
+    filter: brightness(1.2);
+  }
+
+  .etiqueta-nombre-corto {
+    display: none;
+  }
+
+  @media (max-width: 540px) {
+    .etiqueta-nombre-largo {
+      display: none;
+    }
+    .etiqueta-nombre-corto {
+      display: inline;
+      font-size: 8.5px;
+      font-weight: 700;
+    }
+  }
+</style>
+
+<script>
+  import {
+    RAMPA_IV,
+    RAMPA_ANOMALIA,
+    RAMPA_PRESION_CATEGORIA,
+    RAMPA_CONFIANZA,
+    colorIv,
+    colorAnomalia,
+    colorCategoriaPresion,
+    colorIntegridad,
+  } from '../lib/colores';
+
+  // Rampas y configuración
+  const RAMPA_MINSAL = ['#cde2fb', '#9ec5f4', '#5598e7', '#256abf', '#0d366b'];
+  const COLOR_SIN_DATO = '#e4e4e7';
+
+  // Datos mock / fallback offline garantizados para una demo 100% resiliente
+  const DATOS_DEMO: Record<
+    string,
+    {
+      nombre: string;
+      minsal: number;
+      iv: number;
+      anomalia: number;
+      presion: 'baja' | 'media' | 'alta';
+      integridad: 'sin_dato' | 'presente' | 'no_cuadra';
+    }
+  > = {
+    'SV-AH': {
+      nombre: 'Ahuachapán',
+      minsal: 14,
+      iv: 0.18,
+      anomalia: 0.45,
+      presion: 'media',
+      integridad: 'presente',
+    },
+    'SV-CA': {
+      nombre: 'Cabañas',
+      minsal: 6,
+      iv: 0.12,
+      anomalia: -0.21,
+      presion: 'baja',
+      integridad: 'presente',
+    },
+    'SV-CH': {
+      nombre: 'Chalatenango',
+      minsal: 8,
+      iv: 0.09,
+      anomalia: -0.85,
+      presion: 'baja',
+      integridad: 'presente',
+    },
+    'SV-CU': {
+      nombre: 'Cuscatlán',
+      minsal: 19,
+      iv: 0.22,
+      anomalia: 1.12,
+      presion: 'alta',
+      integridad: 'presente',
+    },
+    'SV-LI': {
+      nombre: 'La Libertad',
+      minsal: 68,
+      iv: 0.26,
+      anomalia: 0.88,
+      presion: 'alta',
+      integridad: 'presente',
+    },
+    'SV-MO': {
+      nombre: 'Morazán',
+      minsal: 5,
+      iv: 0.11,
+      anomalia: -0.42,
+      presion: 'baja',
+      integridad: 'presente',
+    },
+    'SV-PA': {
+      nombre: 'La Paz',
+      minsal: 22,
+      iv: 0.24,
+      anomalia: 0.65,
+      presion: 'media',
+      integridad: 'presente',
+    },
+    'SV-SA': {
+      nombre: 'Santa Ana',
+      minsal: 41,
+      iv: 0.21,
+      anomalia: 0.34,
+      presion: 'media',
+      integridad: 'presente',
+    },
+    'SV-SM': {
+      nombre: 'San Miguel',
+      minsal: 52,
+      iv: 0.27,
+      anomalia: 1.35,
+      presion: 'alta',
+      integridad: 'no_cuadra',
+    },
+    'SV-SO': {
+      nombre: 'Sonsonate',
+      minsal: 33,
+      iv: 0.23,
+      anomalia: 0.72,
+      presion: 'media',
+      integridad: 'presente',
+    },
+    'SV-SS': {
+      nombre: 'San Salvador',
+      minsal: 142,
+      iv: 0.29,
+      anomalia: 1.68,
+      presion: 'alta',
+      integridad: 'presente',
+    },
+    'SV-SV': {
+      nombre: 'San Vicente',
+      minsal: 12,
+      iv: 0.15,
+      anomalia: -0.15,
+      presion: 'baja',
+      integridad: 'presente',
+    },
+    'SV-UN': {
+      nombre: 'La Unión',
+      minsal: 18,
+      iv: 0.2,
+      anomalia: 0.1,
+      presion: 'media',
+      integridad: 'presente',
+    },
+    'SV-US': {
+      nombre: 'Usulután',
+      minsal: 27,
+      iv: 0.25,
+      anomalia: 0.54,
+      presion: 'media',
+      integridad: 'presente',
+    },
+  };
+
+  type TipoCapa = 'minsal' | 'iv' | 'anomalia' | 'presion' | 'integridad';
+
+  function iniciarMapaVectorial() {
+    const root = document.querySelector<HTMLElement>('[data-mapa-svg-root]');
+    if (!root) return;
+
+    let capaActiva: TipoCapa = 'minsal';
+    let deptoSeleccionado: string | null = null;
+    let mostrarEtiquetas = true;
+
+    const paths = root.querySelectorAll<SVGPathElement>('.mapa-depto-path');
+    const botonesCapa =
+      root.querySelectorAll<HTMLButtonElement>('[data-capa-btn]');
+    const aviso = root.querySelector<HTMLElement>('[data-aviso-capa]');
+    const leyenda = root.querySelector<HTMLElement>('[data-mapa-leyenda]');
+    const tooltip = root.querySelector<HTMLElement>('[data-mapa-tooltip]');
+    const tooltipTitulo = root.querySelector<HTMLElement>(
+      '[data-tooltip-titulo]',
+    );
+    const tooltipValor = root.querySelector<HTMLElement>(
+      '[data-tooltip-valor]',
+    );
+    const tooltipExtra = root.querySelector<HTMLElement>(
+      '[data-tooltip-extra]',
+    );
+    const capaEtiquetas = root.querySelector<SVGGElement>(
+      '[data-capa-etiquetas]',
+    );
+    const toggleEtiquetas = root.querySelector<HTMLInputElement>(
+      '[data-toggle-etiquetas]',
+    );
+    const btnExportarSvg = root.querySelector<HTMLButtonElement>(
+      '[data-btn-exportar-svg]',
+    );
+    const btnExportarPng = root.querySelector<HTMLButtonElement>(
+      '[data-btn-exportar-png]',
+    );
+    const svgElement = root.querySelector<SVGSVGElement>('[data-svg-lienzo]');
+
+    // Elementos de detalle
+    const panelDetalle = root.querySelector<HTMLElement>(
+      '[data-panel-detalle]',
+    );
+    const detalleNombre = root.querySelector<HTMLElement>(
+      '[data-detalle-nombre]',
+    );
+    const detalleCodigo = root.querySelector<HTMLElement>(
+      '[data-detalle-codigo]',
+    );
+    const detalleResumen = root.querySelector<HTMLElement>(
+      '[data-detalle-resumen]',
+    );
+    const detalleSnapshot = root.querySelector<HTMLElement>(
+      '[data-detalle-snapshot]',
+    );
+    const btnCerrarDetalle = root.querySelector<HTMLElement>(
+      '[data-btn-cerrar-detalle]',
+    );
+
+    function cortesMinsal(): number[] {
+      const valores = Object.values(DATOS_DEMO)
+        .map((d) => d.minsal)
+        .sort((a, b) => a - b);
+      const corte = (p: number) =>
+        valores[Math.min(valores.length - 1, Math.floor(p * (valores.length - 1)))];
+      return [corte(0.2), corte(0.4), corte(0.6), corte(0.8)];
+    }
+
+    const cortesCasos = cortesMinsal();
+
+    function obtenerColor(codigo: string, capa: TipoCapa): string {
+      const d = DATOS_DEMO[codigo];
+      if (!d) return COLOR_SIN_DATO;
+
+      switch (capa) {
+        case 'minsal': {
+          const v = d.minsal;
+          if (v <= cortesCasos[0]) return RAMPA_MINSAL[0];
+          if (v <= cortesCasos[1]) return RAMPA_MINSAL[1];
+          if (v <= cortesCasos[2]) return RAMPA_MINSAL[2];
+          if (v <= cortesCasos[3]) return RAMPA_MINSAL[3];
+          return RAMPA_MINSAL[4];
+        }
+        case 'iv':
+          return colorIv(d.iv);
+        case 'anomalia':
+          return colorAnomalia(d.anomalia);
+        case 'presion':
+          return colorCategoriaPresion(d.presion);
+        case 'integridad':
+          return colorIntegridad(d.integridad);
+      }
+    }
+
+    function actualizarAvisoyLeyenda() {
+      if (!aviso || !leyenda) return;
+
+      switch (capaActiva) {
+        case 'minsal':
+          aviso.textContent =
+            'Casos de dengue observados por MINSAL (SE30/2023). El color agrupa por cuantiles: desde azul tenue (baja carga) hasta azul profundo (alta carga acumulada).';
+          leyenda.innerHTML = `
+            <span class="font-medium text-ink mr-1">Casos notificados:</span>
+            <span class="inline-flex items-center gap-1"><span class="h-2.5 w-2.5 rounded-full" style="background:${RAMPA_MINSAL[0]}"></span> ≤ ${cortesCasos[0]}</span>
+            <span class="inline-flex items-center gap-1"><span class="h-2.5 w-2.5 rounded-full" style="background:${RAMPA_MINSAL[1]}"></span> ${cortesCasos[0]}–${cortesCasos[1]}</span>
+            <span class="inline-flex items-center gap-1"><span class="h-2.5 w-2.5 rounded-full" style="background:${RAMPA_MINSAL[2]}"></span> ${cortesCasos[1]}–${cortesCasos[2]}</span>
+            <span class="inline-flex items-center gap-1"><span class="h-2.5 w-2.5 rounded-full" style="background:${RAMPA_MINSAL[3]}"></span> ${cortesCasos[2]}–${cortesCasos[3]}</span>
+            <span class="inline-flex items-center gap-1"><span class="h-2.5 w-2.5 rounded-full" style="background:${RAMPA_MINSAL[4]}"></span> > ${cortesCasos[3]}</span>
+          `;
+          break;
+        case 'iv':
+          aviso.textContent =
+            'Módulo M1: Idoneidad biofísica del vector (Iv, 0 a 1). Resume qué tan propicio es el ambiente (temperatura, precipitación y humedad) para la dinámica del Aedes aegypti.';
+          leyenda.innerHTML = `
+            <span class="font-medium text-ink mr-1">Escala Iv (0 a 1):</span>
+            <span class="inline-flex items-center gap-1"><span class="h-2.5 w-2.5 rounded-full" style="background:${RAMPA_IV[0]}"></span> Muy baja (< 0.15)</span>
+            <span class="inline-flex items-center gap-1"><span class="h-2.5 w-2.5 rounded-full" style="background:${RAMPA_IV[2]}"></span> Moderada (~0.20)</span>
+            <span class="inline-flex items-center gap-1"><span class="h-2.5 w-2.5 rounded-full" style="background:${RAMPA_IV[4]}"></span> Alta (> 0.25)</span>
+          `;
+          break;
+        case 'anomalia':
+          aviso.textContent =
+            'Módulo M2: Anomalía climática continua (σ respecto al promedio histórico del departamento). Azul indica condiciones más frías/secas; naranja indica calor/humedad por encima de lo normal.';
+          leyenda.innerHTML = `
+            <span class="font-medium text-ink mr-1">Anomalía σ:</span>
+            <span class="inline-flex items-center gap-1"><span class="h-2.5 w-2.5 rounded-full" style="background:${RAMPA_ANOMALIA[0]}"></span> < -1.5σ (menor)</span>
+            <span class="inline-flex items-center gap-1"><span class="h-2.5 w-2.5 rounded-full" style="background:${RAMPA_ANOMALIA[2]}"></span> Neutro (~0σ)</span>
+            <span class="inline-flex items-center gap-1"><span class="h-2.5 w-2.5 rounded-full" style="background:${RAMPA_ANOMALIA[4]}"></span> > +1.5σ (mayor)</span>
+          `;
+          break;
+        case 'presion':
+          aviso.textContent =
+            'Módulo M3: Presión epidemiológica relativa frente a la historia disponible del departamento en esta misma semana epidemiológica.';
+          leyenda.innerHTML = `
+            <span class="font-medium text-ink mr-1">Presión relativa:</span>
+            <span class="inline-flex items-center gap-1"><span class="h-2.5 w-2.5 rounded-full" style="background:${RAMPA_PRESION_CATEGORIA[0]}"></span> Baja (≤ P50)</span>
+            <span class="inline-flex items-center gap-1"><span class="h-2.5 w-2.5 rounded-full" style="background:${RAMPA_PRESION_CATEGORIA[1]}"></span> Media (P50–P75)</span>
+            <span class="inline-flex items-center gap-1"><span class="h-2.5 w-2.5 rounded-full" style="background:${RAMPA_PRESION_CATEGORIA[2]}"></span> Alta (> P75)</span>
+          `;
+          break;
+        case 'integridad':
+          aviso.textContent =
+            'Módulo M4: Integridad de la vigilancia epidemiológica semanal. Evalúa la presencia de datos departamentales y si cuadran con el boletín nacional.';
+          leyenda.innerHTML = `
+            <span class="font-medium text-ink mr-1">Estado del registro:</span>
+            <span class="inline-flex items-center gap-1"><span class="h-2.5 w-2.5 rounded-full" style="background:${RAMPA_CONFIANZA[1]}"></span> Dato presente</span>
+            <span class="inline-flex items-center gap-1"><span class="h-2.5 w-2.5 rounded-full" style="background:${RAMPA_CONFIANZA[2]}"></span> Boletín no cuadra</span>
+            <span class="inline-flex items-center gap-1"><span class="h-2.5 w-2.5 rounded-full" style="background:${RAMPA_CONFIANZA[0]}"></span> Sin dato esa semana</span>
+          `;
+          break;
+      }
+    }
+
+    function pintarMapa() {
+      paths.forEach((p) => {
+        const codigo = p.dataset.codigo ?? '';
+        const color = obtenerColor(codigo, capaActiva);
+        p.style.fill = color;
+
+        if (codigo === deptoSeleccionado) {
+          p.classList.add('seleccionado');
+          p.setAttribute('aria-pressed', 'true');
+        } else {
+          p.classList.remove('seleccionado');
+          p.setAttribute('aria-pressed', 'false');
+        }
+      });
+      actualizarAvisoyLeyenda();
+    }
+
+    function actualizarDetalle(codigo: string | null) {
+      if (
+        !panelDetalle ||
+        !detalleNombre ||
+        !detalleCodigo ||
+        !detalleResumen ||
+        !detalleSnapshot
+      )
+        return;
+
+      if (!codigo || !DATOS_DEMO[codigo]) {
+        panelDetalle.classList.add('hidden');
+        return;
+      }
+
+      const d = DATOS_DEMO[codigo];
+      panelDetalle.classList.remove('hidden');
+      detalleNombre.textContent = d.nombre;
+      detalleCodigo.textContent = codigo;
+      detalleResumen.textContent = `Observaciones en SE30/2023 · Capa activa: ${capaActiva.toUpperCase()}`;
+
+      detalleSnapshot.innerHTML = `
+        <div class="rounded-lg border border-border bg-surface p-2.5">
+          <span class="block text-[11px] font-medium text-ink-muted">Casos MINSAL</span>
+          <span class="mt-0.5 block text-base font-semibold text-ink">${d.minsal} casos</span>
+        </div>
+        <div class="rounded-lg border border-border bg-surface p-2.5">
+          <span class="block text-[11px] font-medium text-ink-muted">Idoneidad (Iv)</span>
+          <span class="mt-0.5 block text-base font-semibold text-ink">${d.iv.toFixed(2)}</span>
+        </div>
+        <div class="rounded-lg border border-border bg-surface p-2.5">
+          <span class="block text-[11px] font-medium text-ink-muted">Anomalía (σ)</span>
+          <span class="mt-0.5 block text-base font-semibold text-ink">${d.anomalia > 0 ? '+' : ''}${d.anomalia.toFixed(2)}σ</span>
+        </div>
+        <div class="rounded-lg border border-border bg-surface p-2.5">
+          <span class="block text-[11px] font-medium text-ink-muted">Presión</span>
+          <span class="mt-0.5 block text-base font-semibold text-ink capitalize">${d.presion}</span>
+        </div>
+      `;
+    }
+
+    // Eventos de botones de capa
+    botonesCapa.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        botonesCapa.forEach((b) => {
+          b.classList.remove('activo');
+          b.setAttribute('aria-selected', 'false');
+        });
+        btn.classList.add('activo');
+        btn.setAttribute('aria-selected', 'true');
+        capaActiva = (btn.dataset.capaBtn as TipoCapa) ?? 'minsal';
+        pintarMapa();
+        if (deptoSeleccionado) actualizarDetalle(deptoSeleccionado);
+      });
+    });
+
+    // Toggle de etiquetas de texto
+    toggleEtiquetas?.addEventListener('change', (e) => {
+      mostrarEtiquetas = (e.target as HTMLInputElement).checked;
+      if (capaEtiquetas) {
+        capaEtiquetas.style.opacity = mostrarEtiquetas ? '1' : '0';
+      }
+    });
+
+    // Cierre de detalle
+    btnCerrarDetalle?.addEventListener('click', () => {
+      deptoSeleccionado = null;
+      actualizarDetalle(null);
+      pintarMapa();
+    });
+
+    // Interacción con paths
+    paths.forEach((p) => {
+      const codigo = p.dataset.codigo ?? '';
+      const nombre = p.dataset.nombre ?? codigo;
+
+      p.addEventListener('mouseenter', (e) => {
+        const d = DATOS_DEMO[codigo];
+        if (!tooltip || !tooltipTitulo || !tooltipValor || !tooltipExtra || !d)
+          return;
+
+        tooltipTitulo.textContent = nombre;
+        switch (capaActiva) {
+          case 'minsal':
+            tooltipValor.textContent = `${d.minsal} casos notificados`;
+            tooltipExtra.textContent = 'SE30/2023';
+            break;
+          case 'iv':
+            tooltipValor.textContent = `Iv: ${d.iv.toFixed(2)} (0 a 1)`;
+            tooltipExtra.textContent = 'Condición biofísica';
+            break;
+          case 'anomalia':
+            tooltipValor.textContent = `Anomalía: ${d.anomalia > 0 ? '+' : ''}${d.anomalia.toFixed(2)}σ`;
+            tooltipExtra.textContent = 'Desviación estándar histórica';
+            break;
+          case 'presion':
+            tooltipValor.textContent = `Presión: ${d.presion}`;
+            tooltipExtra.textContent = 'M3 epidemiológico';
+            break;
+          case 'integridad':
+            tooltipValor.textContent = `Estado: ${d.integridad.replace('_', ' ')}`;
+            tooltipExtra.textContent = 'M4 vigilancia';
+            break;
+        }
+
+        tooltip.classList.remove('hidden');
+        posicionarTooltip(e as MouseEvent);
+      });
+
+      p.addEventListener('mousemove', (e) => {
+        posicionarTooltip(e);
+      });
+
+      p.addEventListener('mouseleave', () => {
+        tooltip?.classList.add('hidden');
+      });
+
+      p.addEventListener('click', () => {
+        deptoSeleccionado = deptoSeleccionado === codigo ? null : codigo;
+        pintarMapa();
+        actualizarDetalle(deptoSeleccionado);
+      });
+
+      p.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          deptoSeleccionado = deptoSeleccionado === codigo ? null : codigo;
+          pintarMapa();
+          actualizarDetalle(deptoSeleccionado);
+        }
+      });
+    });
+
+    function posicionarTooltip(e: MouseEvent) {
+      if (!tooltip || !svgElement) return;
+      const rect = svgElement.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top - 10;
+      tooltip.style.left = `${x}px`;
+      tooltip.style.top = `${y}px`;
+    }
+
+    // Exportación nativa a SVG
+    btnExportarSvg?.addEventListener('click', () => {
+      if (!svgElement) return;
+      const clon = svgElement.cloneNode(true) as SVGSVGElement;
+      clon.removeAttribute('class');
+      clon.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+
+      // Aplicar colores explícitos en lugar de depender de CSS
+      clon
+        .querySelectorAll<SVGPathElement>('.mapa-depto-path')
+        .forEach((path) => {
+          const codigo = path.dataset.codigo ?? '';
+          path.setAttribute('fill', obtenerColor(codigo, capaActiva));
+          path.setAttribute('stroke', '#040316');
+          path.setAttribute('stroke-width', '1.2');
+        });
+
+      const contenido = new XMLSerializer().serializeToString(clon);
+      const blob = new Blob([contenido], {
+        type: 'image/svg+xml;charset=utf-8',
+      });
+      const url = URL.createObjectURL(blob);
+      const enlace = document.createElement('a');
+      enlace.href = url;
+      enlace.download = `mapa-el-salvador-${capaActiva}.svg`;
+      enlace.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // Exportación nativa a PNG (resuelve el problema de CORS que tiene Leaflet)
+    btnExportarPng?.addEventListener('click', () => {
+      if (!svgElement) return;
+      const clon = svgElement.cloneNode(true) as SVGSVGElement;
+      clon.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+
+      clon
+        .querySelectorAll<SVGPathElement>('.mapa-depto-path')
+        .forEach((path) => {
+          const codigo = path.dataset.codigo ?? '';
+          path.setAttribute('fill', obtenerColor(codigo, capaActiva));
+          path.setAttribute('stroke', '#040316');
+          path.setAttribute('stroke-width', '1.2');
+        });
+
+      const contenido = new XMLSerializer().serializeToString(clon);
+      const svgBlob = new Blob([contenido], {
+        type: 'image/svg+xml;charset=utf-8',
+      });
+      const url = URL.createObjectURL(svgBlob);
+      const img = new Image();
+
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const escala = 2; // Alta resolución
+        canvas.width = svgElement.viewBox.baseVal.width * escala;
+        canvas.height = svgElement.viewBox.baseVal.height * escala;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        const pngUrl = canvas.toDataURL('image/png');
+        const enlace = document.createElement('a');
+        enlace.href = pngUrl;
+        enlace.download = `mapa-el-salvador-${capaActiva}.png`;
+        enlace.click();
+        URL.revokeObjectURL(url);
+      };
+      img.src = url;
+    });
+
+    // Primer pintado
+    pintarMapa();
+  }
+
+  // Inicializar en carga y tras navegación en cliente
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', iniciarMapaVectorial);
+  } else {
+    iniciarMapaVectorial();
+  }
+</script>

@@ -1,8 +1,7 @@
 // Exportar gráficos de ECharts (renderer SVG) como SVG o PNG (F6.3).
 // Un SVG descargado pierde las variables CSS de la página (`var(--…)`), así
 // que se resuelven con getComputedStyle sobre el original antes de guardar.
-// El mapa Leaflet queda fuera: los tiles no permiten CORS y el lienzo se
-// contaminaría. Para él siguen la tabla y el CSV.
+// Los mapas vectoriales SVG gestionan su propia exportación directa e independiente.
 
 export interface OpcionesExportacion {
   titulo: string;

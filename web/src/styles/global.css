@@ -951,40 +951,6 @@ html[data-animaciones='off'] ::after {
   scroll-behavior: auto !important;
 }
 
-/* Mapa en tema oscuro: se oscurecen los tiles con un filtro en lugar de sumar
-   un proveedor de tiles distinto. Los controles y marcadores no se tocan. */
-@media (prefers-color-scheme: dark) {
-  :root[data-theme='system'] .leaflet-tile-pane {
-    filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9);
-  }
-}
-:root[data-theme='dark'] .leaflet-tile-pane {
-  filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9);
-}
-
-/* Pista de zoom con rueda (src/lib/mapa-scroll.ts): sale al hacer scroll sobre
-   un mapa y se va sola. */
-.mapa-pista-scroll {
-  position: absolute;
-  inset: 0;
-  z-index: 1000;
-  display: grid;
-  place-items: center;
-  padding: 1rem;
-  background: rgb(0 0 0 / 0.45);
-  color: #fff;
-  font-family: var(--font-sans);
-  font-size: 1rem;
-  font-weight: 600;
-  text-align: center;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s;
-}
-.mapa-pista-scroll.visible {
-  opacity: 1;
-}
-
 /* Términos del glosario dentro del texto (src/lib/terminos.ts). El color solo
    no basta para distinguirlos, así que llevan además subrayado punteado. */
 .termino-glosario-boton {

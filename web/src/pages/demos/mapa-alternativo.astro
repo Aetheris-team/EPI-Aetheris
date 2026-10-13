@@ -1,0 +1,429 @@
+---
+/**
+ * Demo interactiva: Evaluación de alternativas a Leaflet para EPI-Aetheris.
+ * Rama: evaluate_leaflet_map_alternatives
+ *
+ * Muestra el nuevo prototipo de mapa departamental en SVG vectorial puro
+ * frente a la implementación actual con Leaflet + OpenStreetMap.
+ */
+import Layout from '../../layouts/Layout.astro';
+import Icono from '../../components/Icono.astro';
+import MapaDepartamentosSvg from '../../components/MapaDepartamentosSvg.astro';
+import MapaDepartamentos from '../../components/MapaDepartamentos.astro';
+---
+
+<Layout
+  title="Evaluación de Mapa Vectorial — EPI-Aetheris"
+  descripcion="Evaluación técnica y prototipo interactivo de mapa coroplético vectorial SVG frente a Leaflet y OpenStreetMap."
+  mapa={true}
+  noindex
+>
+  <main
+    id="contenido-principal"
+    class="mx-auto max-w-[1200px] px-4 py-8 sm:px-6 sm:py-10"
+  >
+    <!-- Cabecera de la evaluación -->
+    <div class="mb-8 border-b border-border pb-6">
+      <div class="flex flex-wrap items-center gap-2 mb-2">
+        <a
+          href="/demos"
+          class="inline-flex items-center gap-1 font-sans text-xs text-ink-muted hover:text-ink transition-colors"
+        >
+          <Icono nombre="arrow-left" class="h-3.5 w-3.5" />
+          <span>Volver a Demos</span>
+        </a>
+        <span class="text-xs text-ink-muted">/</span>
+        <span
+          class="rounded bg-secondary/30 px-2 py-0.5 font-mono text-[11px] font-medium text-secondary-ink"
+        >
+          branch: evaluate_leaflet_map_alternatives
+        </span>
+      </div>
+
+      <h1
+        class="font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl"
+      >
+        Evaluación de alternativas a Leaflet: Mapa Vectorial SVG
+      </h1>
+      <p
+        class="mt-2 max-w-[85ch] font-sans text-sm leading-relaxed text-ink-muted"
+      >
+        Nuestros filtros epidemiológicos y climáticos se aplican a nivel <strong
+          >departamental (14 departamentos)</strong
+        >. Esta demo permite evaluar si es realmente necesario cargar Leaflet y
+        OpenStreetMap o si un mapa vectorizado a medida ofrece mejor
+        rendimiento, diseño y experiencia de usuario.
+      </p>
+    </div>
+
+    <!-- Pestañas de la vista -->
+    <div
+      class="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-border pb-3"
+    >
+      <div
+        class="flex items-center gap-2"
+        role="tablist"
+        aria-label="Modo de visualización"
+      >
+        <button
+          type="button"
+          id="btn-modo-svg"
+          class="modo-tab-btn activo inline-flex items-center gap-2 rounded-xl px-4 py-2 font-sans text-sm font-semibold transition-all"
+        >
+          <Icono nombre="vector" class="h-4 w-4" />
+          <span>Visor Autónomo con Exportación</span>
+        </button>
+        <button
+          type="button"
+          id="btn-modo-produccion"
+          class="modo-tab-btn inline-flex items-center gap-2 rounded-xl px-4 py-2 font-sans text-sm font-medium transition-all"
+        >
+          <Icono nombre="map" class="h-4 w-4" />
+          <span>Componente de Producción (/analisis)</span>
+        </button>
+      </div>
+
+      <div
+        class="inline-flex items-center gap-2 text-xs font-sans text-ink-muted"
+      >
+        <span
+          class="inline-block h-2 w-2 rounded-full bg-emerald-500 animate-pulse"
+        ></span>
+        <span>Modo Offline 100% Soportado</span>
+      </div>
+    </div>
+
+    <!-- Contenedor 1: Vista solo SVG Vectorial -->
+    <section id="vista-svg" class="space-y-6">
+      <div class="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        <div class="lg:col-span-8">
+          <MapaDepartamentosSvg id="mapa-demo-svg" ancho={680} />
+        </div>
+
+        <!-- Panel lateral explicativo -->
+        <div class="flex flex-col gap-4 lg:col-span-4">
+          <div class="rounded-2xl border border-border bg-surface p-5">
+            <h2
+              class="font-sans text-sm font-semibold text-ink flex items-center gap-2"
+            >
+              <Icono nombre="sparkles" class="h-4 w-4 text-accent" />
+              <span>Por qué funciona mejor en SVG</span>
+            </h2>
+            <ul
+              class="mt-3 space-y-3 font-sans text-xs text-ink-muted leading-relaxed"
+            >
+              <li class="flex items-start gap-2">
+                <Icono
+                  nombre="check"
+                  class="h-4 w-4 shrink-0 text-emerald-600 mt-0.5"
+                />
+                <span
+                  ><strong>0 peticiones HTTP:</strong> No descarga mosaicos de OpenStreetMap.
+                  El mapa se proyecta en el servidor con Astro.</span
+                >
+              </li>
+              <li class="flex items-start gap-2">
+                <Icono
+                  nombre="check"
+                  class="h-4 w-4 shrink-0 text-emerald-600 mt-0.5"
+                />
+                <span
+                  ><strong>0 KB de dependencias:</strong> Se ahorran los ~50 KB de
+                  Leaflet (JS + CSS). Cero hidratación bloqueante.</span
+                >
+              </li>
+              <li class="flex items-start gap-2">
+                <Icono
+                  nombre="check"
+                  class="h-4 w-4 shrink-0 text-emerald-600 mt-0.5"
+                />
+                <span
+                  ><strong>Exportación desbloqueada:</strong> Prueba los botones de
+                  arriba (SVG / PNG). Funcionan instantáneamente sin errores de CORS.</span
+                >
+              </li>
+              <li class="flex items-start gap-2">
+                <Icono
+                  nombre="check"
+                  class="h-4 w-4 shrink-0 text-emerald-600 mt-0.5"
+                />
+                <span
+                  ><strong>Scroll natural:</strong> Puedes deslizar la página con
+                  la rueda o el dedo sin trampas de zoom.</span
+                >
+              </li>
+              <li class="flex items-start gap-2">
+                <Icono
+                  nombre="check"
+                  class="h-4 w-4 shrink-0 text-emerald-600 mt-0.5"
+                />
+                <span
+                  ><strong>Tema oscuro perfecto:</strong> Respeta los tokens CSS directamente
+                  sin filtros invertidos forzados.</span
+                >
+              </li>
+            </ul>
+          </div>
+
+          <div
+            class="rounded-2xl border border-dashed border-border bg-bg/50 p-4"
+          >
+            <h3
+              class="font-sans text-xs font-semibold text-ink flex items-center gap-1.5"
+            >
+              <Icono nombre="accessible" class="h-4 w-4 text-accent" />
+              <span>Accesibilidad (a11y)</span>
+            </h3>
+            <p class="mt-1 font-sans text-xs text-ink-muted leading-relaxed">
+              Presiona <kbd
+                class="rounded border border-border bg-surface px-1.5 py-0.5 font-mono text-[10px]"
+                >Tab</kbd
+              > para navegar entre departamentos y <kbd
+                class="rounded border border-border bg-surface px-1.5 py-0.5 font-mono text-[10px]"
+                >Enter</kbd
+              > para fijar uno. Cada departamento anuncia su nombre y métrica a lectores
+              de pantalla.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contenedor 2: Vista Componente de Producción (/analisis) -->
+    <section id="vista-produccion" class="hidden space-y-6">
+      <div class="rounded-2xl border border-border bg-surface p-4">
+        <div
+          class="mb-4 flex items-center justify-between border-b border-border pb-3"
+        >
+          <div>
+            <h2 class="font-sans text-sm font-semibold text-ink">
+              Componente de Producción (MapaDepartamentos)
+            </h2>
+            <p class="font-sans text-xs text-ink-muted">
+              Migrado completamente a SVG vectorial nativo sin dependencias de
+              Leaflet ni OpenStreetMap.
+            </p>
+          </div>
+          <span
+            class="rounded bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400"
+          >
+            En producción
+          </span>
+        </div>
+        <MapaDepartamentos />
+      </div>
+    </section>
+
+    <!-- Cuadro Comparativo Detallado -->
+    <section
+      class="mt-12 rounded-2xl border border-border bg-surface p-6 shadow-xs"
+    >
+      <h2
+        class="font-display text-lg font-bold text-ink flex items-center gap-2"
+      >
+        <Icono nombre="chart-bar" class="h-5 w-5 text-accent" />
+        <span>Matriz de Decisión Arquitectónica</span>
+      </h2>
+      <p class="mt-1 font-sans text-xs text-ink-muted">
+        Criterios técnicos evaluados para sustituir Leaflet por un mapa
+        vectorial a medida en EPI-Aetheris.
+      </p>
+
+      <div class="mt-6 overflow-x-auto">
+        <table class="w-full border-collapse font-sans text-xs text-left">
+          <thead>
+            <tr class="border-b border-border text-ink-muted">
+              <th class="py-3 pr-4 font-semibold">Criterio de Evaluación</th>
+              <th
+                class="py-3 px-4 font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-500/5 rounded-t-lg"
+              >
+                Mapa Vectorial SVG (Propuesto)
+              </th>
+              <th class="py-3 pl-4 font-semibold text-ink"
+                >Leaflet + OpenStreetMap (Actual)</th
+              >
+              <th class="py-3 pl-4 font-semibold text-ink-muted"
+                >Impacto en el Proyecto</th
+              >
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            <tr>
+              <td class="py-3 pr-4 font-medium text-ink"
+                >Peticiones de Red (Tiles)</td
+              >
+              <td
+                class="py-3 px-4 font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-500/5"
+              >
+                0 peticiones externas
+              </td>
+              <td class="py-3 pl-4 text-ink-muted"
+                >20 a 40 mosaicos PNG por vista</td
+              >
+              <td class="py-3 pl-4 text-ink-muted"
+                >Elimina saturación de red y latencia DNS/TLS.</td
+              >
+            </tr>
+            <tr>
+              <td class="py-3 pr-4 font-medium text-ink">Peso de JavaScript</td>
+              <td
+                class="py-3 px-4 font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-500/5"
+              >
+                0 KB (solo lógica de interacción ligera)
+              </td>
+              <td class="py-3 pl-4 text-ink-muted">~44 KB JS + ~6 KB CSS</td>
+              <td class="py-3 pl-4 text-ink-muted"
+                >Mejora el Total Blocking Time (TBT).</td
+              >
+            </tr>
+            <tr>
+              <td class="py-3 pr-4 font-medium text-ink"
+                >Primer Renderizado (LCP)</td
+              >
+              <td
+                class="py-3 px-4 font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-500/5"
+              >
+                Instantáneo (SSR estático en Astro)
+              </td>
+              <td class="py-3 pl-4 text-ink-muted"
+                >Tardío (espera ejecución de script en cliente)</td
+              >
+              <td class="py-3 pl-4 text-ink-muted"
+                >El mapa aparece pintado desde el primer HTML.</td
+              >
+            </tr>
+            <tr>
+              <td class="py-3 pr-4 font-medium text-ink"
+                >Soporte Offline / PWA</td
+              >
+              <td
+                class="py-3 px-4 font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-500/5"
+              >
+                100% autosuficiente y funcional
+              </td>
+              <td class="py-3 pl-4 text-ink-muted"
+                >Roto (los tiles fallan sin internet)</td
+              >
+              <td class="py-3 pl-4 text-ink-muted"
+                >Crucial para despliegues hospitalarios locales.</td
+              >
+            </tr>
+            <tr>
+              <td class="py-3 pr-4 font-medium text-ink"
+                >Exportación Gráfica (F6.3)</td
+              >
+              <td
+                class="py-3 px-4 font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-500/5"
+              >
+                Descarga directa en SVG y PNG (2x)
+              </td>
+              <td class="py-3 pl-4 text-ink-muted"
+                >Bloqueado (CORS contamina el lienzo)</td
+              >
+              <td class="py-3 pl-4 text-ink-muted"
+                >Permite incluir el mapa en reportes imprimibles.</td
+              >
+            </tr>
+            <tr>
+              <td class="py-3 pr-4 font-medium text-ink"
+                >Comportamiento del Scroll</td
+              >
+              <td
+                class="py-3 px-4 font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-500/5"
+              >
+                Desplazamiento nativo y predecible
+              </td>
+              <td class="py-3 pl-4 text-ink-muted"
+                >Secuestra la rueda (requiere parche mapa-scroll)</td
+              >
+              <td class="py-3 pl-4 text-ink-muted"
+                >Mejora notable en usabilidad móvil y de escritorio.</td
+              >
+            </tr>
+            <tr>
+              <td class="py-3 pr-4 font-medium text-ink">Modo Oscuro</td>
+              <td
+                class="py-3 px-4 font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-500/5"
+              >
+                Variables CSS nativas de diseño
+              </td>
+              <td class="py-3 pl-4 text-ink-muted"
+                >Filtro invert() sobre imagen ráster</td
+              >
+              <td class="py-3 pl-4 text-ink-muted"
+                >Colores exactos y consistencia estética impecable.</td
+              >
+            </tr>
+            <tr>
+              <td class="py-3 pr-4 font-medium text-ink"
+                >Contexto de Calles y Ríos</td
+              >
+              <td class="py-3 px-4 text-ink-muted bg-emerald-500/5">
+                Solo límites y formas departamentales
+              </td>
+              <td class="py-3 pl-4 font-semibold text-ink"
+                >Detalle cartográfico completo</td
+              >
+              <td class="py-3 pl-4 text-ink-muted"
+                >No requerido mientras la unidad de análisis sea departamental.</td
+              >
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</Layout>
+
+<style>
+  .modo-tab-btn {
+    border: 1px solid var(--color-border);
+    background-color: var(--color-surface);
+    color: var(--color-ink-muted);
+  }
+  .modo-tab-btn:hover {
+    background-color: var(--color-bg);
+    color: var(--color-ink);
+  }
+  .modo-tab-btn.activo {
+    background-color: var(--color-accent);
+    color: var(--color-accent-ink);
+    border-color: var(--color-accent);
+  }
+</style>
+
+<script>
+  function iniciarSelectorVistas() {
+    const btnSvg = document.getElementById('btn-modo-svg');
+    const btnProd = document.getElementById('btn-modo-produccion');
+
+    const vistaSvg = document.getElementById('vista-svg');
+    const vistaProd = document.getElementById('vista-produccion');
+
+    const botones = [btnSvg, btnProd];
+    const vistas = [vistaSvg, vistaProd];
+
+    function activar(
+      btnActivo: HTMLElement | null,
+      vistaActiva: HTMLElement | null,
+    ) {
+      botones.forEach((b) => b?.classList.remove('activo'));
+      vistas.forEach((v) => v?.classList.add('hidden'));
+
+      btnActivo?.classList.add('activo');
+      vistaActiva?.classList.remove('hidden');
+
+      // Forzar recálculo de tamaño de gráficos si se muestran
+      window.dispatchEvent(new Event('resize'));
+    }
+
+    btnSvg?.addEventListener('click', () => activar(btnSvg, vistaSvg));
+    btnProd?.addEventListener('click', () => activar(btnProd, vistaProd));
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', iniciarSelectorVistas);
+  } else {
+    iniciarSelectorVistas();
+  }
+</script>

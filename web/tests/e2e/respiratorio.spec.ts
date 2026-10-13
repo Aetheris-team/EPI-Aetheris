@@ -27,27 +27,24 @@ test.describe('observatorio respiratorio', () => {
       page.locator('#neumonias [data-mapa-evento="neumonias"]'),
     ).toBeVisible();
     await expect(
-      page.locator('#ira [data-mapa-evento="ira"] .leaflet-container'),
+      page.locator('#ira [data-mapa-evento="ira"] [data-mapa-canvas] svg'),
     ).toBeVisible({ timeout: 20_000 });
     await expect(
       page.locator(
-        '#neumonias [data-mapa-evento="neumonias"] .leaflet-container',
+        '#neumonias [data-mapa-evento="neumonias"] [data-mapa-canvas] svg',
       ),
     ).toBeVisible({ timeout: 20_000 });
     await expect(
-      page
-        .locator('#ira [data-mapa-evento="ira"] path.leaflet-interactive')
-        .first(),
+      page.locator('#ira [data-mapa-evento="ira"] path[data-codigo]').first(),
     ).toBeVisible();
     await expect(
       page
-        .locator(
-          '#neumonias [data-mapa-evento="neumonias"] path.leaflet-interactive',
-        )
+        .locator('#neumonias [data-mapa-evento="neumonias"] path[data-codigo]')
         .first(),
     ).toBeVisible();
 
     const heatmap = page.locator('[data-heatmap-neu]');
+    await heatmap.locator('summary').click();
     await expect(heatmap.locator('table')).toBeVisible({ timeout: 20_000 });
     await expect(heatmap).toContainText('San Salvador');
     await expect(heatmap).toContainText(/conteo notificado/i);
@@ -84,6 +81,7 @@ test.describe('observatorio respiratorio', () => {
   }) => {
     await page.goto('/respiratorio');
     const heatmap = page.locator('[data-heatmap-neu]');
+    await heatmap.locator('summary').click();
     await expect(heatmap.locator('table')).toBeVisible({ timeout: 20_000 });
     await heatmap.locator('[data-hm-desde]').fill('10');
     await heatmap.locator('[data-hm-hasta]').fill('20');
