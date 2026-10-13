@@ -20,7 +20,6 @@
     "astro": "^7.3.8",
     "chroma-js": "^3.2.0",
     "echarts": "^6.1.0",
-    "leaflet": "^1.9.4",
     "tailwindcss": "^4.3.3"
   },
   "devDependencies": {
@@ -31,7 +30,6 @@
     "@iconify-json/tabler": "^1.2.38",
     "@playwright/test": "^1.62.1",
     "@types/chroma-js": "^3.1.2",
-    "@types/leaflet": "^1.9.12",
     "@types/node": "^26.3.0",
     "astro-icon": "^1.2.0",
     "eslint": "^10.9.1",

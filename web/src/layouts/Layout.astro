@@ -14,8 +14,7 @@ interface Props {
   /** Saca la página del índice de los buscadores. Se usa en las rutas que no
    *  son contenido público: el formulario de operadores y la 404. */
   noindex?: boolean;
-  /** La página monta un mapa Leaflet. Emite preconnect a los tres subdominios
-   *  de tiles de OSM. Solo donde hay mapa: en el resto seria gasto. */
+  /** Indica si la página incluye mapas epidemiológicos (conservado por compatibilidad de props). */
   mapa?: boolean;
 }
 
@@ -24,7 +23,6 @@ const {
   descripcion = 'Vigilancia epidemiológica descriptiva de dengue e IRA en El Salvador, sobre datos públicos de MINSAL, OpenDengue y Open-Meteo. Licencia GPL-3.0.',
   imagen = '/og/og-default.png',
   noindex = false,
-  mapa = false,
 } = Astro.props;
 
 const ruta = Astro.url.pathname;
@@ -82,23 +80,7 @@ const NAV: { href: string; etiqueta: string; rutas?: string[] }[] = [
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="canonical" href={urlCanonica} />
-    {
-      /* Los tiles son el elemento LCP de las vistas con mapa, y el navegador
-        no los descubre hasta que Leaflet se ejecuta. El preconnect adelanta
-        DNS, TCP y TLS a esa espera. Van los tres subdominios porque {s} de
-        Leaflet rota entre a, b y c, y cada uno es un origen distinto. Sin
-        crossorigin a proposito: Leaflet pide los tiles como <img> sin CORS,
-        y una conexion en modo CORS no se reutilizaria. */
-    }
-    {
-      mapa && (
-        <>
-          <link rel="preconnect" href="https://a.tile.openstreetmap.org" />
-          <link rel="preconnect" href="https://b.tile.openstreetmap.org" />
-          <link rel="preconnect" href="https://c.tile.openstreetmap.org" />
-        </>
-      )
-    }
+
     {noindex && <meta name="robots" content="noindex, nofollow" />}
     {
       /* PWA (ADR 0014): permite instalar el sitio y, sobre todo, que /alertas

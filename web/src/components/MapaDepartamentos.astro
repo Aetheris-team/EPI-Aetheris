@@ -1,42 +1,180 @@
 ---
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import AyudaTermino from './AyudaTermino.astro';
 import Icono from './Icono.astro';
 import PanelWorkspace from './analisis/PanelWorkspace.astro';
 import { rutaFicha } from '../fichas/registro';
-// Mapa departamental -- selector de capas descriptivas (módulos M1–M3,
-// docs/contexto). Leaflet necesita el DOM del navegador (no hay forma de
-// renderizarlo en el servidor), así que todo el trabajo con L.* vive en el
-// <script> de abajo, que Astro procesa y ejecuta solo en el cliente. No se
-// agregó React/Preact para esto -- un componente .astro + <script> ya
-// resuelve "solo en el navegador" sin sumar un framework de UI nuevo.
+import { proyectarDepartamentos, type GeoDepartamentos } from '../lib/geo-svg';
+import { DEPARTAMENTOS_POR_CODIGO } from '../lib/departamentos';
+
+// Mapa departamental -- selector de capas descriptivas (módulos M1–M3, docs/contexto).
+// Renderizado vectorial SVG nativo en SSR y enriquecido interactivamente en cliente.
+// 0 KB de dependencias externas (sin Leaflet ni OpenStreetMap), LCP instantáneo,
+// exportación directa a SVG/PNG sin problemas de CORS y soporte offline completo.
 //
 // Ninguna de las capas es salida del clasificador de riesgo (ese vive en
-// MetricasModelo.astro, a nivel nacional, en /prediccion). Todas son descriptivas: volumen
-// de casos MINSAL, idoneidad biofísica, anomalía climática continua,
+// MetricasModelo.astro, a nivel nacional, en /prediccion). Todas son descriptivas:
+// volumen de casos MINSAL, idoneidad biofísica, anomalía climática continua,
 // presión epidemiológica relativa (M3, dos series separadas), e integridad
 // de la vigilancia (M4: presencia de dato / hueco / boletín que no cuadra).
-// M4 no es un semáforo de riesgo ni un índice compuesto.
-//
-// La capa de anomalía climática no es un semáforo de alerta: el umbral
-// binario que se probó se cruzaba todos los años y no distinguía nada. Escala continua,
-// colores neutros (azul/gris/naranja), sin rojo de urgencia ni lenguaje de
-// "cruce de umbral".
+
+const geo = JSON.parse(
+  readFileSync(join(process.cwd(), 'public/geo/slv-adm1.geojson'), 'utf8'),
+) as GeoDepartamentos;
+
+const mapaSvg = proyectarDepartamentos(geo, 720, 14, 0.4);
 ---
 
 <PanelWorkspace tipo="visor" titulo="Mapa departamental" idTitulo="mapa-titulo">
   <div
     class="flex flex-col border-t border-border bg-bg lg:flex-row lg:items-stretch"
   >
+    <!-- Contenedor del mapa SVG interactivo -->
     <div
       id="mapa-departamentos"
       role="region"
       aria-label="Mapa interactivo de departamentos de El Salvador"
-      aria-busy="true"
-      class="h-[340px] w-full overflow-hidden shadow-inner sm:h-[460px] lg:h-auto lg:min-h-[520px] lg:flex-1"
+      class="relative flex flex-col h-[380px] w-full overflow-hidden shadow-inner sm:h-[480px] lg:h-auto lg:min-h-[520px] lg:flex-1 bg-bg/30"
     >
-      <div class="skeleton h-full w-full" aria-hidden="true"></div>
+      <!-- Barra superior de controles del mapa: etiquetas y exportación (SVG/PNG sin CORS) -->
+      <div
+        class="absolute top-3 right-3 z-10 flex items-center gap-2 rounded-lg border border-border/80 bg-surface/90 px-2.5 py-1.5 shadow-xs backdrop-blur-xs"
+      >
+        <label
+          class="inline-flex cursor-pointer items-center gap-1.5 font-sans text-xs text-ink-muted hover:text-ink select-none"
+        >
+          <input
+            type="checkbox"
+            id="mapa-toggle-etiquetas"
+            class="rounded border-border text-accent focus:ring-accent"
+            checked
+          />
+          <span>Nombres</span>
+        </label>
+        <div class="flex items-center gap-1 border-l border-border pl-2">
+          <button
+            type="button"
+            id="mapa-exportar-svg"
+            title="Exportar mapa como imagen vectorial SVG limpia"
+            class="inline-flex items-center gap-1 rounded-md border border-border bg-surface px-2 py-1 font-sans text-xs font-medium text-ink hover:bg-bg hover:border-accent transition-colors"
+          >
+            <Icono nombre="file-type-svg" class="h-3.5 w-3.5 text-accent" />
+            <span>SVG</span>
+          </button>
+          <button
+            type="button"
+            id="mapa-exportar-png"
+            title="Exportar mapa como imagen PNG en alta definición"
+            class="inline-flex items-center gap-1 rounded-md border border-border bg-surface px-2 py-1 font-sans text-xs font-medium text-ink hover:bg-bg hover:border-accent transition-colors"
+          >
+            <Icono nombre="photo" class="h-3.5 w-3.5 text-accent" />
+            <span>PNG</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Lienzo SVG -->
+      <div
+        class="relative flex h-full w-full items-center justify-center p-3 sm:p-5"
+      >
+        <svg
+          id="mapa-svg"
+          viewBox={`0 0 ${mapaSvg.ancho} ${mapaSvg.alto}`}
+          role="group"
+          aria-label="Mapa coroplético departamental de El Salvador"
+          class="h-full w-full max-h-[520px] select-none drop-shadow-2xs"
+          preserveAspectRatio="xMidYMid meet"
+        >
+          <defs>
+            <filter
+              id="mapa-sombra-hover"
+              x="-10%"
+              y="-10%"
+              width="120%"
+              height="120%"
+            >
+              <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.25"
+              ></feDropShadow>
+            </filter>
+          </defs>
+
+          <!-- Trazados poligonales de los 14 departamentos -->
+          <g
+            id="mapa-poligonos-grupo"
+            role="group"
+            aria-label="Departamentos de El Salvador"
+          >
+            {
+              mapaSvg.departamentos.map((d) => {
+                const nombre =
+                  d.nombre ??
+                  DEPARTAMENTOS_POR_CODIGO[d.codigo]?.nombre ??
+                  d.codigo;
+                return (
+                  <path
+                    d={d.d}
+                    data-codigo={d.codigo}
+                    data-departamento={d.codigo}
+                    data-nombre={nombre}
+                    tabindex="0"
+                    role="button"
+                    aria-label={`Seleccionar ${nombre}`}
+                    aria-pressed="false"
+                    class="mapa-departamento-path cursor-pointer stroke-border focus:outline-none"
+                    style="fill: var(--color-surface); stroke: #8a8a90; stroke-width: 1.2px; stroke-linejoin: round; transition: fill 0.35s ease, stroke 0.2s ease, stroke-width 0.2s ease;"
+                  />
+                );
+              })
+            }
+          </g>
+
+          <!-- Etiquetas de texto en centroides óptimos -->
+          <g
+            id="mapa-etiquetas-grupo"
+            class="pointer-events-none transition-opacity duration-200"
+          >
+            {
+              mapaSvg.departamentos.map((d) => {
+                const nombre =
+                  d.nombre ??
+                  DEPARTAMENTOS_POR_CODIGO[d.codigo]?.nombre ??
+                  d.codigo;
+                const corta =
+                  d.abreviatura ??
+                  d.codigoCorto ??
+                  d.codigo.replace(/^SV-/, '');
+                return (
+                  <text
+                    x={d.centroX}
+                    y={d.centroY}
+                    data-etiqueta-codigo={d.codigo}
+                    text-anchor="middle"
+                    dominant-baseline="central"
+                    class="mapa-etiqueta-texto font-sans text-[10.5px] font-semibold tracking-tight fill-ink select-none"
+                    style="paint-order: stroke; stroke: var(--color-surface); stroke-width: 2.5px; stroke-linejoin: round;"
+                  >
+                    <tspan class="etiqueta-larga">{nombre}</tspan>
+                    <tspan class="etiqueta-corta">{corta}</tspan>
+                  </text>
+                );
+              })
+            }
+          </g>
+        </svg>
+
+        <!-- Tooltip flotante enriquecido -->
+        <div
+          id="mapa-tooltip"
+          role="tooltip"
+          aria-hidden="true"
+          class="pointer-events-none absolute z-20 hidden -translate-x-1/2 -translate-y-full rounded-lg border border-border bg-surface px-3 py-2 text-xs font-sans shadow-md backdrop-blur-xs transition-opacity duration-150 leading-relaxed text-ink"
+        >
+        </div>
+      </div>
     </div>
 
+    <!-- Barra lateral de controles y leyenda -->
     <div
       class="flex flex-col gap-3 p-4 sm:p-5 lg:w-[320px] lg:shrink-0 lg:overflow-y-auto lg:border-l lg:border-border"
     >
@@ -48,7 +186,8 @@ import { rutaFicha } from '../fichas/registro';
           class="mt-0.5 h-4 w-4 shrink-0 text-accent"
         />
         <p class="font-sans text-xs leading-relaxed text-ink-muted">
-          <strong class="font-semibold text-ink">Cómo interpretar el mapa:</strong
+          <strong class="font-semibold text-ink"
+            >Cómo interpretar el mapa:</strong
           > el significado del color depende de la capa seleccionada. La explicación
           específica aparece en el aviso de la capa. El gris indica ausencia de dato.
         </p>
@@ -69,7 +208,10 @@ import { rutaFicha } from '../fichas/registro';
       </div>
 
       <div class="flex gap-2 rounded-lg border border-border bg-surface p-3">
-        <Icono nombre="info-circle" class="mt-0.5 h-4 w-4 shrink-0 text-accent" />
+        <Icono
+          nombre="info-circle"
+          class="mt-0.5 h-4 w-4 shrink-0 text-accent"
+        />
         <div class="min-w-0 flex-1">
           <p
             id="mapa-aviso"
@@ -207,61 +349,48 @@ import { rutaFicha } from '../fichas/registro';
 </PanelWorkspace>
 
 <style>
-  :global(.leaflet-container) {
-    font-family: var(--font-sans);
-    background: var(--color-bg);
-    /* Los controles internos de Leaflet (.leaflet-top, .leaflet-control)
-       usan z-index: 1000 -- sin esto, ese valor compite directamente contra
-       el z-40 del header sticky de Layout.astro y gana, así que al hacer
-       scroll el zoom del mapa se dibuja encima del header. isolation
-       confina el z-index de Leaflet dentro de su propio contexto de
-       apilamiento, sin tocar los valores internos de la librería. */
-    isolation: isolate;
+  .mapa-departamento-path:hover {
+    filter: url(#mapa-sombra-hover) brightness(1.06);
+    stroke: var(--color-ink) !important;
+    stroke-width: 1.8px !important;
   }
-  /* Al cambiar la semana los departamentos se recolorean con un fundido corto
-     (ver activarCapa). Con reduced-motion el color cambia de golpe. */
-  @media (prefers-reduced-motion: no-preference) {
-    :global(.leaflet-container path.leaflet-interactive) {
-      transition: fill 300ms ease-out;
+
+  .mapa-departamento-path:focus-visible {
+    outline: none;
+    stroke: var(--color-accent) !important;
+    stroke-width: 2.2px !important;
+    filter: drop-shadow(0 0 4px var(--focus-ring));
+  }
+
+  .mapa-departamento-path.seleccionado {
+    stroke: var(--color-seleccion, #040316) !important;
+    stroke-width: 2.5px !important;
+    filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.25));
+  }
+
+  .etiqueta-corta {
+    display: none;
+  }
+
+  @media (max-width: 640px) {
+    .etiqueta-larga {
+      display: none;
+    }
+    .etiqueta-corta {
+      display: inline;
+      font-size: 9px;
+      font-weight: 700;
     }
   }
-  :global(.leaflet-control-zoom) {
-    border: 1px solid var(--color-border) !important;
-    box-shadow: var(--shadow-card) !important;
-  }
-  :global(.leaflet-control-zoom a) {
-    color: var(--color-accent) !important;
-    background-color: var(--color-surface) !important;
-  }
-  :global(.leaflet-control-zoom a:hover) {
-    background-color: var(--color-secondary) !important;
-  }
-  :global(.leaflet-tooltip) {
-    border-radius: 0.5rem;
-    border: 1px solid var(--color-border);
-    box-shadow: var(--shadow-card);
-    font-family: var(--font-sans);
-    font-size: 12px;
-    line-height: 1.5;
-    color: var(--color-ink);
-    padding: 6px 10px;
+
+  @media (prefers-reduced-motion: reduce) {
+    .mapa-departamento-path {
+      transition: none !important;
+    }
   }
 </style>
 
 <script>
-  // Leaflet (JS ~44KB + CSS ~6KB), el geojson de departamentos (~100KB) y
-  // los tiles de OpenStreetMap (decenas de peticiones) no son necesarios
-  // para el primer render de la página -- solo se importan/descargan aquí
-  // dentro de iniciar(), en lugar de al nivel de módulo, para que no
-  // compitan por ancho de banda ni CPU con el contenido inicial. Ver
-  // "iniciar()" al final del archivo para el diferido con
-  // requestIdleCallback.
-  import type Leaflet from 'leaflet';
-  // "?url" evita que Vite trate este CSS como parte del bundle de la
-  // página (que inyectaría un <link> en el <head> desde el primer HTML,
-  // volviendo a bloquear el render): solo da la URL del archivo, y el
-  // <link> se crea a mano dentro de iniciar().
-  import leafletCssHref from 'leaflet/dist/leaflet.css?url';
   import {
     obtenerAlertasDengue,
     obtenerDatasetAnalitico,
@@ -287,9 +416,9 @@ import { rutaFicha } from '../fichas/registro';
     RAMPA_PRESION_CATEGORIA,
   } from '../lib/colores';
   import { rutaFicha } from '../fichas/registro';
-  import { protegerScrollMapa } from '../lib/mapa-scroll';
   import { renderErrorFuente } from './estado-async';
   import { escapeHtml } from '../utils/security';
+  import { DEPARTAMENTOS } from '../lib/departamentos';
 
   // ---------------------------------------------------------------------
   // Tipos y datos compartidos
@@ -306,16 +435,12 @@ import { rutaFicha } from '../fichas/registro';
   interface DefinicionCapa {
     id: IdCapa;
     etiqueta: string;
-    disponible: boolean; // false => botón deshabilitado, "próximamente"
+    disponible: boolean;
     aviso: string;
     tituloLeyenda: string;
-    /** Si la capa tiene ficha enriquecida, el título de la leyenda la enlaza. */
     enlaceLeyenda?: string;
     rampa: string[];
     sinDatoColor: string;
-    // Carga los valores por código de departamento. undefined = sin dato
-    // para ese departamento (se pinta con sinDatoColor). null de retorno
-    // completo = falla de fetch / capa no disponible en el backend todavía.
     cargarValores: () => Promise<Map<string, number | undefined> | null>;
     calcularCortes: (valores: number[]) => number[];
     etiquetasLeyenda: (cortes: number[]) => string[];
@@ -329,23 +454,12 @@ import { rutaFicha } from '../fichas/registro';
   const RUTA_FICHA_M3 = rutaFicha('m3-presion-epidemiologica');
   const RUTA_FICHA_M4 = rutaFicha('m4-integridad-vigilancia');
 
-  // El shapeName del geojson (geoBoundaries) es inconsistente: 12 de los 14
-  // departamentos traen el prefijo "Departamento de ..." pero La Libertad y
-  // San Vicente no -- se ve como un error tipográfico en los tooltips si no
-  // se normaliza en un solo lugar. Mismo criterio que index.astro (el hero
-  // de la landing ya lo aplicaba, esto lo extiende a los tooltips del mapa).
-  function normalizarNombreDepto(shapeName: string): string {
-    return shapeName.replace(/^Departamento de /, '');
-  }
-
-  // Semana/año de las capas espaciales, derivados del estado global del panel.
   const filtrosIniciales = obtenerFiltrosAnalisis();
   let SEMANA_ESPACIAL = filtrosIniciales.semana;
   let ANIO_ESPACIAL = filtrosIniciales.anio;
 
   // ---------------------------------------------------------------------
-  // Funciones genéricas de color / cortes / leyenda, reutilizadas por todas
-  // las capas -- cada capa solo aporta su rampa, sus cortes y sus textos.
+  // Funciones genéricas de color / cortes / leyenda
   // ---------------------------------------------------------------------
 
   function cortesPorCuantiles(valores: number[]): number[] {
@@ -396,8 +510,7 @@ import { rutaFicha } from '../fichas/registro';
   }
 
   // ---------------------------------------------------------------------
-  // Capa 1: volumen de casos MINSAL -- ya funcionaba, mismo comportamiento,
-  // ahora expresado en la forma genérica de DefinicionCapa.
+  // Capa 1: volumen de casos MINSAL
   // ---------------------------------------------------------------------
 
   interface DetalleDepartamentoMinsal {
@@ -519,8 +632,7 @@ import { rutaFicha } from '../fichas/registro';
   };
 
   // ---------------------------------------------------------------------
-  // Capas 2 y 3: idoneidad biofísica (Iv) y anomalía climática continua --
-  // GET /api/v1/spatial/current (no el dataset de dengue, que corta en 2023).
+  // Capas 2 y 3: idoneidad biofísica (Iv) y anomalía climática continua
   // ---------------------------------------------------------------------
 
   interface DatoEspacial {
@@ -530,9 +642,6 @@ import { rutaFicha } from '../fichas/registro';
   }
 
   let cacheEspacial: Promise<Map<string, DatoEspacial> | null> | null = null;
-
-  // Último resultado resuelto del endpoint espacial, para que el tooltip
-  // unificado de los módulos M1–M3 pueda leerlo de forma síncrona.
   let detallesEspacial = new Map<string, DatoEspacial>();
 
   async function obtenerDatosEspaciales(): Promise<Map<
@@ -591,14 +700,6 @@ import { rutaFicha } from '../fichas/registro';
       for (const [codigo, fila] of datos) valores.set(codigo, fila.iv);
       return valores;
     },
-    // Iv está acotado en [0,1] por definición, pero eso no significa que los
-    // valores reales usen ese rango completo -- medido en vivo (SE01/2023):
-    // Iv real va de 0.076 a 0.277 en los 14 departamentos, muy por debajo de
-    // los cortes fijos que había antes (0.2/0.4/0.6/0.8), así que casi todo
-    // el país caía en el mismo balde de color. Cuantiles de los datos (igual
-    // que la capa de volumen MINSAL) en vez de cortes fijos sobre [0,1] --
-    // siempre usa el rango completo de la rampa contra lo que realmente varía
-    // esa semana, en vez de asumir una dispersión que no existe.
     calcularCortes: cortesPorCuantiles,
     etiquetasLeyenda(cortes) {
       return [
@@ -634,9 +735,6 @@ import { rutaFicha } from '../fichas/registro';
         valores.set(codigo, fila.anomalia_sigma);
       return valores;
     },
-    // Sigma ya es una unidad estandarizada -- cortes fijos y simétricos en
-    // vez de cuantiles, para que el mismo color siempre signifique la misma
-    // magnitud de desviación entre semanas.
     calcularCortes: () => [-1.5, -0.5, 0.5, 1.5],
     etiquetasLeyenda(cortes) {
       return [
@@ -653,19 +751,7 @@ import { rutaFicha } from '../fichas/registro';
   };
 
   // ---------------------------------------------------------------------
-  // Capas 4 y 5: presión epidemiológica relativa (M3), dos series
-  // separadas. GET /api/v1/presion/current devuelve 'probable' y
-  // 'confirmado' por departamento, nunca fusionadas (son conceptos
-  // distintos y no comparables entre sí). Decisión de UI: un botón por
-  // serie, reutilizando el selector de capas existente en vez de sumar un
-  // sub-selector nuevo -- "probable" va primero por ser la serie con más
-  // cobertura (misma serie que colorea la capa de volumen MINSAL). Ambas
-  // comparten un único fetch cacheado.
-  //
-  // El color viene de la categoría (baja/media/alta contra P50/P75 del
-  // propio baseline del departamento), no del percentil crudo -- el
-  // percentil exacto y el conteo observado van en el tooltip. Rampa verde
-  // azulada neutra: sin rojo de urgencia, esto no es una alerta.
+  // Capas 4 y 5: presión epidemiológica relativa (M3)
   // ---------------------------------------------------------------------
 
   interface CeldaPresion {
@@ -684,9 +770,8 @@ import { rutaFicha } from '../fichas/registro';
   }
 
   let cachePresion: Promise<Map<string, DatoPresion> | null> | null = null;
+  let detallesPresion = new Map<string, DatoPresion>();
 
-  // Adaptación de la semana activa del dataset analítico compartido a la
-  // forma que ya consume el mapa para M3.
   async function obtenerDatosPresion(): Promise<Map<
     string,
     DatoPresion
@@ -725,7 +810,6 @@ import { rutaFicha } from '../fichas/registro';
     media: 1,
     alta: 2,
   };
-  let detallesPresion = new Map<string, DatoPresion>();
 
   function definirCapaPresion(
     serie: 'probable' | 'confirmado',
@@ -755,8 +839,6 @@ import { rutaFicha } from '../fichas/registro';
         }
         return valores;
       },
-      // Cortes fijos sobre el índice de categoría (0=baja, 1=media, 2=alta)
-      // -- la categoría ya la decide el backend contra el baseline.
       calcularCortes: () => [0.5, 1.5],
       etiquetasLeyenda: () => ['baja (≤P50)', 'media (P50–P75)', 'alta (>P75)'],
       tooltipValor(valor) {
@@ -770,10 +852,7 @@ import { rutaFicha } from '../fichas/registro';
   const capaPresionConfirmado = definirCapaPresion('confirmado');
 
   // ---------------------------------------------------------------------
-  // Capa 6: integridad de la vigilancia (M4). Tres hechos por separado;
-  // el color del mapa solo codifica presencia / hueco / boletín que no
-  // cuadra. Sin índice compuesto y sin paleta de semáforo de riesgo.
-  // GET /api/v1/vigilancia/integridad?week=&year=
+  // Capa 6: integridad de la vigilancia (M4)
   // ---------------------------------------------------------------------
 
   interface IntegridadSemana {
@@ -863,14 +942,6 @@ import { rutaFicha } from '../fichas/registro';
     capaConfianza,
   ];
 
-  // ---------------------------------------------------------------------
-  // Tooltip unificado de los módulos M1–M3: al pasar sobre un departamento en
-  // cualquiera de las capas M1/M2/M3 se ven los cuatro valores a la vez
-  // (Iv, anomalía, presión probable y confirmado), no solo el de la capa
-  // activa -- la capa activa solo decide el color del mapa. La línea de la
-  // capa activa va al final con el detalle extra de su baseline.
-  // ---------------------------------------------------------------------
-
   const ES_CAPA_MODULO: Partial<Record<IdCapa, boolean>> = {
     iv: true,
     anomalia: true,
@@ -902,8 +973,6 @@ import { rutaFicha } from '../fichas/registro';
       lineaPresion(pres?.confirmado, 'Presión (confirmado)'),
     ];
 
-    // Detalle extra de la serie de presión activa: casos observados y
-    // baseline P50/P75, para poder verificar el color contra el número.
     if (
       capaActiva === 'presion_probable' ||
       capaActiva === 'presion_confirmado'
@@ -921,15 +990,11 @@ import { rutaFicha } from '../fichas/registro';
       }
     }
 
-    return `<strong>${nombre}</strong><br>${lineas.join('<br>')}`;
+    return `<strong>${escapeHtml(nombre)}</strong><br>${lineas.join('<br>')}`;
   }
 
   // ---------------------------------------------------------------------
-  // Detalle de departamento (click en el mapa): snapshot de las 4 capas de
-  // los módulos M1–M3 para la semana/año seleccionados + mini-curva de Iv del
-  // año contra su banda histórica P25-P75. Mismo patrón hecho a mano de
-  // <svg><polyline> que CurvaEpidemicaNacional.astro -- sin librería de
-  // charts nueva.
+  // Detalle de departamento: mini-curva y snapshot
   // ---------------------------------------------------------------------
 
   interface SemanaTemporal {
@@ -1026,55 +1091,15 @@ import { rutaFicha } from '../fichas/registro';
   }
 
   // ---------------------------------------------------------------------
-  // Orquestación: un mapa Leaflet, un geojson, una capa geoJSON activa a la
-  // vez -- se reemplaza al cambiar de selector en vez de duplicar mapas.
+  // Orquestación del mapa vectorial SVG nativo
   // ---------------------------------------------------------------------
 
-  // Máscara visual: un rectángulo enorme con un "agujero" recortado por
-  // cada departamento (SVG fill-rule evenodd, soportado nativamente por
-  // L.Polygon con múltiples anillos). No evita las peticiones de tiles de
-  // países vecinos -- son ráster de OpenStreetMap, no hay forma de pedir
-  // "sin Guatemala/Honduras" a ese proveedor -- pero atenúa visualmente
-  // todo lo que no sea El Salvador, incluyendo los nombres de lugar que
-  // trae el tile, para que la atención quede en el país que sí cubre el
-  // proyecto. Mismo enfoque que MapaIRA.astro.
-  const ANILLO_MUNDO: [number, number][] = [
-    [-85, -170],
-    [-85, 10],
-    [85, 10],
-    [85, -170],
-  ];
-
-  function construirMascara(geojson: any): [number, number][][] {
-    const agujeros: [number, number][][] = [];
-    for (const f of geojson.features) {
-      const partes =
-        f.geometry.type === 'Polygon'
-          ? [f.geometry.coordinates]
-          : f.geometry.coordinates;
-      for (const poligono of partes) {
-        agujeros.push(
-          poligono[0].map(([lon, lat]: [number, number]) => [lat, lon]),
-        );
-      }
-    }
-    return [ANILLO_MUNDO, ...agujeros];
-  }
-
-  function cargarCssLeaflet() {
-    if (document.querySelector(`link[href="${leafletCssHref}"]`)) return;
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = leafletCssHref;
-    document.head.appendChild(link);
-  }
-
   async function iniciar() {
-    cargarCssLeaflet();
-    const { default: L } = await import('leaflet');
-
     const contenedorSelector = document.getElementById('mapa-selector');
     const contenedorMapa = document.getElementById('mapa-departamentos');
+    const svgElement = document.getElementById(
+      'mapa-svg',
+    ) as unknown as SVGSVGElement | null;
     const contenedorLeyenda = document.getElementById('mapa-leyenda');
     const contenedorAviso = document.getElementById('mapa-aviso');
     const contenedorNoDisponible =
@@ -1092,9 +1117,18 @@ import { rutaFicha } from '../fichas/registro';
     const tablaColumnaValor = document.getElementById(
       'mapa-tabla-columna-valor',
     );
+    const toggleEtiquetas = document.getElementById(
+      'mapa-toggle-etiquetas',
+    ) as HTMLInputElement | null;
+    const btnExportarSvg = document.getElementById('mapa-exportar-svg');
+    const btnExportarPng = document.getElementById('mapa-exportar-png');
+    const tooltip = document.getElementById('mapa-tooltip');
+    const grupoEtiquetas = document.getElementById('mapa-etiquetas-grupo');
+
     if (
       !contenedorSelector ||
       !contenedorMapa ||
+      !svgElement ||
       !contenedorLeyenda ||
       !contenedorAviso ||
       !contenedorNoDisponible ||
@@ -1105,6 +1139,12 @@ import { rutaFicha } from '../fichas/registro';
       !detalleCerrar
     )
       return;
+
+    const paths = Array.from(
+      contenedorMapa.querySelectorAll<SVGPathElement>(
+        '.mapa-departamento-path',
+      ),
+    );
 
     detalleCerrar.addEventListener('click', () => {
       actualizarFiltrosAnalisis({ departamento: null });
@@ -1179,61 +1219,13 @@ import { rutaFicha } from '../fichas/registro';
       }
     }
 
-    // Límites duros a El Salvador (bbox real del geojson + margen) -- sin
-    // esto, un scroll de más con la rueda del mouse manda a ver Guatemala u
-    // Honduras, que el proyecto todavía no cubre. maxBoundsViscosity: 1
-    // hace que el mapa "rebote" en vez de dejar salir el pan; minZoom evita
-    // alejar hasta ver la región entera.
-    const LIMITES_SV = L.latLngBounds([12.95, -90.35], [14.65, -87.45]);
-    // Con departamentos como unidad no hay nada que ver más cerca de 10.
-    const MAX_ZOOM = 10;
-    contenedorMapa.innerHTML = '';
-    contenedorMapa.removeAttribute('aria-busy');
-    const mapa = L.map(contenedorMapa, {
-      minZoom: 8,
-      maxZoom: MAX_ZOOM,
-      maxBounds: LIMITES_SV,
-      maxBoundsViscosity: 1.0,
-    }).setView([13.79, -88.9], 8);
-    protegerScrollMapa(contenedorMapa);
-    new ResizeObserver(() => {
-      mapa.invalidateSize({ animate: false, pan: false });
-    }).observe(contenedorMapa);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution:
-        '&copy; colaboradores de <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      maxZoom: MAX_ZOOM,
-    }).addTo(mapa);
-
-    const respGeo = await fetch('/geo/slv-adm1.geojson');
-    const geojson = await respGeo.json();
-    const nombresPorCodigo = new Map<string, string>(
-      geojson.features.map((feature: any) => [
-        feature.properties?.codigo ?? '',
-        feature.properties?.shapeName
-          ? normalizarNombreDepto(feature.properties.shapeName)
-          : (feature.properties?.codigo ?? ''),
-      ]),
-    );
-
-    L.polygon(construirMascara(geojson), {
-      stroke: false,
-      fillColor: '#f0f0f0',
-      fillOpacity: 0.85,
-      interactive: false,
-    }).addTo(mapa);
-
-    let capaGeoJsonActiva: Leaflet.GeoJSON | null = null;
-    /** Capa de datos que dibuja `capaGeoJsonActiva` (para fundir solo recoloreos). */
-    let idCapaPintada: IdCapa | null = null;
     let capaActivaId: IdCapa = capaMinsal.id;
+    let idCapaPintada: IdCapa | null = null;
     const cacheValoresPorCapa = new Map<
       IdCapa,
       Map<string, number | undefined> | null
     >();
 
-    // Departamentos con una alerta de dengue vigente que los nombra (ADR 0022).
-    // Las nacionales no marcan ninguno: se resumen en un aviso sobre la leyenda.
     let departamentosConAlerta = new Set<string>();
 
     function pintarAlertasEnTabla() {
@@ -1276,7 +1268,6 @@ import { rutaFicha } from '../fichas/registro';
             'Los departamentos con contorno punteado tienen una alerta de dengue vigente.';
         }
       } catch {
-        // Sin alertas el mapa sigue igual: la marca es un añadido.
         departamentosConAlerta = new Set();
       }
       pintarAlertasEnTabla();
@@ -1284,44 +1275,31 @@ import { rutaFicha } from '../fichas/registro';
     }
 
     function resaltarDepartamento(codigoActivo: string | null) {
-      capaGeoJsonActiva?.eachLayer((capa) => {
-        const ruta = capa as Leaflet.Path & {
-          feature?: { properties?: { codigo?: string } };
-          bringToFront?: () => void;
-        };
-        const codigo = ruta.feature?.properties?.codigo ?? '';
+      paths.forEach((ruta) => {
+        const codigo = ruta.dataset.codigo ?? '';
         const activa = codigoActivo !== null && codigo === codigoActivo;
         const conAlerta = departamentosConAlerta.has(codigo);
-        ruta.setStyle({
-          color: activa || conAlerta ? 'var(--color-seleccion)' : '#8a8a90',
-          weight: activa ? 2 : conAlerta ? 2.5 : 1,
-          // Contorno punteado: la marca de alerta no depende solo del color.
-          dashArray: conAlerta && !activa ? '5 4' : undefined,
-        });
-        if (activa) ruta.bringToFront?.();
-      });
-    }
 
-    function vincularSeleccionDepartamento(
-      capa: Leaflet.Layer,
-      codigo: string,
-      nombre: string,
-    ) {
-      const seleccionar = () =>
-        actualizarFiltrosAnalisis({ departamento: codigo });
-      capa.on('click', seleccionar);
-      capa.on('add', () => {
-        const elemento = (capa as Leaflet.Path).getElement();
-        if (!elemento) return;
-        elemento.setAttribute('data-departamento', codigo);
-        elemento.setAttribute('tabindex', '0');
-        elemento.setAttribute('role', 'button');
-        elemento.setAttribute('aria-label', `Seleccionar ${nombre}`);
-        elemento.addEventListener('keydown', (evento: KeyboardEvent) => {
-          if (evento.key !== 'Enter' && evento.key !== ' ') return;
-          evento.preventDefault();
-          seleccionar();
-        });
+        if (activa) {
+          ruta.classList.add('seleccionado');
+          ruta.setAttribute('aria-pressed', 'true');
+          ruta.style.stroke = 'var(--color-seleccion, #040316)';
+          ruta.style.strokeWidth = '2.5px';
+          ruta.style.strokeDasharray = 'none';
+          ruta.parentElement?.appendChild(ruta);
+        } else if (conAlerta) {
+          ruta.classList.remove('seleccionado');
+          ruta.setAttribute('aria-pressed', 'false');
+          ruta.style.stroke = 'var(--color-seleccion, #040316)';
+          ruta.style.strokeWidth = '2.2px';
+          ruta.style.strokeDasharray = '5 4';
+        } else {
+          ruta.classList.remove('seleccionado');
+          ruta.setAttribute('aria-pressed', 'false');
+          ruta.style.stroke = '#8a8a90';
+          ruta.style.strokeWidth = '1.2px';
+          ruta.style.strokeDasharray = 'none';
+        }
       });
     }
 
@@ -1402,19 +1380,12 @@ import { rutaFicha } from '../fichas/registro';
       tablaColumnaValor.textContent = capa.etiqueta;
       tablaCaption.textContent = `Valores de ${capa.etiqueta} por departamento`;
       tablaCuerpo.innerHTML = '';
-      const filas = (
-        geojson.features as {
-          properties?: { codigo?: string; shapeName?: string };
-        }[]
-      )
-        .map((feature) => {
-          const codigo = feature.properties?.codigo ?? '';
-          const nombre = feature.properties?.shapeName
-            ? normalizarNombreDepto(feature.properties.shapeName)
-            : codigo;
-          return { codigo, nombre, valor: valores?.get(codigo) };
-        })
-        .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+      const filas = DEPARTAMENTOS.map((dep) => ({
+        codigo: dep.codigo,
+        nombre: dep.nombre,
+        valor: valores?.get(dep.codigo),
+      })).sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+
       for (const fila of filas) {
         const tr = document.createElement('tr');
         const th = document.createElement('th');
@@ -1432,6 +1403,215 @@ import { rutaFicha } from '../fichas/registro';
       }
       pintarAlertasEnTabla();
     }
+
+    function obtenerContenidoTooltip(codigo: string, nombre: string): string {
+      const valores = cacheValoresPorCapa.get(capaActivaId);
+      const capa = CAPAS.find((c) => c.id === capaActivaId);
+      if (!capa || !valores) {
+        return `<strong>${escapeHtml(nombre)}</strong><br>capa no disponible todavía`;
+      }
+
+      if (capa.id === 'minsal_volumen') {
+        const dato = detallesMinsal.get(codigo);
+        if (!dato) {
+          return `<strong>${escapeHtml(nombre)}</strong><br>sin dato`;
+        }
+        const valorMinsal =
+          dato.valor === undefined
+            ? 'sin dato'
+            : dato.valor === 0
+              ? '0 observado'
+              : `${dato.valor} casos`;
+        return (
+          `<strong>${escapeHtml(nombre)}</strong><br>` +
+          `Serie: ${escapeHtml(obtenerFiltrosAnalisis().serie)}<br>` +
+          `Periodo: ${escapeHtml(dato.periodo)}<br>` +
+          `Valor: ${valorMinsal}<br>` +
+          `Cobertura: ${dato.semanasObservadas}/${dato.semanasEsperadas} semanas`
+        );
+      }
+
+      if (ES_CAPA_MODULO[capa.id]) {
+        return tooltipModulos(codigo, nombre, capa.id);
+      }
+
+      const valor = valores.get(codigo);
+      return `<strong>${escapeHtml(nombre)}</strong><br>${escapeHtml(capa.tituloLeyenda)}: ${capa.tooltipValor(valor)}`;
+    }
+
+    function posicionarTooltip(e: MouseEvent) {
+      if (!tooltip) return;
+      const rect = contenedorMapa.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top - 12;
+      tooltip.style.left = `${x}px`;
+      tooltip.style.top = `${y}px`;
+    }
+
+    paths.forEach((ruta) => {
+      const codigo = ruta.dataset.codigo ?? '';
+      const nombre = ruta.dataset.nombre ?? codigo;
+
+      const seleccionar = () => {
+        const actual = obtenerFiltrosAnalisis().departamento;
+        actualizarFiltrosAnalisis({
+          departamento: actual === codigo ? null : codigo,
+        });
+      };
+
+      ruta.addEventListener('click', seleccionar);
+
+      ruta.addEventListener('keydown', (e: KeyboardEvent) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          seleccionar();
+        }
+      });
+
+      ruta.addEventListener('mouseenter', (e) => {
+        if (!tooltip) return;
+        tooltip.innerHTML = obtenerContenidoTooltip(codigo, nombre);
+        tooltip.classList.remove('hidden');
+        tooltip.setAttribute('aria-hidden', 'false');
+        posicionarTooltip(e);
+      });
+
+      ruta.addEventListener('mousemove', (e) => {
+        posicionarTooltip(e);
+      });
+
+      ruta.addEventListener('mouseleave', () => {
+        tooltip?.classList.add('hidden');
+        tooltip?.setAttribute('aria-hidden', 'true');
+      });
+
+      ruta.addEventListener('focus', () => {
+        if (!tooltip || !svgElement) return;
+        tooltip.innerHTML = obtenerContenidoTooltip(codigo, nombre);
+        tooltip.classList.remove('hidden');
+        tooltip.setAttribute('aria-hidden', 'false');
+        const rect = contenedorMapa.getBoundingClientRect();
+        const svgRect = svgElement.getBoundingClientRect();
+        const bbox = ruta.getBBox();
+        const viewBox = svgElement.viewBox.baseVal;
+        const x =
+          svgRect.left -
+          rect.left +
+          (bbox.x + bbox.width / 2) * (svgRect.width / viewBox.width);
+        const y =
+          svgRect.top -
+          rect.top +
+          (bbox.y + bbox.height * 0.3) * (svgRect.height / viewBox.height);
+        tooltip.style.left = `${x}px`;
+        tooltip.style.top = `${y}px`;
+      });
+
+      ruta.addEventListener('blur', () => {
+        tooltip?.classList.add('hidden');
+        tooltip?.setAttribute('aria-hidden', 'true');
+      });
+    });
+
+    toggleEtiquetas?.addEventListener('change', (e) => {
+      const activo = (e.target as HTMLInputElement).checked;
+      if (grupoEtiquetas) {
+        grupoEtiquetas.style.opacity = activo ? '1' : '0';
+      }
+    });
+
+    btnExportarSvg?.addEventListener('click', () => {
+      if (!svgElement) return;
+      const clon = svgElement.cloneNode(true) as SVGSVGElement;
+      clon.removeAttribute('class');
+      clon.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+      clon
+        .querySelectorAll<SVGPathElement>('.mapa-departamento-path')
+        .forEach((path) => {
+          const orig = contenedorMapa.querySelector(
+            `.mapa-departamento-path[data-codigo="${path.dataset.codigo}"]`,
+          ) as SVGPathElement | null;
+          if (orig) {
+            const estilo = window.getComputedStyle(orig);
+            path.setAttribute('fill', estilo.fill);
+            path.setAttribute('stroke', estilo.stroke);
+            path.setAttribute('stroke-width', estilo.strokeWidth);
+            if (orig.style.strokeDasharray) {
+              path.setAttribute('stroke-dasharray', orig.style.strokeDasharray);
+            }
+          }
+        });
+      clon
+        .querySelectorAll<SVGTextElement>('.mapa-etiqueta-texto')
+        .forEach((txt) => {
+          txt.setAttribute('fill', '#040316');
+          txt.setAttribute('font-family', 'sans-serif');
+        });
+      const contenido = new XMLSerializer().serializeToString(clon);
+      const blob = new Blob([contenido], {
+        type: 'image/svg+xml;charset=utf-8',
+      });
+      const url = URL.createObjectURL(blob);
+      const enlace = document.createElement('a');
+      enlace.href = url;
+      enlace.download = `mapa-el-salvador-${capaActivaId}.svg`;
+      enlace.click();
+      URL.revokeObjectURL(url);
+    });
+
+    btnExportarPng?.addEventListener('click', () => {
+      if (!svgElement) return;
+      const clon = svgElement.cloneNode(true) as SVGSVGElement;
+      clon.removeAttribute('class');
+      clon.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+      clon
+        .querySelectorAll<SVGPathElement>('.mapa-departamento-path')
+        .forEach((path) => {
+          const orig = contenedorMapa.querySelector(
+            `.mapa-departamento-path[data-codigo="${path.dataset.codigo}"]`,
+          ) as SVGPathElement | null;
+          if (orig) {
+            const estilo = window.getComputedStyle(orig);
+            path.setAttribute('fill', estilo.fill);
+            path.setAttribute('stroke', estilo.stroke);
+            path.setAttribute('stroke-width', estilo.strokeWidth);
+            if (orig.style.strokeDasharray) {
+              path.setAttribute('stroke-dasharray', orig.style.strokeDasharray);
+            }
+          }
+        });
+      clon
+        .querySelectorAll<SVGTextElement>('.mapa-etiqueta-texto')
+        .forEach((txt) => {
+          txt.setAttribute('fill', '#040316');
+          txt.setAttribute('font-family', 'sans-serif');
+        });
+      const contenido = new XMLSerializer().serializeToString(clon);
+      const svgBlob = new Blob([contenido], {
+        type: 'image/svg+xml;charset=utf-8',
+      });
+      const url = URL.createObjectURL(svgBlob);
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const escala = 2;
+        const anchoPx = svgElement.viewBox.baseVal.width * escala;
+        const altoPx = svgElement.viewBox.baseVal.height * escala;
+        canvas.width = anchoPx;
+        canvas.height = altoPx;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, anchoPx, altoPx);
+        ctx.drawImage(img, 0, 0, anchoPx, altoPx);
+        const pngUrl = canvas.toDataURL('image/png');
+        const enlace = document.createElement('a');
+        enlace.href = pngUrl;
+        enlace.download = `mapa-el-salvador-${capaActivaId}.png`;
+        enlace.click();
+        URL.revokeObjectURL(url);
+      };
+      img.src = url;
+    });
 
     async function activarCapa(id: IdCapa) {
       const capa = CAPAS.find((c) => c.id === id);
@@ -1464,40 +1644,12 @@ import { rutaFicha } from '../fichas/registro';
         cacheValoresPorCapa.set(id, valores);
       }
 
-      // Para las capas de los módulos M1–M3 el tooltip muestra los cuatro valores
-      // (Iv, anomalía, presión probable/confirmado) a la vez -- se esperan
-      // ambos endpoints aquí (cacheados: 2 fetch en total como máximo) para
-      // que el tooltip no dependa de qué capa se visitó antes.
       if (ES_CAPA_MODULO[id]) {
         await Promise.all([obtenerDatosEspaciales(), obtenerDatosPresion()]);
       }
 
-      // Colores vigentes por departamento: si solo cambia el dato de la misma
-      // capa (semana, año, serie) la capa nueva nace con el color anterior y
-      // pasa al nuevo en el siguiente cuadro, para que el CSS lo funda.
-      const colorPrevio = new Map<string, string>();
-      if (
-        capaGeoJsonActiva &&
-        idCapaPintada === id &&
-        !window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      ) {
-        capaGeoJsonActiva.eachLayer((l) => {
-          const ruta = l as Leaflet.Path & {
-            feature?: { properties?: { codigo?: string } };
-          };
-          const codigo = ruta.feature?.properties?.codigo;
-          if (codigo && ruta.options.fillColor) {
-            colorPrevio.set(codigo, ruta.options.fillColor);
-          }
-        });
-      }
-      if (capaGeoJsonActiva) {
-        mapa.removeLayer(capaGeoJsonActiva);
-        capaGeoJsonActiva = null;
-      }
-      idCapaPintada = null;
-
       if (!valores) {
+        idCapaPintada = null;
         contenedorNoDisponible!.classList.remove('hidden');
         contenedorLeyenda!.innerHTML = '';
         renderErrorFuente(
@@ -1506,26 +1658,10 @@ import { rutaFicha } from '../fichas/registro';
           'No se pudo cargar esta capa. El mapa se muestra en gris hasta que los datos vuelvan a estar disponibles.',
         );
         pintarTablaValores(capa, null);
-        // Se sigue dibujando el contorno departamental, todo en "sin dato",
-        // para que el mapa no se sienta roto.
-        capaGeoJsonActiva = L.geoJSON(geojson, {
-          style: () => ({
-            color: '#8a8a90',
-            weight: 1,
-            fillColor: SIN_DATO,
-            fillOpacity: 0.5,
-          }),
-          onEachFeature: (feature, layer) => {
-            const codigo = feature.properties?.codigo ?? '';
-            const nombre = feature.properties?.shapeName
-              ? normalizarNombreDepto(feature.properties.shapeName)
-              : codigo;
-            vincularSeleccionDepartamento(layer, codigo, nombre);
-            layer.bindTooltip(
-              `<strong>${nombre}</strong><br>capa no disponible todavía`,
-            );
-          },
-        }).addTo(mapa);
+        paths.forEach((ruta) => {
+          ruta.style.fill = SIN_DATO;
+          ruta.style.fillOpacity = '0.5';
+        });
         resaltarDepartamento(obtenerFiltrosAnalisis().departamento);
         return;
       }
@@ -1536,87 +1672,22 @@ import { rutaFicha } from '../fichas/registro';
       const cortes = capa.calcularCortes(numericos);
       dibujarLeyenda(contenedorLeyenda!, capa, cortes);
       pintarTablaValores(capa, valores);
-
-      const destinos = new Map<string, string>();
-      const capaNueva = L.geoJSON(geojson, {
-        style: (feature) => {
-          const codigo = feature?.properties?.codigo ?? '';
-          const valor = valores!.get(codigo);
-          const fillColor = colorGenerico(
-            valor,
-            cortes,
-            capa.rampa,
-            capa.sinDatoColor,
-          );
-          destinos.set(codigo, fillColor);
-          return {
-            color: '#8a8a90',
-            weight: 1,
-            fillColor: colorPrevio.get(codigo) ?? fillColor,
-            fillOpacity: 0.75,
-          };
-        },
-        onEachFeature: (feature, layer) => {
-          const codigo = feature.properties?.codigo ?? '';
-          const nombre = feature.properties?.shapeName
-            ? normalizarNombreDepto(feature.properties.shapeName)
-            : codigo;
-          const valor = valores!.get(codigo);
-
-          vincularSeleccionDepartamento(layer, codigo, nombre);
-
-          if (capa.id === 'minsal_volumen') {
-            const dato = detallesMinsal.get(codigo);
-            if (!dato) {
-              layer.bindTooltip(`<strong>${nombre}</strong><br>sin dato`);
-              return;
-            }
-            const valorMinsal =
-              dato.valor === undefined
-                ? 'sin dato'
-                : dato.valor === 0
-                  ? '0 observado'
-                  : `${dato.valor} casos`;
-            layer.bindTooltip(
-              `<strong>${nombre}</strong><br>` +
-                `Serie: ${escapeHtml(obtenerFiltrosAnalisis().serie)}<br>` +
-                `Periodo: ${escapeHtml(dato.periodo)}<br>` +
-                `Valor: ${valorMinsal}<br>` +
-                `Cobertura: ${dato.semanasObservadas}/${dato.semanasEsperadas} semanas`,
-            );
-            return;
-          }
-
-          if (ES_CAPA_MODULO[capa.id]) {
-            layer.bindTooltip(tooltipModulos(codigo, nombre, capa.id));
-            return;
-          }
-
-          layer.bindTooltip(
-            `<strong>${nombre}</strong><br>${capa.tituloLeyenda}: ${capa.tooltipValor(valor)}`,
-          );
-        },
-      }).addTo(mapa);
-      capaGeoJsonActiva = capaNueva;
       idCapaPintada = id;
-      resaltarDepartamento(obtenerFiltrosAnalisis().departamento);
-      if (colorPrevio.size > 0) {
-        // Dos cuadros: el primero deja pintado el color previo.
-        requestAnimationFrame(() =>
-          requestAnimationFrame(() => {
-            if (capaGeoJsonActiva !== capaNueva) return;
-            capaNueva.eachLayer((l) => {
-              const ruta = l as Leaflet.Path & {
-                feature?: { properties?: { codigo?: string } };
-              };
-              const destino = destinos.get(
-                ruta.feature?.properties?.codigo ?? '',
-              );
-              if (destino) ruta.setStyle({ fillColor: destino });
-            });
-          }),
+
+      paths.forEach((ruta) => {
+        const codigo = ruta.dataset.codigo ?? '';
+        const valor = valores!.get(codigo);
+        const color = colorGenerico(
+          valor,
+          cortes,
+          capa.rampa,
+          capa.sinDatoColor,
         );
-      }
+        ruta.style.fill = color;
+        ruta.style.fillOpacity = '0.85';
+      });
+
+      resaltarDepartamento(obtenerFiltrosAnalisis().departamento);
     }
 
     const resolverIdCapa = (
@@ -1702,22 +1773,19 @@ import { rutaFicha } from '../fichas/registro';
             contenedorDetalle.classList.add('hidden');
             return;
           }
-          const nombre =
-            nombresPorCodigo.get(filtros.departamento) ?? filtros.departamento;
+          const dep = DEPARTAMENTOS.find(
+            (d) => d.codigo === filtros.departamento,
+          );
+          const nombre = dep ? dep.nombre : filtros.departamento;
           await mostrarDetalle(filtros.departamento, nombre);
         }
       })();
     }, false);
   }
 
-  // Se difiere al primer momento ocioso del navegador: el resto de la
-  // página (texto, layout) ya pintó, así que la descarga de Leaflet + el
-  // geojson + los tiles de OpenStreetMap no compite por ancho de banda ni
-  // CPU con el primer render. requestIdleCallback no existe en Safari, de
-  // ahí el fallback a setTimeout.
-  if ('requestIdleCallback' in window) {
-    requestIdleCallback(() => iniciar());
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => void iniciar());
   } else {
-    setTimeout(iniciar, 1);
+    void iniciar();
   }
 </script>

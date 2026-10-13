@@ -1,6 +1,11 @@
 ---
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import Icono from './Icono.astro';
 import PanelWorkspace from './analisis/PanelWorkspace.astro';
+import { proyectarDepartamentos, type GeoDepartamentos } from '../lib/geo-svg';
+import { DEPARTAMENTOS_POR_CODIGO } from '../lib/departamentos';
+
 interface Props {
   evento?: 'ira' | 'neumonias';
 }
@@ -10,6 +15,12 @@ const endpoint =
   evento === 'neumonias'
     ? '/api/neumonias/departamental'
     : '/api/ira/departamental';
+
+const geo = JSON.parse(
+  readFileSync(join(process.cwd(), 'public/geo/slv-adm1.geojson'), 'utf8'),
+) as GeoDepartamentos;
+
+const mapaSvg = proyectarDepartamentos(geo, 700, 14, 0.4);
 ---
 
 <PanelWorkspace
@@ -45,11 +56,89 @@ const endpoint =
     data-mapa-canvas
     role="region"
     aria-label={`Mapa departamental de ${etiqueta}`}
-    aria-busy="true"
-    class="mt-4 h-[300px] w-full overflow-hidden rounded-xl border border-border shadow-inner sm:h-[420px] lg:h-[540px]"
+    class="relative mt-4 flex h-[320px] w-full items-center justify-center overflow-hidden rounded-xl border border-border bg-bg/30 shadow-inner sm:h-[420px] lg:h-[520px]"
   >
-    <div class="skeleton h-full w-full" aria-hidden="true"></div>
+    <svg
+      viewBox={`0 0 ${mapaSvg.ancho} ${mapaSvg.alto}`}
+      role="group"
+      aria-label={`Mapa coroplético departamental de ${etiqueta}`}
+      class="h-full w-full max-h-[500px] select-none p-2 sm:p-4 drop-shadow-2xs"
+      preserveAspectRatio="xMidYMid meet"
+    >
+      <defs>
+        <filter
+          id={`mapa-sombra-hover-${evento}`}
+          x="-10%"
+          y="-10%"
+          width="120%"
+          height="120%"
+        >
+          <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.25"
+          ></feDropShadow>
+        </filter>
+      </defs>
+
+      <g role="group" aria-label="Departamentos de El Salvador">
+        {
+          mapaSvg.departamentos.map((d) => {
+            const nombre =
+              d.nombre ??
+              DEPARTAMENTOS_POR_CODIGO[d.codigo]?.nombre ??
+              d.codigo;
+            return (
+              <path
+                d={d.d}
+                data-codigo={d.codigo}
+                data-departamento={d.codigo}
+                data-nombre={nombre}
+                tabindex="0"
+                role="button"
+                aria-label={`Seleccionar ${nombre}`}
+                aria-pressed="false"
+                class="mapa-ira-path cursor-pointer stroke-border focus:outline-none"
+                style="fill: var(--color-surface); stroke: #8a8a90; stroke-width: 1.2px; stroke-linejoin: round; transition: fill 0.35s ease, stroke 0.2s ease, stroke-width 0.2s ease;"
+              />
+            );
+          })
+        }
+      </g>
+      <g class="pointer-events-none">
+        {
+          mapaSvg.departamentos.map((d) => {
+            const nombre =
+              d.nombre ??
+              DEPARTAMENTOS_POR_CODIGO[d.codigo]?.nombre ??
+              d.codigo;
+            const corta =
+              d.abreviatura ?? d.codigoCorto ?? d.codigo.replace(/^SV-/, '');
+            return (
+              <text
+                x={d.centroX}
+                y={d.centroY}
+                text-anchor="middle"
+                dominant-baseline="central"
+                class="mapa-ira-etiqueta font-sans text-[10px] font-semibold tracking-tight fill-ink select-none"
+                style="paint-order: stroke; stroke: var(--color-surface); stroke-width: 2.5px; stroke-linejoin: round;"
+              >
+                <tspan class="etiqueta-larga">{nombre}</tspan>
+                <tspan class="etiqueta-corta">{corta}</tspan>
+              </text>
+            );
+          })
+        }
+      </g>
+    </svg>
+
+    <!-- Tooltip flotante enriquecido -->
+    <div
+      data-mapa-tooltip
+      role="tooltip"
+      aria-hidden="true"
+      class="pointer-events-none absolute z-20 hidden -translate-x-1/2 -translate-y-full rounded-lg border border-border bg-surface px-3 py-2 text-xs font-sans shadow-md backdrop-blur-xs transition-opacity duration-150 leading-relaxed text-ink"
+    >
+    </div>
   </div>
+
   <div
     class="mt-3 flex items-center gap-2 rounded-lg border border-border/80 bg-surface px-3 py-2 shadow-2xs"
   >
@@ -97,76 +186,63 @@ const endpoint =
 </PanelWorkspace>
 
 <style>
-  :global(.leaflet-container) {
-    font-family: var(--font-sans);
-    background: var(--color-bg);
-    /* Ver MapaDepartamentos.astro: confina el z-index:1000 de los controles
-       de Leaflet dentro de su propio contexto de apilamiento, para que no
-       compita contra el z-40 del header sticky de Layout.astro. */
-    isolation: isolate;
+  .mapa-ira-path:hover {
+    stroke: var(--color-ink) !important;
+    stroke-width: 1.8px !important;
+    filter: brightness(1.06);
   }
-  :global(.leaflet-control-zoom) {
-    border: 1px solid var(--color-border) !important;
-    box-shadow: var(--shadow-card) !important;
+
+  .mapa-ira-path:focus-visible {
+    outline: none;
+    stroke: var(--color-accent) !important;
+    stroke-width: 2.2px !important;
+    filter: drop-shadow(0 0 4px var(--focus-ring));
   }
-  :global(.leaflet-control-zoom a) {
-    color: var(--color-accent) !important;
-    background-color: var(--color-surface) !important;
+
+  .mapa-ira-path.seleccionado {
+    stroke: var(--color-seleccion, #040316) !important;
+    stroke-width: 2.5px !important;
+    filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.25));
   }
-  :global(.leaflet-control-zoom a:hover) {
-    background-color: var(--color-secondary) !important;
+
+  .etiqueta-corta {
+    display: none;
   }
-  :global(.leaflet-tooltip) {
-    border-radius: 0.5rem;
-    border: 1px solid var(--color-border);
-    box-shadow: var(--shadow-card);
-    font-family: var(--font-sans);
-    font-size: 12px;
-    line-height: 1.5;
-    color: var(--color-ink);
-    padding: 6px 10px;
+
+  @media (max-width: 640px) {
+    .etiqueta-larga {
+      display: none;
+    }
+    .etiqueta-corta {
+      display: inline;
+      font-size: 8.5px;
+      font-weight: 700;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .mapa-ira-path {
+      transition: none !important;
+    }
   }
 </style>
 
 <script>
-  // Leaflet se carga de forma perezosa (mismo patrón que
-  // MapaDepartamentos.astro): /respiratorio monta dos instancias de este
-  // componente, así que el bundle eager metía ~140KB en la ruta crítica. El
-  // "?url" del CSS evita que Vite lo inyecte en el <head> del primer HTML; el
-  // <link> se crea a mano justo antes de instanciar el mapa.
-  import type Leaflet from 'leaflet';
-  import leafletCssHref from 'leaflet/dist/leaflet.css?url';
   import { escapeHtml } from '../utils/security';
-  import { DEPARTAMENTOS_POR_CODIGO } from '../lib/departamentos';
+  import {
+    DEPARTAMENTOS,
+    DEPARTAMENTOS_POR_CODIGO,
+  } from '../lib/departamentos';
   import {
     actualizarFiltrosRespiratorio,
     obtenerFiltrosRespiratorio,
     suscribirFiltrosRespiratorio,
   } from '../lib/respiratorio-state';
   import { esNoDisponible, motivoNoDisponible } from './estado-async';
-  import { protegerScrollMapa } from '../lib/mapa-scroll';
-
-  function cargarCssLeaflet() {
-    if (document.querySelector(`link[href="${leafletCssHref}"]`)) return;
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = leafletCssHref;
-    document.head.appendChild(link);
-  }
 
   const API_BASE = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8000';
   const SIN_DATO = '#e4e4e7';
-  // Mismo family de la marca que la capa de volumen MINSAL de dengue, para
-  // que "más oscuro = más casos" se lea igual en ambos mapas.
   const RAMPA = ['#cde2fb', '#9ec5f4', '#5598e7', '#256abf', '#0d366b'];
-
-  // El shapeName del geojson (geoBoundaries) es inconsistente: 12 de los 14
-  // departamentos traen el prefijo "Departamento de ..." pero La Libertad y
-  // San Vicente no -- se normaliza en un solo lugar (mismo criterio que
-  // MapaDepartamentos.astro e index.astro).
-  function normalizarNombreDepto(shapeName: string): string {
-    return shapeName.replace(/^Departamento de /, '');
-  }
 
   interface DatoDepartamentoIra {
     nombre: string;
@@ -217,43 +293,13 @@ const endpoint =
     `;
   }
 
-  // Máscara visual: un rectángulo enorme con un "agujero" recortado por
-  // cada departamento (SVG fill-rule evenodd, soportado nativamente por
-  // L.Polygon con múltiples anillos). No evita las peticiones de tiles de
-  // países vecinos -- son ráster de OpenStreetMap, no hay forma de pedir
-  // "sin Guatemala/Honduras" a ese proveedor -- pero atenúa visualmente
-  // todo lo que no sea El Salvador, incluyendo los nombres de lugar que
-  // trae el tile, para que la atención quede en el país que sí cubre el
-  // proyecto.
-  const ANILLO_MUNDO: [number, number][] = [
-    [-85, -170],
-    [-85, 10],
-    [85, 10],
-    [85, -170],
-  ];
-
-  function construirMascara(geojson: any): [number, number][][] {
-    const agujeros: [number, number][][] = [];
-    for (const f of geojson.features) {
-      const partes =
-        f.geometry.type === 'Polygon'
-          ? [f.geometry.coordinates]
-          : f.geometry.coordinates;
-      for (const poligono of partes) {
-        agujeros.push(
-          poligono[0].map(([lon, lat]: [number, number]) => [lat, lon]),
-        );
-      }
-    }
-    return [ANILLO_MUNDO, ...agujeros];
-  }
-
   async function iniciarSeccion(seccion: HTMLElement) {
-    cargarCssLeaflet();
-    const L: typeof Leaflet = (await import('leaflet')).default;
-    const contenedorMapa = seccion.querySelector(
+    const contenedorCanvas = seccion.querySelector(
       '[data-mapa-canvas]',
     ) as HTMLElement | null;
+    const svgElement = contenedorCanvas?.querySelector(
+      'svg',
+    ) as SVGSVGElement | null;
     const contenedorLeyenda = seccion.querySelector(
       '[data-mapa-leyenda]',
     ) as HTMLElement | null;
@@ -261,26 +307,32 @@ const endpoint =
       '[data-mapa-vacio]',
     ) as HTMLElement | null;
     const tablaCuerpo = seccion.querySelector('[data-mapa-tabla-cuerpo]');
+    const anuncio = seccion.querySelector('[data-mapa-seleccion]');
+    const tooltip = seccion.querySelector(
+      '[data-mapa-tooltip]',
+    ) as HTMLElement | null;
     const endpoint = seccion.dataset.mapaEndpoint ?? '/api/ira/departamental';
-    if (!contenedorMapa || !contenedorLeyenda || !contenedorNoDisponible)
+
+    if (
+      !contenedorCanvas ||
+      !contenedorLeyenda ||
+      !contenedorNoDisponible ||
+      !svgElement
+    )
       return;
+
+    const paths = Array.from(
+      seccion.querySelectorAll<SVGPathElement>('path[data-codigo]'),
+    );
 
     function pintarTablaValores(detalles: Map<string, DatoDepartamentoIra>) {
       if (!tablaCuerpo) return;
       tablaCuerpo.innerHTML = '';
-      const filas = (
-        geojson.features as {
-          properties?: { codigo?: string; shapeName?: string };
-        }[]
-      )
-        .map((feature) => {
-          const codigo = feature.properties?.codigo ?? '';
-          const nombre = feature.properties?.shapeName
-            ? normalizarNombreDepto(feature.properties.shapeName)
-            : codigo;
-          return { nombre, dato: detalles.get(codigo) };
-        })
-        .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+      const filas = DEPARTAMENTOS.map((dep) => ({
+        nombre: dep.nombre,
+        dato: detalles.get(dep.codigo),
+      })).sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+
       for (const fila of filas) {
         const tr = document.createElement('tr');
         const th = document.createElement('th');
@@ -297,10 +349,6 @@ const endpoint =
       }
     }
 
-    // Selección compartida con las curvas y el mapa de calor (estado en la URL).
-    const anuncio = seccion.querySelector('[data-mapa-seleccion]');
-    let capaGeo: Leaflet.GeoJSON | null = null;
-
     function anunciarSeleccion(codigo: string) {
       const nombre = DEPARTAMENTOS_POR_CODIGO[codigo]?.nombre ?? codigo;
       if (anuncio)
@@ -308,78 +356,31 @@ const endpoint =
     }
 
     function resaltar(codigoActivo: string) {
-      capaGeo?.eachLayer((capa) => {
-        const ruta = capa as Leaflet.Path & {
-          feature?: { properties?: { codigo?: string } };
-          bringToFront?: () => void;
-        };
-        const activa = ruta.feature?.properties?.codigo === codigoActivo;
-        ruta.setStyle({
-          color: activa ? 'var(--color-seleccion)' : '#8a8a90',
-          weight: activa ? 3 : 1,
-        });
-        if (activa) ruta.bringToFront?.();
+      paths.forEach((ruta) => {
+        const activa = ruta.dataset.codigo === codigoActivo;
+        ruta.style.stroke = activa
+          ? 'var(--color-seleccion, #040316)'
+          : '#8a8a90';
+        ruta.style.strokeWidth = activa ? '2.5px' : '1.2px';
+        if (activa) {
+          ruta.classList.add('seleccionado');
+          ruta.setAttribute('aria-pressed', 'true');
+          ruta.parentElement?.appendChild(ruta);
+        } else {
+          ruta.classList.remove('seleccionado');
+          ruta.setAttribute('aria-pressed', 'false');
+        }
       });
     }
 
-    function vincularSeleccion(
-      capa: Leaflet.Layer,
-      codigo: string,
-      nombre: string,
-    ) {
-      const seleccionar = () => {
-        actualizarFiltrosRespiratorio({ departamento: codigo });
-        // Si ya estaba elegido no hay evento: se anuncia igual.
-        anunciarSeleccion(codigo);
-      };
-      capa.on('click', seleccionar);
-      capa.on('add', () => {
-        const elemento = (capa as Leaflet.Path).getElement();
-        if (!elemento) return;
-        elemento.setAttribute('tabindex', '0');
-        elemento.setAttribute('role', 'button');
-        elemento.setAttribute('aria-label', `Seleccionar ${nombre}`);
-        elemento.addEventListener('keydown', (evento: KeyboardEvent) => {
-          if (evento.key !== 'Enter' && evento.key !== ' ') return;
-          evento.preventDefault();
-          seleccionar();
-        });
-      });
+    function posicionarTooltip(e: MouseEvent) {
+      if (!tooltip) return;
+      const rect = contenedorCanvas!.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top - 12;
+      tooltip.style.left = `${x}px`;
+      tooltip.style.top = `${y}px`;
     }
-
-    // Límites duros a El Salvador (mismo bbox que MapaDepartamentos.astro) --
-    // sin esto, un scroll de más con la rueda del mouse manda a ver
-    // Guatemala u Honduras, que el proyecto todavía no cubre.
-    const LIMITES_SV = L.latLngBounds([12.95, -90.35], [14.65, -87.45]);
-    // Con departamentos como unidad no hay nada que ver más cerca de 10.
-    const MAX_ZOOM = 10;
-    contenedorMapa.innerHTML = '';
-    contenedorMapa.removeAttribute('aria-busy');
-    const mapa = L.map(contenedorMapa, {
-      minZoom: 8,
-      maxZoom: MAX_ZOOM,
-      maxBounds: LIMITES_SV,
-      maxBoundsViscosity: 1.0,
-    }).setView([13.79, -88.9], 8);
-    protegerScrollMapa(contenedorMapa);
-    mapa.whenReady(() => {
-      mapa.invalidateSize();
-    });
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution:
-        '&copy; colaboradores de <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      maxZoom: MAX_ZOOM,
-    }).addTo(mapa);
-
-    const respGeo = await fetch('/geo/slv-adm1.geojson');
-    const geojson = await respGeo.json();
-
-    L.polygon(construirMascara(geojson), {
-      stroke: false,
-      fillColor: '#f0f0f0',
-      fillOpacity: 0.85,
-      interactive: false,
-    }).addTo(mapa);
 
     let detalles = new Map<string, DatoDepartamentoIra>();
     let valores: Map<string, number | undefined> | null = null;
@@ -399,10 +400,7 @@ const endpoint =
         const cuerpo = datos as { departamentos: DatoDepartamentoIra[] };
         detalles = new Map(cuerpo.departamentos.map((d) => [d.codigo, d]));
         valores = new Map(
-          cuerpo.departamentos.map((d) => [
-            d.codigo,
-            d.notificado_total > 0 ? d.notificado_total : undefined,
-          ]),
+          cuerpo.departamentos.map((d) => [d.codigo, d.notificado_total]),
         );
       }
     } catch {
@@ -412,22 +410,10 @@ const endpoint =
     if (!valores) {
       contenedorNoDisponible.classList.remove('hidden');
       pintarTablaValores(detalles);
-      L.geoJSON(geojson, {
-        style: () => ({
-          color: '#8a8a90',
-          weight: 1,
-          fillColor: SIN_DATO,
-          fillOpacity: 0.5,
-        }),
-        onEachFeature: (feature, layer) => {
-          const nombre = feature.properties?.shapeName
-            ? normalizarNombreDepto(feature.properties.shapeName)
-            : (feature.properties?.codigo ?? '');
-          layer.bindTooltip(
-            `<strong>${escapeHtml(nombre)}</strong><br>mapa no disponible todavía`,
-          );
-        },
-      }).addTo(mapa);
+      paths.forEach((ruta) => {
+        ruta.style.fill = SIN_DATO;
+        ruta.style.fillOpacity = '0.5';
+      });
       return;
     }
 
@@ -438,39 +424,83 @@ const endpoint =
     dibujarLeyenda(contenedorLeyenda, cortes);
     pintarTablaValores(detalles);
 
-    capaGeo = L.geoJSON(geojson, {
-      style: (feature) => {
-        const codigo = feature?.properties?.codigo ?? '';
-        return {
-          color: '#8a8a90',
-          weight: 1,
-          fillColor: colorPorValor(valores!.get(codigo), cortes),
-          fillOpacity: 0.75,
-        };
-      },
-      onEachFeature: (feature, layer) => {
-        const codigo = feature.properties?.codigo ?? '';
-        const nombre = feature.properties?.shapeName
-          ? normalizarNombreDepto(feature.properties.shapeName)
-          : codigo;
-        vincularSeleccion(layer, codigo, nombre);
-        const dato = detalles.get(codigo);
-        if (!dato) {
-          layer.bindTooltip(nombre);
-          return;
+    paths.forEach((ruta) => {
+      const codigo = ruta.dataset.codigo ?? '';
+      const nombre = ruta.dataset.nombre ?? codigo;
+      const valor = valores?.get(codigo);
+      const color = colorPorValor(valor, cortes);
+      ruta.style.fill = color;
+      ruta.style.fillOpacity = '0.85';
+
+      const seleccionar = () => {
+        actualizarFiltrosRespiratorio({ departamento: codigo });
+        anunciarSeleccion(codigo);
+      };
+
+      ruta.addEventListener('click', seleccionar);
+      ruta.addEventListener('keydown', (e: KeyboardEvent) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          seleccionar();
         }
-        const ventana =
-          dato.primer_anio && dato.ultimo_anio
-            ? `${dato.primer_anio}-${dato.ultimo_anio}`
-            : 'sin dato';
-        layer.bindTooltip(
-          `<strong>${escapeHtml(nombre)}</strong><br>` +
-            `Notificado (acum.): ${dato.notificado_total}<br>` +
-            `Semanas con dato: ${dato.semanas_con_dato}<br>` +
-            `Ventana: ${escapeHtml(ventana)}`,
-        );
-      },
-    }).addTo(mapa);
+      });
+
+      const dato = detalles.get(codigo);
+      const ventana =
+        dato?.primer_anio && dato?.ultimo_anio
+          ? `${dato.primer_anio}-${dato.ultimo_anio}`
+          : 'sin dato';
+
+      const textoTooltip = dato
+        ? `<strong>${escapeHtml(nombre)}</strong><br>` +
+          `Notificado (acum.): ${dato.notificado_total}<br>` +
+          `Semanas con dato: ${dato.semanas_con_dato}<br>` +
+          `Ventana: ${escapeHtml(ventana)}`
+        : `<strong>${escapeHtml(nombre)}</strong><br>sin dato`;
+
+      ruta.addEventListener('mouseenter', (e) => {
+        if (!tooltip) return;
+        tooltip.innerHTML = textoTooltip;
+        tooltip.classList.remove('hidden');
+        tooltip.setAttribute('aria-hidden', 'false');
+        posicionarTooltip(e);
+      });
+
+      ruta.addEventListener('mousemove', (e) => {
+        posicionarTooltip(e);
+      });
+
+      ruta.addEventListener('mouseleave', () => {
+        tooltip?.classList.add('hidden');
+        tooltip?.setAttribute('aria-hidden', 'true');
+      });
+
+      ruta.addEventListener('focus', () => {
+        if (!tooltip || !svgElement) return;
+        tooltip.innerHTML = textoTooltip;
+        tooltip.classList.remove('hidden');
+        tooltip.setAttribute('aria-hidden', 'false');
+        const rect = contenedorCanvas!.getBoundingClientRect();
+        const svgRect = svgElement.getBoundingClientRect();
+        const bbox = ruta.getBBox();
+        const viewBox = svgElement.viewBox.baseVal;
+        const x =
+          svgRect.left -
+          rect.left +
+          (bbox.x + bbox.width / 2) * (svgRect.width / viewBox.width);
+        const y =
+          svgRect.top -
+          rect.top +
+          (bbox.y + bbox.height * 0.3) * (svgRect.height / viewBox.height);
+        tooltip.style.left = `${x}px`;
+        tooltip.style.top = `${y}px`;
+      });
+
+      ruta.addEventListener('blur', () => {
+        tooltip?.classList.add('hidden');
+        tooltip?.setAttribute('aria-hidden', 'true');
+      });
+    });
 
     resaltar(obtenerFiltrosRespiratorio().departamento);
     suscribirFiltrosRespiratorio((f) => {

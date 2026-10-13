@@ -10,8 +10,8 @@
  *    *.cdn.cloudflare.net y las respuestas llevan `server: cloudflare`).
  *  - Límite de peticiones: backend/api/main.py, `_client_ip` como key_func de
  *    slowapi con almacenamiento en memoria.
- *  - Teselas de OSM: MapaDepartamentos.astro y MapaIRA.astro, montados en
- *    portada, /dengue y /respiratorio (las fichas no tienen mapa).
+ *  - Cartografía local: mapas vectoriales SVG integrados, renderizados sin
+ *    contactar con servidores externos ni solicitar teselas a OpenStreetMap.
  *  - Tipografías: Fonts API de Astro en astro.config.mjs, descargadas en build.
  *  - Formulario de operadores: src/pages/alertas/nueva.astro.
  *  - Almacenamiento local: las dos claves `epi-aetheris:*` (nueva.astro y
@@ -93,8 +93,10 @@ import { navegacionLegal } from '../../lib/navegacion-documentos';
       actividad. No hay analítica ni publicidad.
     </li>
     <li>
-      Al navegar, la dirección IP llega a Render, que lo aloja, y a
-      OpenStreetMap, que sirve los mapas.
+      Al navegar por el sitio, la dirección IP solo llega al proveedor de
+      alojamiento (Render). La cartografía se procesa localmente en SVG sin
+      contactar con OpenStreetMap ni transferir datos a servidores de mapas
+      externos.
     </li>
     <li>
       Las cuentas existen solo para las personas del equipo que publican o
@@ -197,22 +199,22 @@ import { navegacionLegal } from '../../lib/navegacion-documentos';
 
   <h3>3. Al ver un mapa</h3>
   <p>
-    Los mapas de la portada, de dengue y de respiratorio usan imágenes de fondo
-    (teselas) de OpenStreetMap. El navegador las pide directamente a la
-    OpenStreetMap Foundation, así que la IP, el user-agent y la dirección de
-    este sitio llegan a esa fundación cada vez que se dibuja un mapa. Aparte del
-    alojamiento, es el único tercero que recibe datos al navegar por el sitio.
+    Los mapas de la portada, de dengue y de respiratorio son representaciones
+    vectoriales SVG integradas directamente en la aplicación. No se descargan
+    teselas de mapas ni se realizan conexiones a servidores de la OpenStreetMap
+    Foundation ni de ningún otro proveedor externo. Toda la geometría
+    cartográfica se procesa y dibuja de forma local en el navegador o servidor,
+    de modo que no se transfiere la dirección IP, el navegador ni ningún otro
+    dato técnico al interactuar con los mapas.
   </p>
   <ul>
-    <li>Para qué: mostrar el mapa.</li>
     <li>
-      Cuánto tiempo: el que fija la{' '}
-      <a
-        href="https://wiki.osmfoundation.org/wiki/Privacy_Policy"
-        target="_blank"
-        rel="noopener noreferrer"
-        >política de privacidad de la OpenStreetMap Foundation</a
-      >.
+      <strong>Para qué:</strong> mostrar la distribución territorial de los eventos
+      de salud sin depender de servicios externos.
+    </li>
+    <li>
+      <strong>Qué datos se transfieren:</strong> ninguno; el renderizado es estrictamente
+      local y no genera peticiones de red externas.
     </li>
   </ul>
 
@@ -601,18 +603,6 @@ import { navegacionLegal } from '../../lib/navegacion-documentos';
       </tr>
       <tr>
         <td>
-          OpenStreetMap Foundation (Reino Unido).{' '}
-          <a
-            href="https://wiki.osmfoundation.org/wiki/Privacy_Policy"
-            target="_blank"
-            rel="noopener noreferrer">Política de privacidad de la OSMF</a
-          >
-        </td>
-        <td>Sirve las imágenes de fondo de los mapas</td>
-        <td>IP, user-agent y dirección del sitio al cargar un mapa</td>
-      </tr>
-      <tr>
-        <td>
           GitHub, Inc. (EE. UU.).{' '}
           <a
             href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement"
@@ -626,9 +616,10 @@ import { navegacionLegal } from '../../lib/navegacion-documentos';
     </tbody>
   </table>
   <p>
-    Las fuentes de datos (MINSAL, OpenDengue y Open-Meteo) no reciben nada. El
-    proyecto descarga sus cifras; el navegador de quien visita el sitio nunca se
-    conecta con ellas.
+    Las fuentes de datos (MINSAL, OpenDengue y Open-Meteo) y los proveedores
+    cartográficos (OpenStreetMap) no reciben datos. El proyecto descarga sus
+    cifras y procesa los límites vectoriales internamente; el navegador de quien
+    visita el sitio nunca se conecta con ellos para solicitar datos ni teselas.
   </p>
   <p>
     Los datos de las cuentas no se entregan a ninguna otra empresa ni
@@ -640,8 +631,10 @@ import { navegacionLegal } from '../../lib/navegacion-documentos';
     La API y la base de datos, con los datos de las cuentas, están en servidores
     de Render en Estados Unidos. Los correos de las cuentas pasan por Resend,
     también en Estados Unidos. Las páginas se sirven desde la red de Cloudflare,
-    que tiene servidores en varios países, y los mapas se piden a la
-    OpenStreetMap Foundation. Por eso los datos descritos arriba salen del país.
+    que tiene servidores en varios países. La cartografía no realiza peticiones
+    a servidores externos fuera del país, ya que se renderiza localmente como
+    SVG. Por eso los datos descritos arriba, salvo los de los mapas, salen del
+    país.
   </p>
   <p>
     Para las personas con cuenta, esa salida es parte de lo que aceptan al
@@ -787,9 +780,9 @@ import { navegacionLegal } from '../../lib/navegacion-documentos';
 </DocumentoTexto>
 
 <style>
-  /* A 375 px la tabla de terceros no cabía: «OpenStreetMap», «user-agent» y
-     los nombres de las políticas fijan un ancho mínimo mayor que la columna.
-     anywhere (a diferencia de break-word) sí reduce ese mínimo en tablas. */
+  /* A 375 px la tabla de terceros no cabía: «user-agent» y los nombres
+     de las políticas fijan un ancho mínimo mayor que la columna. anywhere
+     (a diferencia de break-word) sí reduce ese mínimo en tablas. */
   table {
     hyphens: auto;
     overflow-wrap: anywhere;

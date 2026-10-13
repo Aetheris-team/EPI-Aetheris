@@ -297,7 +297,7 @@ const aniosHistorico = `${Math.min(...ANIOS_ANALISIS_DENGUE)} a ${Math.max(...AN
     boton.addEventListener('click', () => {
       const abrir = menu.hidden;
       cerrarMenus();
-      // El mapa (Leaflet) no se exporta; solo los paneles con un gráfico SVG.
+      // Solo los paneles con gráfico permiten exportación desde este menú genérico.
       const hayGrafico = encontrarGrafico(panel) !== null;
       menu
         .querySelectorAll<HTMLElement>('[data-accion-panel^="exportar"]')

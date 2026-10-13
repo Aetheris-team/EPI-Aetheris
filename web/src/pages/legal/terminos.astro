@@ -257,13 +257,16 @@ const HISTORIAL_TERMINOS =
       agrupa por departamento y semana epidemiológica.
     </li>
     <li>
-      <strong>Los mapas</strong> usan el fondo de{' '}
+      <strong>Los mapas</strong> se basan en los límites geográficos de geoBoundaries
+      (derivados de OpenStreetMap a través de osm-boundaries, con licencia CC BY-SA
+      2.0, © colaboradores de{' '}
       <a
         href="https://www.openstreetmap.org/copyright"
         target="_blank"
         rel="noopener noreferrer">OpenStreetMap</a
-      > (© colaboradores de OpenStreetMap) y los límites departamentales de geoBoundaries,
-      con licencia CC BY-SA 2.0.
+      >). La cartografía se dibuja mediante geometrías vectoriales locales en
+      SVG, sin cargar teselas ráster ni conectar con servidores externos de
+      mapas.
     </li>
     <li>
       <strong>Los textos</strong> del sitio y de la Biblioteca se pueden citar indicando
@@ -283,12 +286,13 @@ const HISTORIAL_TERMINOS =
 
   <h2>7. Servicios de terceros</h2>
   <p>
-    El sitio usa servicios externos y enlaza a otros: los mapas de
-    OpenStreetMap, el alojamiento en Render y su red de distribución, el envío
-    de correos de las cuentas, los repositorios y las sugerencias en GitHub, y
-    las fuentes de datos. El proyecto no controla su contenido ni sus políticas,
-    y al usarlos se aplican sus propios términos. Qué datos reciben se explica
-    en la política de privacidad.
+    El sitio usa servicios externos y enlaza a otros: el alojamiento en Render
+    y su red de distribución, el envío de correos de las cuentas, los
+    repositorios y las sugerencias en GitHub, y las fuentes de datos. Los mapas
+    se procesan de forma vectorial local sin solicitar teselas externas. El
+    proyecto no controla su contenido ni sus políticas, y al usarlos se aplican
+    sus propios términos. Qué datos reciben se explica en la política de
+    privacidad.
   </p>
 
   <h2>8. Cuentas del equipo</h2>

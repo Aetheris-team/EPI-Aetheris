@@ -72,14 +72,14 @@ test('el pie expone la sección legal en cualquier página', async ({ page }) =>
   ).toHaveAttribute('href', '/contacto');
 });
 
-test('la política de privacidad nombra las transferencias reales a terceros', async ({
+test('la política de privacidad nombra las transferencias reales a terceros y la cartografía local', async ({
   page,
 }) => {
   await page.goto('/legal/privacidad');
   const documento = page.locator('.doc-texto');
-  // Las teselas de OSM son la única transferencia sustantiva al navegar y la
-  // más fácil de omitir al redactar: no hay ningún <script> de terceros que
-  // la delate. Si alguien reescribe la política, esto lo frena.
+  // Render es el receptor técnico de acceso al navegar. Se documenta además que
+  // la cartografía es vectorial local y no se transfieren datos a OpenStreetMap,
+  // y que el sitio no usa cookies.
   await expect(documento).toContainText('OpenStreetMap');
   await expect(documento).toContainText('Render');
   await expect(documento).toContainText('no recibe cookies');
