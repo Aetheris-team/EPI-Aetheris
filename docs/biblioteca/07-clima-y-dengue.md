@@ -414,4 +414,4 @@ Los dos archivos completos, con los parámetros de cada cálculo, las series sem
 | Temporal_extract_PAHO_V1_3.csv | f8eaa7134dd7e4a718df16ec5e2bfdd60bf446732281a1bbf3a1463084af230f |
 | clima_multipais.json | 066f17474daa3fa7e020a8e83b83a54b3826c3a0fc81601eea325b4a49e55d48 |
 
-Los protocolos de los dos análisis se escribieron antes de correr el código. La estructura de los archivos y la decisión de publicarlos están en la [decisión de arquitectura 0023](https://github.com/the-monolith-project/EPI-Aetheris/blob/main/docs/adr/0023-clima-dengue-descriptivo.md).
+Los protocolos de los dos análisis se escribieron antes de correr el código. La estructura de los archivos y la decisión de publicarlos están en la [decisión de arquitectura 0023](https://github.com/aetheris-team/EPI-Aetheris/blob/main/docs/adr/0023-clima-dengue-descriptivo.md).
