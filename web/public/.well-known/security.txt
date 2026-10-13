@@ -10,7 +10,7 @@
 # Expires es obligatorio y un archivo vencido deja de ser válido:
 # renovar esta fecha cada año (recordatorio en /contacto).
 
-Contact: https://github.com/the-monolith-project/EPI-Aetheris/security/advisories/new
+Contact: https://github.com/aetheris-team/EPI-Aetheris/security/advisories/new
 Contact: mailto:epi-aetheris@epi-aetheris.dev
 Expires: 2027-09-20T00:00:00.000Z
 Preferred-Languages: es, en
