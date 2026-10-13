@@ -53,6 +53,7 @@ constancia de dónde salió cada dato reunido en la Fase 0 de ingesta.
   | `tablero-06_20260927T0654Z.har` | 2026, S1–S37 | `79e677e2c59751e732ba85635efcc37bc16d2d883400acd1348d9b1d504926b4` |
   | `tablero-05_20260927T0655Z.har` | 2026, S1–S37 | `b696593a157b225063e11548b653cd6b94b7d3bab6b9c01aa8fa77b08f4d06e3` |
   | `tablero-04_20260927T0656Z.har` | 2026, S1–S37 | `5cabe8dbfd6a7012f0241d021951dce46600dc5f03cf0b525e9849e9c932e3db` |
+  | `tablero-02_20261013T0723Z.har` | 2026, S1–S39 | `bef1e8427b4df9f6886e676c280a66e6169db81ee9871ca41071161bb5607298` |
 
 - **Notas:** los tableros 04, 05 y 06 leen los mismos datos de 2026 aunque
   su rótulo diga otra fecha. Cada captura es una foto del día y MINSAL
