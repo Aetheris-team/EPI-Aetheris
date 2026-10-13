@@ -49,79 +49,60 @@ AVISO_COBERTURA = (
 )
 
 
-def _semanas_por_anio(conn, tipo_codigo: str) -> dict[str, int]:
+def _conteos_notificado(conn) -> dict[str, dict[str, tuple[int, int]]]:
+    """tipo_evento -> anio -> (semanas distintas con dato, filas), para IRA y
+    neumonías de los boletines. Una consulta para los dos eventos en vez de
+    dos por evento: las filas totales son la suma de las filas por año."""
     with conn.cursor() as cur:
         cur.execute(
             """
-            SELECT anio, count(DISTINCT semana_epi)
-            FROM casos_epidemiologicos
-            WHERE clasificacion = 'notificado'
-              AND tipo_evento_id = (SELECT id FROM tipos_evento WHERE codigo = %s)
-              AND fuente_id = (SELECT id FROM fuentes_datos WHERE codigo = 'minsal_pdf')
-            GROUP BY anio
-            ORDER BY anio
-            """,
-            (tipo_codigo,),
+            SELECT t.codigo, c.anio, count(DISTINCT c.semana_epi), count(*)
+            FROM casos_epidemiologicos c
+            JOIN tipos_evento t ON t.id = c.tipo_evento_id
+            WHERE c.clasificacion = 'notificado'
+              AND t.codigo IN ('ira', 'neumonia')
+              AND c.fuente_id = (SELECT id FROM fuentes_datos WHERE codigo = 'minsal_pdf')
+            GROUP BY t.codigo, c.anio
+            """
         )
-        return {str(anio): int(n) for anio, n in cur.fetchall()}
+        filas = cur.fetchall()
+    out: dict[str, dict[str, tuple[int, int]]] = {"ira": {}, "neumonia": {}}
+    for tipo, anio, semanas, n in filas:
+        out[tipo][str(anio)] = (int(semanas), int(n))
+    return out
 
 
-def _filas_evento(conn, tipo_codigo: str) -> int:
+def _conteos_virus(conn) -> dict[str, tuple[int, int]]:
+    """anio -> (semanas distintas con dato, filas) de la vigilancia de virus."""
     with conn.cursor() as cur:
         cur.execute(
             """
-            SELECT count(*)
-            FROM casos_epidemiologicos
-            WHERE clasificacion = 'notificado'
-              AND tipo_evento_id = (SELECT id FROM tipos_evento WHERE codigo = %s)
-              AND fuente_id = (SELECT id FROM fuentes_datos WHERE codigo = 'minsal_pdf')
-            """,
-            (tipo_codigo,),
-        )
-        return int(cur.fetchone()[0])
-
-
-def _virus_por_anio(conn) -> dict[str, int]:
-    with conn.cursor() as cur:
-        cur.execute(
-            """
-            SELECT anio, count(DISTINCT semana_epi)
+            SELECT anio, count(DISTINCT semana_epi), count(*)
             FROM vigilancia_virus_respiratorios
             GROUP BY anio
-            ORDER BY anio
             """
         )
-        return {str(anio): int(n) for anio, n in cur.fetchall()}
+        return {str(anio): (int(semanas), int(n)) for anio, semanas, n in cur.fetchall()}
+
+
+def _bloque(conteos: dict[str, tuple[int, int]], notas: dict) -> dict:
+    return {
+        "filas_cargadas": sum(n for _, n in conteos.values()),
+        "semanas_con_dato_por_anio": {
+            str(a): conteos.get(str(a), (0, 0))[0] for a in ANIOS
+        },
+        "notas": notas,
+    }
 
 
 def cargar_cobertura(conn) -> dict:
-    ira = _semanas_por_anio(conn, "ira")
-    neu = _semanas_por_anio(conn, "neumonia")
-    vir = _virus_por_anio(conn)
+    notificado = _conteos_notificado(conn)
     return {
         "aviso": AVISO_COBERTURA,
         "procedencia": "MINSAL, boletines epidemiológicos PDF 2018-2019 y 2021-2023",
         "anios": ANIOS,
         "semanas_nominales_por_anio": SEMANAS_NOMINALES,
-        "ira": {
-            "filas_cargadas": _filas_evento(conn, "ira"),
-            "semanas_con_dato_por_anio": {str(a): ira.get(str(a), 0) for a in ANIOS},
-            "notas": NOTAS_IRA,
-        },
-        "neumonias": {
-            "filas_cargadas": _filas_evento(conn, "neumonia"),
-            "semanas_con_dato_por_anio": {str(a): neu.get(str(a), 0) for a in ANIOS},
-            "notas": NOTAS_NEUMONIAS,
-        },
-        "virus": {
-            "filas_cargadas": _virus_count(conn),
-            "semanas_con_dato_por_anio": {str(a): vir.get(str(a), 0) for a in ANIOS},
-            "notas": NOTAS_VIRUS,
-        },
+        "ira": _bloque(notificado["ira"], NOTAS_IRA),
+        "neumonias": _bloque(notificado["neumonia"], NOTAS_NEUMONIAS),
+        "virus": _bloque(_conteos_virus(conn), NOTAS_VIRUS),
     }
-
-
-def _virus_count(conn) -> int:
-    with conn.cursor() as cur:
-        cur.execute("SELECT count(*) FROM vigilancia_virus_respiratorios")
-        return int(cur.fetchone()[0])

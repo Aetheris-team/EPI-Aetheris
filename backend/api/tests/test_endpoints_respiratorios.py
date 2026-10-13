@@ -172,3 +172,40 @@ class SerieNacionalTableroTest(unittest.TestCase):
                     self.assertGreaterEqual(s["anio"], 2025)
                     self.assertTrue(1 <= s["semana_epi"] <= 53)
                     self.assertGreaterEqual(s["conteo"], 0)
+
+
+class IraDepartamentalSinFilasTest(unittest.TestCase):
+    """Contra Postgres: un departamento sin ninguna fila de IRA sale con
+    semanas_con_dato=0. Se crea dentro de una transacción que se revierte,
+    así que no deja rastro en la base."""
+
+    def setUp(self):
+        if not _db_disponible():
+            raise unittest.SkipTest("Postgres no disponible")
+
+    def test_departamento_sin_filas_reporta_cero_semanas(self):
+        import psycopg2
+
+        from api.ira import cargar_ira_departamental
+
+        conn = psycopg2.connect(
+            host=os.getenv("POSTGRES_HOST", "localhost"),
+            database=os.getenv("POSTGRES_DB"),
+            user=os.getenv("POSTGRES_USER"),
+            password=os.getenv("POSTGRES_PASSWORD"),
+            port=os.getenv("POSTGRES_PORT", "5432"),
+            connect_timeout=3,
+        )
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "INSERT INTO regiones (codigo, nombre, nivel_admin) "
+                    "VALUES ('ZZ-TEST', 'Prueba sin filas', 1)"
+                )
+            filas = {f["codigo"]: f for f in cargar_ira_departamental(conn)}
+            self.assertEqual(filas["ZZ-TEST"]["semanas_con_dato"], 0)
+            self.assertEqual(filas["ZZ-TEST"]["notificado_total"], 0)
+            self.assertIsNone(filas["ZZ-TEST"]["primer_anio"])
+        finally:
+            conn.rollback()
+            conn.close()

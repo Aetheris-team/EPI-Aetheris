@@ -235,3 +235,53 @@ class CapaConfianzaEnFuenteTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# Las consultas por serie que cargar_ultimas_se hacía antes de juntarlas en
+# una sola. Se conservan aquí como referencia: la consulta única tiene que
+# devolver exactamente la misma (anio, semana_epi) que cada una de ellas.
+_DESDE_CASOS = """
+    FROM casos_epidemiologicos c
+    JOIN regiones r ON r.id = c.region_id
+    JOIN tipos_evento t ON t.id = c.tipo_evento_id
+    JOIN fuentes_datos f ON f.id = c.fuente_id
+"""
+_ORDEN = " ORDER BY anio DESC, semana_epi DESC LIMIT 1"
+_REFERENCIA_ULTIMAS_SE = {
+    "dengue_minsal_departamental": "SELECT c.anio, c.semana_epi" + _DESDE_CASOS
+    + " WHERE r.nivel_admin = 1 AND t.codigo = 'dengue' AND f.codigo = 'minsal_pdf'",
+    "dengue_opendengue_nacional": "SELECT c.anio, c.semana_epi" + _DESDE_CASOS
+    + " WHERE f.codigo = 'opendengue_v1_3'",
+    "dengue_tablero_nacional": "SELECT c.anio, c.semana_epi" + _DESDE_CASOS
+    + " WHERE t.codigo = 'dengue' AND f.codigo = 'minsal_tablero'",
+    "clima": "SELECT anio, semana_epi FROM variables_ambientales",
+    "ira": "SELECT c.anio, c.semana_epi" + _DESDE_CASOS
+    + " WHERE t.codigo = 'ira' AND f.codigo = 'minsal_pdf'",
+    "neumonias": "SELECT c.anio, c.semana_epi" + _DESDE_CASOS
+    + " WHERE t.codigo = 'neumonia' AND f.codigo = 'minsal_pdf'",
+    "ira_tablero_nacional": "SELECT c.anio, c.semana_epi" + _DESDE_CASOS
+    + " WHERE t.codigo = 'ira' AND f.codigo = 'minsal_tablero'",
+    "neumonias_tablero_nacional": "SELECT c.anio, c.semana_epi" + _DESDE_CASOS
+    + " WHERE t.codigo = 'neumonia' AND f.codigo = 'minsal_tablero'",
+    "virus_respiratorios": "SELECT anio, semana_epi FROM vigilancia_virus_respiratorios",
+}
+
+
+class UltimasSeTest(unittest.TestCase):
+    def setUp(self):
+        if not _db_disponible():
+            raise unittest.SkipTest("Postgres no disponible")
+
+    def test_consulta_unica_coincide_con_una_consulta_por_serie(self):
+        conn = _conectar()
+        try:
+            ultimas = cargar_ultimas_se(conn)
+            self.assertEqual(list(ultimas), list(SERIES_ANTIGUEDAD))
+            for serie, sql in _REFERENCIA_ULTIMAS_SE.items():
+                with conn.cursor() as cur:
+                    cur.execute(sql + _ORDEN)
+                    fila = cur.fetchone()
+                esperado = None if fila is None else (int(fila[0]), int(fila[1]))
+                self.assertEqual(ultimas[serie], esperado, serie)
+        finally:
+            conn.close()

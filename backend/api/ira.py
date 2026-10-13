@@ -32,7 +32,11 @@ AVISO_HONESTIDAD_IRA = (
 def cargar_ira_departamental(conn) -> list[dict]:
     """Resumen por departamento: total notificado, semanas con dato, rango
     de años. Mismo patrón que /api/casos-departamentales (main.py) pero
-    filtrando clasificacion='notificado' en vez de probable/confirmado."""
+    filtrando clasificacion='notificado' en vez de probable/confirmado.
+
+    count(c.id) y no count(*): el LEFT JOIN sin coincidencias deja una
+    fila con c.* = NULL, y count(*) la cuenta como una semana con dato
+    (fila fantasma, issue #84; misma corrección que neumonias.py)."""
     with conn.cursor() as cur:
         cur.execute(
             """
@@ -40,7 +44,7 @@ def cargar_ira_departamental(conn) -> list[dict]:
                 r.nombre,
                 r.codigo,
                 sum(c.conteo) AS notificado_total,
-                count(*) AS semanas_con_dato,
+                count(c.id) AS semanas_con_dato,
                 min(c.anio) AS primer_anio,
                 max(c.anio) AS ultimo_anio
             FROM regiones r
@@ -68,10 +72,13 @@ def cargar_ira_departamental(conn) -> list[dict]:
     ]
 
 
-def cargar_ira_departamento_temporal(conn, codigo: str) -> dict[int, dict[int, float]] | None:
-    """anio -> semana -> conteo, para un departamento. None si el código no
-    existe en `regiones`. Dict vacío (no None) si el departamento existe
-    pero no tiene ninguna fila IRA."""
+def cargar_ira_departamento_temporal(
+    conn, codigo: str
+) -> tuple[str, dict[int, dict[int, float]]] | None:
+    """(nombre del departamento, anio -> semana -> conteo). None si el
+    código no existe en `regiones`. Dict vacío (no None) si el departamento
+    existe pero no tiene ninguna fila IRA. El nombre sale de la misma
+    consulta que resuelve el código, así el endpoint no vuelve a pedirlo."""
     with conn.cursor() as cur:
         cur.execute(
             "SELECT id, nombre FROM regiones WHERE nivel_admin = 1 AND codigo = %s",
@@ -80,7 +87,7 @@ def cargar_ira_departamento_temporal(conn, codigo: str) -> dict[int, dict[int, f
         fila_region = cur.fetchone()
         if fila_region is None:
             return None
-        region_id, _nombre = fila_region
+        region_id, nombre = fila_region
 
         cur.execute(
             """
@@ -97,4 +104,4 @@ def cargar_ira_departamento_temporal(conn, codigo: str) -> dict[int, dict[int, f
     serie: dict[int, dict[int, float]] = defaultdict(dict)
     for anio, semana, conteo in filas:
         serie[anio][semana] = float(conteo)
-    return dict(serie)
+    return nombre, dict(serie)
