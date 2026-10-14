@@ -6,8 +6,10 @@ import threading
 from contextlib import contextmanager
 from datetime import date
 from pathlib import Path
+from typing import NoReturn
 
 import joblib
+import psycopg2
 from fastapi import FastAPI, Header, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
@@ -388,6 +390,40 @@ def _es_fallo_conexion(exc: BaseException) -> bool:
     return isinstance(exc, (OperationalError, InterfaceError, TimeoutError))
 
 
+_registro_consultas = logging.getLogger("uvicorn.error")
+
+
+def _fallo_base_datos(exc: BaseException) -> NoReturn:
+    """Registra la causa y responde 503 (conexión) o 500 (resto).
+
+    Al cliente nunca se le devuelve la causa. En el registro, mismo criterio
+    que /health: un error de Python (KeyError, TypeError...) va con su traza
+    completa, porque es un fallo del código de la consulta y sin ella no se
+    puede depurar; un error que reporta el servidor (con SQLSTATE) o un
+    OperationalError, con la primera línea de su mensaje; cualquier otro error
+    de psycopg2 (un DSN mal formado, por ejemplo), solo con el nombre de su
+    clase, porque su mensaje puede repetir la URL con la clave.
+    """
+    if not isinstance(exc, (psycopg2.Error, TimeoutError)):
+        _registro_consultas.error(
+            "consulta: error inesperado (%s)", type(exc).__name__, exc_info=exc
+        )
+    else:
+        mensaje = str(exc).strip()
+        con_mensaje = mensaje and (
+            getattr(exc, "pgcode", None) or isinstance(exc, (OperationalError, TimeoutError))
+        )
+        _registro_consultas.error(
+            "consulta: fallo la base de datos (%s)%s",
+            type(exc).__name__,
+            f": {mensaje.splitlines()[0]}" if con_mensaje else "",
+        )
+    raise HTTPException(
+        status_code=503 if _es_fallo_conexion(exc) else 500,
+        detail="Error de conexión a la base de datos",
+    ) from exc
+
+
 def _respuesta_no_disponible(response: Response, motivo: str, aviso: str) -> dict:
     _cache_control(response, CACHE_TTL_HISTORICO)
     return {"disponible": False, "motivo": motivo, "aviso": aviso}
@@ -399,11 +435,7 @@ def _degradar_consulta(
     """UndefinedTable → 200 disponible=false. Conexión → 503. Resto → 500."""
     if _es_tabla_ausente(exc):
         return _respuesta_no_disponible(response, motivo, aviso)
-    status = 503 if _es_fallo_conexion(exc) else 500
-    raise HTTPException(
-        status_code=status,
-        detail="Error de conexión a la base de datos",
-    )
+    _fallo_base_datos(exc)
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
@@ -520,11 +552,8 @@ def casos_nacional(response: Response):
                     """
                 )
                 filas = cursor.fetchall()
-    except Exception:
-        raise HTTPException(
-            status_code=500,
-            detail="Error de conexión a la base de datos"
-        )
+    except Exception as exc:
+        _fallo_base_datos(exc)
 
     return _cachear(clave, CACHE_TTL_HISTORICO, [
         {
@@ -818,11 +847,8 @@ def casos_departamentales(request: Request, response: Response):
                     """
                 )
                 filas = cursor.fetchall()
-    except Exception:
-        raise HTTPException(
-            status_code=500,
-            detail="Error de conexión a la base de datos"
-        )
+    except Exception as exc:
+        _fallo_base_datos(exc)
 
     return _cachear(clave, CACHE_TTL_HISTORICO, {
         "departamentos": [
@@ -893,8 +919,8 @@ def idoneidad_espacial_actual(request: Request, response: Response, week: int, y
                 cursor.execute("SELECT codigo, nombre FROM regiones WHERE nivel_admin = 1 ORDER BY nombre")
                 departamentos = cursor.fetchall()
             clima = cargar_clima_departamentos(conn, anios=ANIOS_CLIMA, semanas=semanas_necesarias)
-    except Exception:
-        raise HTTPException(status_code=500, detail="Error de conexión a la base de datos")
+    except Exception as exc:
+        _fallo_base_datos(exc)
 
     serie_iv = calcular_serie_iv(clima)
 
@@ -968,8 +994,8 @@ def dataset_analitico_dengue(request: Request, response: Response, year: int):
     try:
         with _conexion() as conn:
             respuesta = construir_dataset_dengue(conn, anio=year)
-    except Exception:
-        raise HTTPException(status_code=500, detail="Error de conexión a la base de datos")
+    except Exception as exc:
+        _fallo_base_datos(exc)
 
     respuesta["avisos"] = {
         "idoneidad": AVISO_HONESTIDAD_IDONEIDAD,
@@ -1008,8 +1034,8 @@ def procedencia_analitica_dengue(request: Request, response: Response, year: int
                 departamento_codigo=dept,
                 serie=serie,
             )
-    except Exception:
-        raise HTTPException(status_code=500, detail="Error de conexión a la base de datos")
+    except Exception as exc:
+        _fallo_base_datos(exc)
 
     if respuesta is None:
         raise HTTPException(
@@ -1051,8 +1077,8 @@ def presion_espacial_actual(request: Request, response: Response, week: int, yea
                 cursor.execute("SELECT codigo, nombre FROM regiones WHERE nivel_admin = 1 ORDER BY nombre")
                 departamentos = cursor.fetchall()
             casos = cargar_casos_departamentales(conn, anios=anios_necesarios, semanas=semanas_necesarias)
-    except Exception:
-        raise HTTPException(status_code=500, detail="Error de conexión a la base de datos")
+    except Exception as exc:
+        _fallo_base_datos(exc)
 
     resultado = []
     for codigo, nombre in departamentos:
@@ -1097,8 +1123,8 @@ def presion_temporal_departamento(departamento_id: str, anio: int, response: Res
             casos_depto = cargar_casos_departamento(conn, codigo=departamento_id, anios=anios_necesarios)
     except HTTPException:
         raise
-    except Exception:
-        raise HTTPException(status_code=500, detail="Error de conexión a la base de datos")
+    except Exception as exc:
+        _fallo_base_datos(exc)
 
     codigo, nombre = fila_region
 
@@ -1158,8 +1184,8 @@ def idoneidad_temporal_departamento(departamento_id: str, anio: int, response: R
             clima_depto = cargar_clima_departamento(conn, codigo=departamento_id, anios=ANIOS_CLIMA)
     except HTTPException:
         raise
-    except Exception:
-        raise HTTPException(status_code=500, detail="Error de conexión a la base de datos")
+    except Exception as exc:
+        _fallo_base_datos(exc)
 
     codigo, nombre = fila_region
 
@@ -1224,8 +1250,8 @@ def ira_departamental(request: Request, response: Response):
     try:
         with _conexion() as conn:
             departamentos = cargar_ira_departamental(conn)
-    except Exception:
-        raise HTTPException(status_code=500, detail="Error de conexión a la base de datos")
+    except Exception as exc:
+        _fallo_base_datos(exc)
 
     return _cachear(clave, CACHE_TTL_HISTORICO, {
         "departamentos": departamentos,
@@ -1247,8 +1273,8 @@ def ira_temporal_departamento(departamento_id: str, response: Response):
     try:
         with _conexion() as conn:
             resultado = cargar_ira_departamento_temporal(conn, codigo=departamento_id)
-    except Exception:
-        raise HTTPException(status_code=500, detail="Error de conexión a la base de datos")
+    except Exception as exc:
+        _fallo_base_datos(exc)
     if resultado is None:
         raise HTTPException(
             status_code=404,
@@ -1523,8 +1549,8 @@ def vigilancia_integridad(
     try:
         with _conexion() as conn:
             cuerpo = construir_integridad(conn, week=week, year=year)
-    except Exception:
-        raise HTTPException(status_code=500, detail="Error de conexión a la base de datos")
+    except Exception as exc:
+        _fallo_base_datos(exc)
 
     return _cachear(clave, CACHE_TTL_COMPUTO, cuerpo)
 
@@ -1560,14 +1586,6 @@ def _autorizar_escritura_alertas(authorization: str | None) -> None:
     if error is not None:
         codigo, detalle = error
         raise HTTPException(status_code=codigo, detail=detalle)
-
-
-def _alertas_http_error(exc: BaseException) -> None:
-    status = 503 if _es_fallo_conexion(exc) else 500
-    raise HTTPException(
-        status_code=status,
-        detail="Error de conexión a la base de datos",
-    )
 
 
 @app.get("/api/alertas")
@@ -1611,7 +1629,7 @@ def alertas_publicas(
         # Contrato propio ({aviso, ultima_revision, alertas}); no se degrada
         # a {disponible:false} como los endpoints respiratorios. Solo se
         # distingue fallo de conexión (503) del resto (500).
-        _alertas_http_error(exc)
+        _fallo_base_datos(exc)
 
     _cache_control(response, CACHE_TTL_ALERTAS)
     return cuerpo
@@ -1624,7 +1642,7 @@ def alertas_feed(request: Request):
         with _conexion() as conn:
             cuerpo = consultar_alertas_publicas(conn)
     except Exception as exc:
-        _alertas_http_error(exc)
+        _fallo_base_datos(exc)
 
     sitio = os.environ.get("SITIO_PUBLICO", "https://epi-aetheris.dev")
     xml = construir_feed_atom(
@@ -1658,7 +1676,7 @@ def alertas_crear(
     except HTTPException:
         raise
     except Exception as exc:
-        _alertas_http_error(exc)
+        _fallo_base_datos(exc)
     return creada
 
 
@@ -1691,7 +1709,7 @@ def alertas_parchear(
     except HTTPException:
         raise
     except Exception as exc:
-        _alertas_http_error(exc)
+        _fallo_base_datos(exc)
     return actualizada
 
 
