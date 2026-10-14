@@ -60,6 +60,7 @@ from .tablero import (
     cargar_serie_tablero_nacional,
 )
 from .cache_respuestas import CACHE as CACHE_RESPUESTAS, serializar_json
+from .claves_api import ClaveApiMiddleware, clave_actual, parsear_claves
 from .cobertura import AVISO_COBERTURA, cargar_cobertura
 from .conexion_db import parametros_conexion
 from .vigilancia import construir_integridad
@@ -175,9 +176,27 @@ RATE_LIMIT_AUTH = os.getenv("RATE_LIMIT_AUTH", "10/minute")
 # "true": el despliegue actual no tiene las claves ni el correo que necesitan.
 CUENTAS_HABILITADAS = os.getenv("CUENTAS_HABILITADAS", "false").lower() == "true"
 
+# Claves de API (ADR 0025): quien manda X-API-Key válida usa estos umbrales en
+# lugar de RATE_LIMIT_DEFAULT y RATE_LIMIT_HEAVY. La key_func sigue siendo la
+# IP: el contador de `limits` lleva el umbral en su llave, así que las
+# peticiones con clave cuentan aparte de las anónimas de la misma IP. Escritura
+# de alertas y cuentas conservan su umbral, con o sin clave.
+API_CLAVES = parsear_claves(os.getenv("API_CLAVES"))
+RATE_LIMIT_CLAVE_DEFAULT = os.getenv("RATE_LIMIT_CLAVE_DEFAULT", "1200/minute")
+RATE_LIMIT_CLAVE_HEAVY = os.getenv("RATE_LIMIT_CLAVE_HEAVY", "300/minute")
+
+
+def _limite_global() -> str:
+    return RATE_LIMIT_CLAVE_DEFAULT if clave_actual.get() else RATE_LIMIT_DEFAULT
+
+
+def _limite_pesado() -> str:
+    return RATE_LIMIT_CLAVE_HEAVY if clave_actual.get() else RATE_LIMIT_HEAVY
+
+
 limiter = Limiter(
     key_func=_client_ip,
-    default_limits=[RATE_LIMIT_DEFAULT],
+    default_limits=[_limite_global],
     enabled=RATE_LIMIT_ENABLED,
 )
 app.state.limiter = limiter
@@ -187,6 +206,9 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 # Access-Control-Allow-Origin y el frontend Astro ve un 429 legible en vez de
 # un error de red opaco.
 app.add_middleware(SlowAPIMiddleware)
+# Por fuera de SlowAPIMiddleware (fija la clave antes de que se resuelvan los
+# límites) y por dentro de CORS (el 401 de clave inválida lleva sus cabeceras).
+app.add_middleware(ClaveApiMiddleware, claves=API_CLAVES)
 
 # El frontend Astro corre en un origen distinto (puerto 4321) al de esta API
 # (puerto 8000) tanto en desarrollo local como dentro de docker-compose.
@@ -579,7 +601,7 @@ def _cargar_dataset_riesgo():
 
 
 @app.get("/api/riesgo-nacional")
-@limiter.limit(RATE_LIMIT_HEAVY)
+@limiter.limit(_limite_pesado)
 def riesgo_nacional(
     request: Request,
     response: Response,
@@ -677,7 +699,7 @@ AVISO_HONESTIDAD_NOWCAST_DENGUE = (
 
 
 @app.get("/api/nowcast-dengue")
-@limiter.limit(RATE_LIMIT_HEAVY)
+@limiter.limit(_limite_pesado)
 def nowcast_dengue(request: Request, response: Response):
     """Artefacto de prediccion de horizonte corto de dengue, precomputado por
     backend/ingestion/nowcast_tablero_dengue.py sobre la base de
@@ -700,7 +722,7 @@ NOWCAST_DENGUE_RETRO_PATH = NOWCAST_DENGUE_PATH.with_name("nowcast_dengue_retros
 
 
 @app.get("/api/nowcast-dengue/retrospectivo")
-@limiter.limit(RATE_LIMIT_HEAVY)
+@limiter.limit(_limite_pesado)
 def nowcast_dengue_retrospectivo(request: Request, response: Response):
     """Abanico h=1..8 que el modelo habria dado desde cada semana de la serie,
     con los datos disponibles hasta esa semana, para contrastarlo con lo
@@ -742,7 +764,7 @@ def _servir_clima_dengue(response: Response, ruta: Path, motivo: str) -> dict | 
 
 
 @app.get("/api/clima-dengue/por-anio")
-@limiter.limit(RATE_LIMIT_HEAVY)
+@limiter.limit(_limite_pesado)
 def clima_dengue_por_anio(request: Request, response: Response):
     """Clima y dengue de El Salvador año por año (2014-2019 y 2021-2023):
     aporte del clima al pronóstico (A1), ciclo medio y desfase (A2), correlación
@@ -757,7 +779,7 @@ def clima_dengue_por_anio(request: Request, response: Response):
 
 
 @app.get("/api/clima-dengue/multipais")
-@limiter.limit(RATE_LIMIT_HEAVY)
+@limiter.limit(_limite_pesado)
 def clima_dengue_multipais(request: Request, response: Response):
     """El Salvador frente a 18 países de las Américas (OpenDengue/OPS, 2014-2024):
     perfil de cada país (P1), señal regional y posición de El Salvador (P2),
@@ -779,7 +801,7 @@ AVISO_HONESTIDAD_CASOS_DEPARTAMENTALES = (
 
 
 @app.get("/api/casos-departamentales")
-@limiter.limit(RATE_LIMIT_HEAVY)
+@limiter.limit(_limite_pesado)
 def casos_departamentales(request: Request, response: Response):
     """Capa descriptiva del mapa (tarjeta 25) -- casos MINSAL desacumulados
     (tarjeta 22) sumados por departamento en toda la ventana cargada
@@ -865,7 +887,7 @@ AVISO_HONESTIDAD_IDONEIDAD = (
 
 
 @app.get("/api/v1/spatial/current")
-@limiter.limit(RATE_LIMIT_HEAVY)
+@limiter.limit(_limite_pesado)
 def idoneidad_espacial_actual(request: Request, response: Response, week: int, year: int):
     """Índice de idoneidad biofísica (Iv) y anomalía climática continua
     (anomaly_sigma), por departamento, para la semana epidemiológica y año
@@ -947,7 +969,7 @@ AVISO_HONESTIDAD_PRESION = (
 
 
 @app.get("/api/v1/analisis/dengue")
-@limiter.limit(RATE_LIMIT_HEAVY)
+@limiter.limit(_limite_pesado)
 def dataset_analitico_dengue(request: Request, response: Response, year: int):
     """Dataset anual compartido para exploracion descriptiva de dengue.
 
@@ -979,7 +1001,7 @@ def dataset_analitico_dengue(request: Request, response: Response, year: int):
 
 
 @app.get("/api/v1/analisis/dengue/procedencia")
-@limiter.limit(RATE_LIMIT_HEAVY)
+@limiter.limit(_limite_pesado)
 def procedencia_analitica_dengue(request: Request, response: Response, year: int, week: int, dept: str, serie: str):
     """Trazabilidad almacenada de una observacion departamental de dengue."""
     if year not in ANIOS_ANALISIS_DENGUE:
@@ -1021,7 +1043,7 @@ def procedencia_analitica_dengue(request: Request, response: Response, year: int
 
 
 @app.get("/api/v1/presion/current")
-@limiter.limit(RATE_LIMIT_HEAVY)
+@limiter.limit(_limite_pesado)
 def presion_espacial_actual(request: Request, response: Response, week: int, year: int):
     """Presión epidemiológica relativa (Módulo 3) por departamento, para la
     semana epidemiológica y año pedidos, en dos series separadas
@@ -1205,7 +1227,7 @@ def idoneidad_temporal_departamento(departamento_id: str, anio: int, response: R
 
 
 @app.get("/api/ira/departamental")
-@limiter.limit(RATE_LIMIT_HEAVY)
+@limiter.limit(_limite_pesado)
 def ira_departamental(request: Request, response: Response):
     """Resumen por departamento del conteo notificado de IRA (total
     acumulado en la ventana cargada, semanas con dato, rango de años) --
@@ -1488,7 +1510,7 @@ def respiratorios_semana(anio: int, semana: int, response: Response):
 
 
 @app.get("/api/v1/vigilancia/integridad")
-@limiter.limit(RATE_LIMIT_HEAVY)
+@limiter.limit(_limite_pesado)
 def vigilancia_integridad(
     request: Request,
     response: Response,

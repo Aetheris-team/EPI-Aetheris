@@ -98,6 +98,10 @@ services:
       # se versiona un valor. Sin él, POST/PATCH responden 503.
       - key: ALERTAS_TOKEN
         sync: false
+      # Claves de API con límites más altos (ADR 0025): nombre:sha256hex, la
+      # huella y no la clave. Se pone en el panel; no se versiona.
+      - key: API_CLAVES
+        sync: false
       # Cuentas de usuario (ADR 0024), activas desde 2026-10-04. Los secretos
       # los pone una persona en el panel de Render; ninguno se versiona.
       - key: CUENTAS_HABILITADAS

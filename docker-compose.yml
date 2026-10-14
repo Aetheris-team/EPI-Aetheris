@@ -59,6 +59,10 @@ services:
       RATE_LIMIT_HEAVY: ${RATE_LIMIT_HEAVY:-30/minute}
       RATE_LIMIT_WRITE: ${RATE_LIMIT_WRITE:-10/minute}
       RATE_LIMIT_AUTH: ${RATE_LIMIT_AUTH:-10/minute}
+      # Claves de API con límites más altos (ADR 0025): vacía = sin claves.
+      API_CLAVES: ${API_CLAVES:-}
+      RATE_LIMIT_CLAVE_DEFAULT: ${RATE_LIMIT_CLAVE_DEFAULT:-1200/minute}
+      RATE_LIMIT_CLAVE_HEAVY: ${RATE_LIMIT_CLAVE_HEAVY:-300/minute}
       # Cuentas de usuario (ADR 0024): apagadas por defecto.
       CUENTAS_HABILITADAS: ${CUENTAS_HABILITADAS:-false}
       AUTH_ORIGEN_CANONICO: ${AUTH_ORIGEN_CANONICO:-http://localhost:4321}

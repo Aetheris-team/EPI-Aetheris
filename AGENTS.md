@@ -293,6 +293,7 @@ Cuando una tarea toque autenticación, middleware, CORS, cabeceras HTTP, secreto
 * utiliza `.env.example` únicamente como referencia de variables;
 * nunca copies credenciales reales a código, documentación, tests o commits.
 * `POST`/`PATCH /api/alertas` llevan umbral propio `RATE_LIMIT_WRITE` (default `10/minute`); `SecurityHeadersMiddleware` incluye `Referrer-Policy` y `Permissions-Policy`; CORS `allow_headers` es lista explícita (`Authorization`, `Content-Type`), no `*`. No reordenes los middleware.
+* Claves de API (ADR 0025, propuesto): `X-API-Key` válida contra `API_CLAVES` (huellas SHA-256, nunca la clave) cambia `RATE_LIMIT_DEFAULT`/`HEAVY` por `RATE_LIMIT_CLAVE_DEFAULT`/`HEAVY`; escritura y cuentas no cambian. Clave desconocida → 401. `X-API-Key` no va en `allow_headers`: es para scripts, no para el navegador.
 * Excepción acotada (ADR 0024): con `CUENTAS_HABILITADAS=true`, CORS admite credenciales solo para el origen canónico y `allow_headers` suma `X-CSRF-Token`. La CSP propia para las rutas privadas y el orden de los middleware de sesión y CSRF se documentan al activar las cuentas.
 
 ---
