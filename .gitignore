@@ -31,7 +31,7 @@ pgdata/
 # ingesta. El dato crudo no se trackea; el código de descarga/parsing sí.
 # Excepción deliberada a esta regla: backend/ingestion/geo/slv-adm1-source.geojson
 # SÍ se trackea (es dato descargado, pero pequeño, estático, y necesario para que
-# el build del mapa no dependa de red — ver CLAUDE.md y docs/adr/0002-*.md).
+# el build del mapa no dependa de red — ver AGENTS.md y docs/adr/0002-*.md).
 backend/ingestion/data/raw/
 
 # Salida intermedia del parser MINSAL (tabla cruda por boletín, previa a

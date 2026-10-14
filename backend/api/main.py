@@ -629,11 +629,11 @@ def riesgo_nacional(
     filas = _cargar_dataset_riesgo()
     modelo_paquete = _cargar_modelo() if filas is not None else None
     if filas is None or modelo_paquete is None:
-        # Los artefactos derivados (dataset_modelado.csv + joblib) estan en
-        # .gitignore y no se generan en el build de Render, asi que faltan en
-        # produccion (issue #72). No es un error del servidor: se responde
-        # 200 con disponible=false y el frontend muestra un aviso explicito,
-        # mismo patron que /ira cuando falta su extracto exploratorio.
+        # Los artefactos derivados (dataset_modelado.csv + joblib) se
+        # versionan desde el issue #72 (excepcion en .gitignore), asi que
+        # llegan a la imagen de Render. Esta rama cubre un checkout o una
+        # imagen sin ellos. No es un error del servidor: se responde 200 con
+        # disponible=false y el frontend muestra un aviso explicito.
         _cache_control(response, CACHE_TTL_COMPUTO)
         return {
             "disponible": False,
