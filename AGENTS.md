@@ -430,6 +430,7 @@ En este repositorio `docs/` contiene sólo lo esencial:
 docs/
 ├── adr/                    # decisiones arquitectónicas formales
 ├── biblioteca/             # documentos públicos de /biblioteca (colección de Astro; no mover)
+├── experimentos/           # experimentos firmados que respaldan un ADR aceptado (ver abajo)
 ├── seguridad/              # procedimiento de respuesta a incidentes (excepción del ADR 0024)
 └── despliegue-render.md    # procedimiento de despliegue (referenciado por render.yaml)
 ```
@@ -441,7 +442,9 @@ Cuando surja conocimiento nuevo:
 * historial de cambios → los mensajes de commit (no hay CHANGELOG);
 * protocolos y resultados de experimentos, notas de sesión, planes → no se versionan.
 
-No crees carpetas de documentación nuevas fuera de `docs/adr/`, `docs/biblioteca/` y `docs/seguridad/`. Esta última, por el ADR 0024, contiene solo el procedimiento de respuesta a incidentes.
+Excepción acotada: `docs/experimentos/` guarda **solo** experimentos firmados (protocolo fechado y resultado) que respaldan un ADR aceptado y que ese ADR o el código citan, como la mezcla C del nowcast (ADR 0020, ADR 0021). Un experimento exploratorio, uno sin firmar o uno que ningún ADR usa sigue sin versionarse.
+
+No crees carpetas de documentación nuevas fuera de `docs/adr/`, `docs/biblioteca/`, `docs/experimentos/` y `docs/seguridad/`. Esta última, por el ADR 0024, contiene solo el procedimiento de respuesta a incidentes.
 
 ---
 
