@@ -2,15 +2,14 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Instalar dependencias mínimas del sistema operativo
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    libpq-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copiar e instalar dependencias de Python
-COPY requirements.txt .
-RUN pip install --no-cache-dir --require-hashes -r requirements.txt
+# Dependencias de Python. Todas se instalan desde wheels (--only-binary): no
+# hace falta compilador ni libpq-dev, psycopg2-binary trae su libpq. Esta
+# imagen es la de desarrollo y la que corre la ingesta de forma reproducible
+# (docker compose run backend python ingestion/...), así que lleva también
+# requirements-ingesta.txt; la de Render (Dockerfile.render) no (ADR 0025).
+COPY requirements.txt requirements-ingesta.txt ./
+RUN pip install --no-cache-dir --require-hashes --only-binary=:all: \
+    -r requirements.txt -r requirements-ingesta.txt
 
 # Copiar el código del backend
 COPY . .

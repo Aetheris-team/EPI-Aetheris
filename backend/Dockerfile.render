@@ -7,13 +7,13 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    libpq-dev \
-    && rm -rf /var/lib/apt/lists/*
-
+# Solo las dependencias de la API (ADR 0025): ni las de la ingesta ni las de
+# los tests. Todas se instalan desde wheels (--only-binary), así que la imagen
+# no lleva compilador ni libpq-dev; psycopg2-binary trae su libpq. Si una
+# versión nueva deja de publicar wheel, el build falla aquí en vez de
+# compilarla en silencio.
 COPY backend/requirements.txt .
-RUN pip install --no-cache-dir --require-hashes -r requirements.txt
+RUN pip install --no-cache-dir --require-hashes --only-binary=:all: -r requirements.txt
 
 COPY backend/ .
 COPY db/aplicar_migraciones.py db/aplicar_migraciones.py

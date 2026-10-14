@@ -1,10 +1,15 @@
-# Dependencias directas de producción. requirements.txt se genera desde aquí,
-# con todas las transitivas fijadas y un hash por archivo, y se instala con
-# pip install --require-hashes. Para cambiar una versión, editar este archivo y
-# regenerar (Python 3.11 en Linux x86_64, como la imagen y el CI):
+# Dependencias directas de la API (y del runner de migraciones, que corre en
+# la misma imagen). La ingesta tiene las suyas en requirements-ingesta.in y
+# los tests en requirements-dev.in (ADR 0025). requirements.txt se genera
+# desde aquí, con todas las transitivas fijadas y un hash por archivo, y se
+# instala con pip install --require-hashes. Para cambiar una versión, editar
+# el .in y regenerar los tres, en este orden (Python 3.11 en Linux x86_64,
+# como la imagen y el CI):
 #   cd backend
 #   uv pip compile --generate-hashes --strip-extras --python-version 3.11 \
 #       --python-platform x86_64-unknown-linux-gnu -o requirements.txt requirements.in
+#   uv pip compile --generate-hashes --strip-extras --python-version 3.11 \
+#       --python-platform x86_64-unknown-linux-gnu -o requirements-ingesta.txt requirements-ingesta.in
 #   uv pip compile --generate-hashes --strip-extras --python-version 3.11 \
 #       --python-platform x86_64-unknown-linux-gnu -o requirements-dev.txt requirements-dev.in
 # pip-compile de pip-tools produce el mismo formato y también sirve.
@@ -16,11 +21,7 @@ uvicorn[standard]==0.30.1
 psycopg2-binary==2.9.9
 pydantic==2.13.5
 python-dotenv==1.2.4
-pdfplumber==0.11.10
 epiweeks==2.4.0
-requests==2.34.2
-scikit-learn==1.5.1
-joblib==1.6.0
 
 # Cuentas de usuario (ADR 0024)
 argon2-cffi==25.1.0

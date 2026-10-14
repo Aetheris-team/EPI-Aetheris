@@ -1,7 +1,9 @@
-# Dependencias de desarrollo, no entran a la imagen de producción. Se compila
-# contra requirements.txt (-c) para que no pueda mover ninguna versión de
-# producción. Ver las instrucciones en requirements.in.
+# Dependencias de desarrollo, no entran a la imagen de producción. La suite
+# importa módulos de la ingesta, así que se instala junto con
+# requirements-ingesta.txt. Se compila contra los dos (-c) para que no pueda
+# mover ninguna de sus versiones. Ver las instrucciones en requirements.in.
 -c requirements.txt
+-c requirements-ingesta.txt
 
 pytest==9.1.1
 shapely==2.0.4

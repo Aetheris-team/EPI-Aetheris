@@ -1,4 +1,3 @@
-import csv
 import json
 import logging
 import os
@@ -8,7 +7,6 @@ from datetime import date
 from pathlib import Path
 from typing import NoReturn
 
-import joblib
 import psycopg2
 from fastapi import FastAPI, Header, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -83,16 +81,11 @@ from .alertas import (
     parchear_alerta,
 )
 
-# Artefactos de la tarjeta 23/24 -- generados por
-# backend/ingestion/construir_dataset_modelado.py y entrenar_clasificador.py,
-# leidos aqui via el mismo bind mount de ./backend (docker-compose.yml). No
-# hay tabla de predicciones en el esquema (punto G de las decisiones
-# abiertas, sin resolver) -- esta es la opcion "on-demand": recalcula desde
-# el dataset ya generado en vez de persistir nada nuevo en Postgres.
-INGESTION_DIR = Path(__file__).parent.parent / "ingestion"
-DATASET_RIESGO_PATH = INGESTION_DIR / "data" / "interim" / "dataset_modelado" / "dataset_modelado.csv"
-MODELO_PATH = INGESTION_DIR / "data" / "interim" / "modelo" / "clasificador_riesgo_nacional_v1.joblib"
-METRICAS_MODELO_PATH = INGESTION_DIR / "data" / "interim" / "modelo" / "metricas_modelo.json"
+# Salidas congeladas del clasificador retirado (ADR 0025), generadas por
+# backend/ingestion/congelar_clasificador.py a partir del modelo y el dataset
+# versionados en ingestion/data/interim/. La API ya no carga el modelo: sin
+# scikit-learn ni joblib en la imagen.
+RIESGO_NACIONAL_PATH = Path(__file__).parent / "datos" / "riesgo_nacional_congelado.json"
 
 AVISO_HONESTIDAD_RIESGO_NACIONAL = (
     "Clasificación entrenada sobre la serie nacional agregada de El Salvador. "
@@ -567,44 +560,24 @@ def casos_nacional(response: Response):
     ])
 
 
-# Artefactos derivados del clasificador historico (dataset CSV + joblib +
-# metricas). La carga es perezosa y se protege con un lock (issue #71): sin
-# el, dos requests concurrentes en cold start leen la cache como None a la
-# vez y ambos deserializan el joblib / parsean el CSV completo de forma
-# redundante -- justo en la rafaga de trafico que el rate limiter busca
-# absorber. Double-checked locking: el chequeo rapido sin lock cubre el
-# caso normal (cache ya poblada), el lock solo se toma en el arranque.
-_artefactos_lock = threading.Lock()
-_modelo_cache = None
-_dataset_riesgo_cache = None
+_riesgo_nacional_lock = threading.Lock()
+_riesgo_nacional_cache = None
 
 
-def _cargar_modelo():
-    """Devuelve el paquete del modelo, o None si el joblib no existe en este
-    despliegue (issue #72) -- el handler traduce None a una respuesta 200
-    explicita en vez de un 503."""
-    global _modelo_cache
-    if _modelo_cache is None:
-        with _artefactos_lock:
-            if _modelo_cache is None:
-                if not MODELO_PATH.exists():
+def _cargar_riesgo_nacional():
+    """Devuelve el artefacto congelado, o None si no existe en este
+    despliegue. Carga perezosa con double-checked locking (issue #71): en
+    cold start dos requests no lo parsean a la vez."""
+    global _riesgo_nacional_cache
+    if _riesgo_nacional_cache is None:
+        with _riesgo_nacional_lock:
+            if _riesgo_nacional_cache is None:
+                if not RIESGO_NACIONAL_PATH.exists():
                     return None
-                _modelo_cache = joblib.load(MODELO_PATH)
-    return _modelo_cache
-
-
-def _cargar_dataset_riesgo():
-    """Devuelve las filas del dataset de modelado, o None si el CSV no
-    existe en este despliegue (issue #72)."""
-    global _dataset_riesgo_cache
-    if _dataset_riesgo_cache is None:
-        with _artefactos_lock:
-            if _dataset_riesgo_cache is None:
-                if not DATASET_RIESGO_PATH.exists():
-                    return None
-                with open(DATASET_RIESGO_PATH, newline="", encoding="utf-8") as f:
-                    _dataset_riesgo_cache = list(csv.DictReader(f))
-    return _dataset_riesgo_cache
+                datos = json.loads(RIESGO_NACIONAL_PATH.read_text(encoding="utf-8"))
+                datos["por_semana"] = {(f["anio"], f["semana_epi"]): f for f in datos["semanas"]}
+                _riesgo_nacional_cache = datos
+    return _riesgo_nacional_cache
 
 
 @app.get("/api/riesgo-nacional")
@@ -615,68 +588,46 @@ def riesgo_nacional(
     anio: int | None = None,
     semana: int | None = None,
 ):
-    """Clasificación de riesgo NACIONAL para una semana epidemiológica dada
-    (tarjetas 23/24/25, primera versión: semana fija, colores planos --
-    selector de semanas viene después). Recalcula on-demand desde el dataset
-    ya generado, no persiste nada nuevo en Postgres (ver comentario junto a
-    DATASET_RIESGO_PATH).
+    """Clasificación de riesgo NACIONAL del clasificador retirado para una
+    semana epidemiológica dada (tarjetas 23/24/25). Sirve las salidas
+    congeladas por congelar_clasificador.py (ADR 0025); el contrato es el
+    mismo que cuando el modelo corría en cada request.
 
     Sin parámetros, devuelve la última semana disponible del dataset (fin
     de 2023, año de prueba de la tarjeta 24) -- el sistema no tiene forma
     de verificar en vivo lo que predice, no hay fuente departamental
     automatizable después de 2023.
     """
-    filas = _cargar_dataset_riesgo()
-    modelo_paquete = _cargar_modelo() if filas is not None else None
-    if filas is None or modelo_paquete is None:
-        # Los artefactos derivados (dataset_modelado.csv + joblib) se
-        # versionan desde el issue #72 (excepcion en .gitignore), asi que
-        # llegan a la imagen de Render. Esta rama cubre un checkout o una
-        # imagen sin ellos. No es un error del servidor: se responde 200 con
-        # disponible=false y el frontend muestra un aviso explicito.
+    artefacto = _cargar_riesgo_nacional()
+    if artefacto is None:
+        # Sin el artefacto (un checkout o una imagen que no lo trae) no es un
+        # error del servidor: se responde 200 con disponible=false y el
+        # frontend muestra un aviso explicito.
         _cache_control(response, CACHE_TTL_COMPUTO)
         return {
             "disponible": False,
             "motivo": (
-                "El clasificador nacional historico no esta generado en este "
-                "despliegue (dataset de modelado y/o modelo entrenado ausentes)."
+                "El clasificador nacional historico no esta disponible en este "
+                "despliegue (falta el artefacto congelado del modelo)."
             ),
             "aviso": AVISO_HONESTIDAD_RIESGO_NACIONAL,
         }
 
     if anio is None or semana is None:
-        fila = max(filas, key=lambda r: (int(r["anio"]), int(r["semana_epi"])))
+        fila = max(artefacto["semanas"], key=lambda f: (f["anio"], f["semana_epi"]))
     else:
-        coincidencias = [r for r in filas if int(r["anio"]) == anio and int(r["semana_epi"]) == semana]
-        if not coincidencias:
+        fila = artefacto["por_semana"].get((anio, semana))
+        if fila is None:
             raise HTTPException(
                 status_code=404,
                 detail=f"No hay datos de modelado para año={anio}, semana={semana}.",
             )
-        fila = coincidencias[0]
-
-    modelo = modelo_paquete["modelo"]
-    columnas_feature = modelo_paquete["columnas_feature"]
-    clases = modelo_paquete["clases"]
-
-    X = [[float(fila[c]) for c in columnas_feature]]
-    etiqueta_predicha = modelo.predict(X)[0]
-    probabilidades = dict(zip(modelo.classes_, modelo.predict_proba(X)[0].tolist()))
-
-    metricas_modelo = None
-    if METRICAS_MODELO_PATH.exists():
-        metricas_modelo = json.loads(METRICAS_MODELO_PATH.read_text(encoding="utf-8"))
 
     _cache_control(response, CACHE_TTL_COMPUTO)
     return {
         "disponible": True,
-        "anio": int(fila["anio"]),
-        "semana_epi": int(fila["semana_epi"]),
-        "etiqueta_predicha": etiqueta_predicha,
-        "etiqueta_real": fila["etiqueta_riesgo"],
-        "probabilidades": {clase: round(probabilidades.get(clase, 0.0), 4) for clase in clases},
-        "casos_observados": float(fila["casos"]),
-        "metricas_modelo": metricas_modelo,
+        **fila,
+        "metricas_modelo": artefacto["metricas_modelo"],
         "aviso": AVISO_HONESTIDAD_RIESGO_NACIONAL,
     }
 

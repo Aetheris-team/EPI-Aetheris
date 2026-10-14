@@ -37,13 +37,14 @@ backend/ingestion/data/raw/
 # Salida intermedia del parser MINSAL (tabla cruda por boletín, previa a
 # normalizar) — derivada del dato crudo, misma regla de exclusión.
 #
-# Excepción deliberada (issue #72, opción 1): los 3 artefactos que consume
-# /api/riesgo-nacional en producción SÍ se trackean. Son datos ya procesados
-# (no boletines crudos), pesan ~2.7 MB en conjunto (bajo el precedente ya
-# aceptado del seed de 4.4 MB, ADR 0010), y Render nunca corre el pipeline
-# de ingesta/entrenamiento antes de levantar el backend, así que sin esta
-# excepción el endpoint siempre da 503. Regenerar con:
-# construir_dataset_modelado.py + entrenar_clasificador.py.
+# Excepción deliberada (issue #72, opción 1): los 3 artefactos del
+# clasificador retirado SÍ se trackean. Son datos ya procesados (no boletines
+# crudos), pesan ~2.7 MB en conjunto (bajo el precedente ya aceptado del seed
+# de 4.4 MB, ADR 0010) y son la fuente de
+# backend/api/datos/riesgo_nacional_congelado.json, que es lo que sirve
+# /api/riesgo-nacional (ADR 0025). Regenerar con:
+# construir_dataset_modelado.py + entrenar_clasificador.py, y después
+# congelar_clasificador.py.
 # (La regla del padre usa /* -- excluye cada entrada directa del directorio,
 # no todo el subárbol de una vez -- porque un directorio excluido por completo
 # ("dir/") no se recorre y sus "!" nunca se evalúan. Con /* cada nivel queda
