@@ -4,7 +4,7 @@
   "aprobado": "2026-08-18T08:23:00-06:00",
   "fuente": {
     "seed_relativo": "db/seed/seed_datos_reales.sql",
-    "seed_sha256": "9be39da8f3e7142b712450b1798846f63c533183f20aab747be91fcc58893f36",
+    "seed_sha256": "5178916a181851af99e768fc6ac6250fa4c6be081e8271b8daf8a937b86e6540",
     "casos": {
       "pais": "SV",
       "nivel": "nacional",
