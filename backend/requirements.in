@@ -21,7 +21,6 @@ epiweeks==2.4.0
 requests==2.34.2
 scikit-learn==1.5.1
 joblib==1.6.0
-pytest==9.1.1
 
 # Cuentas de usuario (ADR 0024)
 argon2-cffi==25.1.0

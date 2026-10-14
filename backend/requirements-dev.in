@@ -3,6 +3,7 @@
 # producción. Ver las instrucciones en requirements.in.
 -c requirements.txt
 
+pytest==9.1.1
 shapely==2.0.4
 
 # TestClient de Starlette 1.x usa httpx2 (con httpx avisa de que está en
