@@ -323,7 +323,7 @@ test('el pie expone las cuatro columnas y el aviso de sensibilidad', async ({
   ).toHaveAttribute('href', '/biblioteca/05-sensibilidad-y-honestidad');
   await expect(enlace('Externo', 'GitHub')).toHaveAttribute(
     'href',
-    'https://github.com/the-monolith-project/EPI-Aetheris',
+    'https://github.com/aetheris-team/EPI-Aetheris',
   );
 
   await expect(footer).toContainText(
