@@ -30,7 +30,6 @@ const cachePorAnio = new Map<
   Promise<DatasetAnaliticoDengue>
 >();
 let cacheCasosNacionales: Promise<CasoNacionalSemanal[]> | null = null;
-let cacheIraDepartamental: Promise<RespuestaIraDepartamental> | null = null;
 let cacheIntegridad: Promise<IntegridadVigilancia> | null = null;
 let cacheNowcastDengue: Promise<NowcastDengue> | null = null;
 let cacheAlertasDengue: Promise<AlertaPublica[]> | null = null;
@@ -44,6 +43,10 @@ let cacheClimaDengueMultipais: Promise<
 const cacheProcedencia = new Map<string, Promise<ProcedenciaAnalitica>>();
 const cacheSerieIdoneidad = new Map<string, Promise<SerieTemporalIdoneidad>>();
 const cacheSeriePresion = new Map<string, Promise<SerieTemporalPresion>>();
+const cacheRespiratorioDepartamental = new Map<
+  EventoRespiratorio,
+  Promise<RespuestaIraDepartamental | RespuestaNoDisponible>
+>();
 const cacheRespiratorioNacional = new Map<
   EventoRespiratorio,
   Promise<SerieRespiratoriaNacional | RespuestaNoDisponible>
@@ -187,37 +190,48 @@ export function obtenerIntegridadVigilancia(): Promise<IntegridadVigilancia> {
   return cacheIntegridad;
 }
 
-// Mismo patrón que obtenerCasosNacionales: MapaIRA y CurvaIRADepartamental
-// piden ambos /api/ira/departamental por su cuenta al montarse -- este
-// helper deduplica esa petición (es uno de los endpoints más lentos del
-// backend, ver informe de rendimiento) en una sola promesa compartida.
-export function obtenerIraDepartamental(): Promise<RespuestaIraDepartamental> {
-  if (!cacheIraDepartamental) {
-    cacheIraDepartamental = registrarPeticion(
-      fetch(`${API_BASE}/api/ira/departamental`)
+/** Resumen departamental de IRA o neumonías. En /respiratorio lo muestran
+ *  MapaIRA y CurvaIRADepartamental, y antes cada uno lo pedía por su cuenta:
+ *  dos peticiones idénticas por evento. La promesa se comparte entre los
+ *  dos, así que nadie debe mutar la respuesta (ordenar una copia, no el
+ *  arreglo recibido). Con la tabla vacía o ausente la API responde
+ *  disponible:false y se devuelve tal cual. */
+export function obtenerResumenDepartamentalRespiratorio(
+  evento: EventoRespiratorio,
+): Promise<RespuestaIraDepartamental | RespuestaNoDisponible> {
+  let solicitud = cacheRespiratorioDepartamental.get(evento);
+  if (!solicitud) {
+    solicitud = registrarPeticion(
+      fetch(`${API_BASE}/api/${evento}/departamental`)
         .then(async (respuesta) => {
           if (!respuesta.ok) {
             throw new Error(
-              `No se pudo cargar la serie de IRA (${respuesta.status}).`,
+              `No se pudo cargar el resumen departamental (${respuesta.status}).`,
             );
           }
           const datos: unknown = await respuesta.json();
+          if (esNoDisponible(datos)) {
+            return datos;
+          }
           if (
             !datos ||
             typeof datos !== 'object' ||
             !Array.isArray((datos as { departamentos?: unknown }).departamentos)
           ) {
-            throw new Error('La serie de IRA no tiene el contrato esperado.');
+            throw new Error(
+              'El resumen departamental no tiene el contrato esperado.',
+            );
           }
           return datos as RespuestaIraDepartamental;
         })
         .catch((error) => {
-          cacheIraDepartamental = null;
+          cacheRespiratorioDepartamental.delete(evento);
           throw error;
         }),
     );
+    cacheRespiratorioDepartamental.set(evento, solicitud);
   }
-  return cacheIraDepartamental;
+  return solicitud;
 }
 
 function tieneSemanas(datos: unknown): boolean {

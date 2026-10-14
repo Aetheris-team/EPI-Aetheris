@@ -32,6 +32,6 @@ La **Biblioteca** es esta colección: el relato del proyecto, el catálogo de fu
 
 ## Quién lo construye
 
-El proyecto lo desarrolla el Equipo 4 de 3.er año de Bachillerato Técnico Vocacional en Desarrollo de Software del **INSAMT** (Instituto Nacional de San Miguel Tepezontes, El Salvador), para Expotécnica. Cinco integrantes; tres dedicados de lleno a programación. El repositorio es público: `github.com/the-monolith-project/EPI-Aetheris`.
+El proyecto lo desarrolla el Equipo 4 de 3.er año de Bachillerato Técnico Vocacional en Desarrollo de Software del **INSAMT** (Instituto Nacional de San Miguel Tepezontes, El Salvador), para Expotécnica. Cinco integrantes; tres dedicados de lleno a programación. El repositorio es público: `github.com/aetheris-team/EPI-Aetheris`.
 
 El aporte que el equipo sostiene es de **ingeniería de software**: integración, trazabilidad, despliegue y acceso abierto. La literatura de dengue, clima y aprendizaje automático ya existe; lo que este repositorio publica es un sistema que se clona, se corre y se audita.

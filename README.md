@@ -19,7 +19,7 @@ arquitectura agnóstica al tipo de evento y región.
 ## Clonar
 
 ```bash
-git clone git@github.com:the-monolith-project/EPI-Aetheris.git
+git clone git@github.com:aetheris-team/EPI-Aetheris.git
 cd EPI-Aetheris
 ```
 

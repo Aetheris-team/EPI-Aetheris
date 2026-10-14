@@ -55,7 +55,11 @@ def cargar_neumonias_departamental(conn) -> list[dict]:
     ]
 
 
-def cargar_neumonias_departamento_temporal(conn, codigo: str) -> dict[int, dict[int, float]] | None:
+def cargar_neumonias_departamento_temporal(
+    conn, codigo: str
+) -> tuple[str, dict[int, dict[int, float]]] | None:
+    """(nombre del departamento, anio -> semana -> conteo). None si el
+    código no existe. Mismo contrato que cargar_ira_departamento_temporal."""
     with conn.cursor() as cur:
         cur.execute(
             "SELECT id, nombre FROM regiones WHERE nivel_admin = 1 AND codigo = %s",
@@ -64,7 +68,7 @@ def cargar_neumonias_departamento_temporal(conn, codigo: str) -> dict[int, dict[
         fila_region = cur.fetchone()
         if fila_region is None:
             return None
-        region_id, _nombre = fila_region
+        region_id, nombre = fila_region
         cur.execute(
             """
             SELECT anio, semana_epi, conteo
@@ -79,7 +83,7 @@ def cargar_neumonias_departamento_temporal(conn, codigo: str) -> dict[int, dict[
     serie: dict[int, dict[int, float]] = defaultdict(dict)
     for anio, semana, conteo in filas:
         serie[anio][semana] = float(conteo)
-    return dict(serie)
+    return nombre, dict(serie)
 
 
 def cargar_heatmap_neumonias(conn, anio: int) -> list[dict]:

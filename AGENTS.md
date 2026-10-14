@@ -474,7 +474,7 @@ Nada de M1–M4 se persiste (se calcula on-request, sin cambios de esquema). El 
 Tres servicios Docker (`docker-compose.yml`, red `aetheris_network`):
 
 - **`db`** — PostgreSQL 15. El esquema se carga desde `db/migrations/*.sql` **solo una vez, sobre volumen vacío**. Para una base ya inicializada usa el runner de ADR 0009: `python db/aplicar_migraciones.py --bootstrap` una vez, luego `python db/aplicar_migraciones.py` tras añadir cada migración (corre desde el host contra `localhost:5432`, sin rollback — una migración mala se corrige con otra migración).
-- **`backend`** (`./backend`) — FastAPI + `psycopg2` directo, sin ORM. Entrada: `backend/api/main.py`.
+- **`backend`** (`./backend`) — FastAPI + `psycopg2` directo, sin ORM. Entrada: `backend/api/main.py`. Los GET públicos de solo lectura pasan por un cache en memoria (`backend/api/cache_respuestas.py`) con el mismo TTL de su `Cache-Control`: un dato recién ingerido tarda hasta ese TTL en verse (o reinicia el servicio). No lo uses para alertas, `/health` ni cuentas; los tests lo vacían en `api/tests/conftest.py`.
 - **`web`** (`./web`) — Astro + TypeScript + Leaflet.
 
 ### Valores controlados del esquema — reutiliza verbatim, nunca inventes
