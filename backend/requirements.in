@@ -22,6 +22,9 @@ psycopg2-binary==2.9.13
 pydantic==2.14.1
 python-dotenv==1.2.4
 epiweeks==2.4.0
+# cargar_clima.py corre en la imagen de la API como subproceso del refresco
+# semanal (ADR 0027).
+requests==2.34.2
 
 # Cuentas de usuario (ADR 0024)
 argon2-cffi==25.1.0

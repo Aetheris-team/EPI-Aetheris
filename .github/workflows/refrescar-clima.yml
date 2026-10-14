@@ -1,0 +1,45 @@
+name: Refrescar clima
+
+# Resuelve A2 del ADR 0018 / ADR 0027: cargar_clima.py no se vuelve a
+# correr solo. Este workflow no toca la base de datos directamente -- el
+# Postgres gestionado de Render tiene ipAllowList vacio y no acepta
+# conexiones externas (ADR 0024) -- solo dispara el endpoint interno del
+# backend, que ya tiene su propia conexion privada.
+#
+# Requiere dos secrets del repo (Settings > Secrets > Actions), ninguno
+# versionado:
+#   CLIMA_REFRESCO_URL:   https://<host-backend>/internal/clima/refrescar
+#   CLIMA_REFRESCO_TOKEN: mismo valor que CLIMA_REFRESCO_TOKEN en Render
+
+on:
+  schedule:
+    # Lunes 12:00 UTC. El endpoint solo encola el trabajo (202 inmediato);
+    # cargar_clima.py puede tardar varios minutos por el rate-limit de
+    # Open-Meteo (ver backend/api/clima_refresco.py).
+    - cron: "0 12 * * 1"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  disparar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: POST al endpoint de refresco
+        run: |
+          set -e
+          codigo="$(curl -s -o /tmp/respuesta.json -w '%{http_code}' \
+            -X POST \
+            -H "Authorization: Bearer ${CLIMA_REFRESCO_TOKEN}" \
+            "${CLIMA_REFRESCO_URL}")"
+          echo "HTTP $codigo"
+          cat /tmp/respuesta.json
+          echo
+          if [ "$codigo" != "202" ]; then
+            echo "Esperaba 202, el workflow falla para que quede visible."
+            exit 1
+          fi
+        env:
+          CLIMA_REFRESCO_URL: ${{ secrets.CLIMA_REFRESCO_URL }}
+          CLIMA_REFRESCO_TOKEN: ${{ secrets.CLIMA_REFRESCO_TOKEN }}

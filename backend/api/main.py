@@ -16,6 +16,7 @@ from psycopg2.pool import ThreadedConnectionPool
 
 from .conexion_db import parametros_conexion
 from .rutas import alertas as _rutas_alertas
+from .rutas import clima as _rutas_clima
 from .rutas import dengue as _rutas_dengue
 from .rutas import modulos as _rutas_modulos
 from .rutas import respiratorio as _rutas_respiratorio
@@ -344,6 +345,7 @@ for _router in (
     _rutas_alertas.crear_router(
         limiter=limiter, abrir_conexion=_abrir_conexion, limite_escritura=RATE_LIMIT_WRITE
     ),
+    _rutas_clima.crear_router(limiter=limiter, limite_escritura=RATE_LIMIT_WRITE),
 ):
     app.include_router(_router)
 

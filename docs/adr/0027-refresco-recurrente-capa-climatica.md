@@ -1,4 +1,4 @@
-# 0025 - Refresco recurrente de la capa climática (A2 del ADR 0018)
+# 0027 - Refresco recurrente de la capa climática (A2 del ADR 0018)
 
 **Estado:** Propuesto (2026-10-14)
 

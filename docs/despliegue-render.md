@@ -134,3 +134,28 @@ hotfix), el mismo comando desde el host con las variables del paso 3:
 ```bash
 python db/aplicar_migraciones.py
 ```
+
+## Refresco recurrente de clima (ADR 0027)
+
+`POST /internal/clima/refrescar` dispara `cargar_clima.py` en segundo
+plano contra la base del backend. Lo llama semanalmente
+`.github/workflows/refrescar-clima.yml`; no hay nada en Render que lo
+corra por sí solo.
+
+Variables involucradas:
+
+- `CLIMA_REFRESCO_TOKEN` (env var del backend en Render, no versionada):
+  mismo tratamiento que `ALERTAS_TOKEN` -- un valor random largo puesto a
+  mano en el panel. Sin esta variable el endpoint responde 503.
+- `CLIMA_REFRESCO_URL` y `CLIMA_REFRESCO_TOKEN` (secrets del repo en
+  GitHub, Settings > Secrets > Actions): la URL es
+  `https://<host-backend>/internal/clima/refrescar`; el token debe ser
+  el mismo valor que el de Render.
+
+Para dispararlo a mano sin esperar al cron, usar
+`workflow_dispatch` desde la pestaña Actions del repo, o:
+
+```bash
+curl -X POST -H "Authorization: Bearer $CLIMA_REFRESCO_TOKEN" \
+  "$CLIMA_REFRESCO_URL"
+```

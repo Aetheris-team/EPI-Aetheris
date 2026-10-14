@@ -1,8 +1,9 @@
 """
 Conexion compartida a Postgres para scripts de ingesta.
 
-Mismas variables de entorno que backend/api/main.py (POSTGRES_HOST/DB/USER/
-PASSWORD/PORT) para no introducir una segunda convencion de configuracion.
+Mismas variables de entorno que backend/api/conexion_db.py (DATABASE_URL y, si
+no esta definida, POSTGRES_HOST/DB/USER/PASSWORD/PORT) para no introducir una
+segunda convencion de configuracion.
 """
 
 from __future__ import annotations
@@ -22,6 +23,10 @@ def get_connection() -> psycopg2.extensions.connection:
     if not _env_cargado:
         load_dotenv(_ENV_PATH)
         _env_cargado = True
+
+    url = (os.getenv("DATABASE_URL") or "").strip()
+    if url:
+        return psycopg2.connect(dsn=url)
 
     return psycopg2.connect(
         host=os.getenv("POSTGRES_HOST", "db"),
