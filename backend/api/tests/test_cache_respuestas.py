@@ -20,7 +20,8 @@ sys.path.insert(0, str(BACKEND_DIR))
 
 from api import cache_respuestas  # noqa: E402
 from api.cache_respuestas import CacheRespuestas, serializar_json  # noqa: E402
-from api.main import CACHE_TTL_HISTORICO, app  # noqa: E402
+from api.main import app  # noqa: E402
+from api.respuestas import CACHE_TTL_HISTORICO  # noqa: E402
 
 
 def test_guarda_y_devuelve_el_tiempo_restante():
