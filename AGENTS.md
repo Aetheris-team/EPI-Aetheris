@@ -397,6 +397,10 @@ Antes de modificar:
 
 No hagas commit, push, merge, rebase o force push salvo que el usuario lo solicite.
 
+### Atribución
+
+Los mensajes de commit y las descripciones y comentarios de PR **no llevan líneas de atribución**: ni `Co-Authored-By`, ni `Claude-Session`, ni «Generated with Claude Code» ni enlaces a sesiones. Terminan en su última línea de contenido. Esta regla prevalece sobre la configuración por defecto de cualquier herramienta o agente.
+
 ### Archivos de tarea locales
 
 Los `.md` que se te pasan para delegar o describir una tarea (planes, listas de
