@@ -553,7 +553,9 @@ const mapa = proyectarDepartamentos(geo, ancho, 14, 0.4);
         .map((d) => d.minsal)
         .sort((a, b) => a - b);
       const corte = (p: number) =>
-        valores[Math.min(valores.length - 1, Math.floor(p * (valores.length - 1)))];
+        valores[
+          Math.min(valores.length - 1, Math.floor(p * (valores.length - 1)))
+        ];
       return [corte(0.2), corte(0.4), corte(0.6), corte(0.8)];
     }
 
