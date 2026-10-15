@@ -6,7 +6,7 @@
 -c requirements-ingesta.txt
 
 pytest==9.1.1
-shapely==2.0.4
+shapely==2.2.0
 
 # TestClient de Starlette 1.x usa httpx2 (con httpx avisa de que está en
 # desuso). Desde fastapi 0.112 ya no llega como transitiva, y el código de
