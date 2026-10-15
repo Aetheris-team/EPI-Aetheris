@@ -3,12 +3,9 @@ import logging
 import os
 import threading
 from contextlib import contextmanager
-from datetime import date
 from pathlib import Path
-from typing import NoReturn
 
-import psycopg2
-from fastapi import FastAPI, Header, HTTPException, Request, Response
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -16,8 +13,7 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from slowapi.util import get_remote_address
-from psycopg2 import InterfaceError, OperationalError
-from psycopg2.errors import UndefinedTable
+from psycopg2 import OperationalError
 from psycopg2.pool import ThreadedConnectionPool
 
 from .analisis import (
@@ -59,9 +55,18 @@ from .tablero import (
     MOTIVO_TABLERO_AUSENTE,
     cargar_serie_tablero_nacional,
 )
-from .cache_respuestas import CACHE as CACHE_RESPUESTAS, serializar_json
 from .cobertura import AVISO_COBERTURA, cargar_cobertura
 from .conexion_db import parametros_conexion
+from .respuestas import (
+    CACHE_TTL_COMPUTO,
+    CACHE_TTL_HISTORICO,
+    cache_control as _cache_control,
+    cachear as _cachear,
+    degradar_consulta as _degradar_consulta,
+    desde_cache as _desde_cache,
+    fallo_base_datos as _fallo_base_datos,
+    respuesta_no_disponible as _respuesta_no_disponible,
+)
 from .vigilancia import construir_integridad
 from .respiratorios import (
     AVISO_HONESTIDAD_VIRUS,
@@ -69,17 +74,7 @@ from .respiratorios import (
     semana_virus,
     serie_virus,
 )
-from .alertas import (
-    DEPARTAMENTOS_ALERTA,
-    TIPOS_ALERTA,
-    AlertaCrear,
-    AlertaParche,
-    comprobar_token_escritura,
-    consultar_alertas_publicas,
-    construir_feed_atom,
-    crear_alerta,
-    parchear_alerta,
-)
+from .rutas import alertas as _rutas_alertas
 
 # Salidas congeladas del clasificador retirado (ADR 0025), generadas por
 # backend/ingestion/congelar_clasificador.py a partir del modelo y el dataset
@@ -293,58 +288,11 @@ def _conexion():
         _pool_semaforo.release()
 
 
-# --- Cache-Control (informe de rendimiento externo) -------------------------
-# Cabeceras HTTP estándar: el navegador reutiliza la respuesta sin volver a
-# pedirla. Los mismos TTL gobiernan el cache del servidor (más abajo), así
-# que ninguna respuesta sale más vieja de lo que su max-age ya admitía. TTL
-# segun que tan seguido cambia el dato real -- ninguno de estos endpoints
-# escribe en caliente:
-#   - CACHE_TTL_HISTORICO: series ya cargadas en Postgres que solo cambian
-#     con una corrida nueva de ingesta (cargar_ira.py, etc.).
-#   - CACHE_TTL_COMPUTO: capas espaciales/de cómputo (idoneidad, presión,
-#     riesgo-nacional) recalculadas en cada request -- TTL más corto porque
-#     son las más caras y las que más se beneficiarían de un cambio de
-#     metodología sin esperar una hora completa de cache.
-#   - CACHE_TTL_ALERTAS: alertas de campo (ADR 0013). Las redacta y apaga
-#     el equipo a mano; el valor de la vista es "¿hay algo vigente ahora?".
-#     TTL corto para que un cambio se refleje en el minuto, no en la hora.
-CACHE_TTL_HISTORICO = 3600
-CACHE_TTL_COMPUTO = 900
-CACHE_TTL_ALERTAS = 60
-
-
-def _cache_control(response: Response, max_age: int) -> None:
-    response.headers["Cache-Control"] = f"public, max-age={max_age}"
-
-
-# --- Cache de respuestas en el servidor (backend/api/cache_respuestas.py) ----
-# Lo de arriba solo evita que el MISMO navegador repita la petición; cada
-# visitante nuevo volvía a pagar la consulta y el cálculo. Los endpoints de
-# solo lectura consultan aquí primero con una clave armada con sus parámetros
-# ya validados (no con la URL cruda: un parámetro basura no debe crear otra
-# entrada) y guardan el cuerpo serializado con el mismo TTL de su
-# Cache-Control. Las respuestas de error y las degradadas
-# (disponible=false) no se guardan.
-def _json_cacheable(cuerpo: bytes, max_age: int) -> Response:
-    return Response(
-        content=cuerpo,
-        media_type="application/json",
-        headers={"Cache-Control": f"public, max-age={max_age}"},
-    )
-
-
-def _desde_cache(clave) -> Response | None:
-    acierto = CACHE_RESPUESTAS.obtener(clave)
-    if acierto is None:
-        return None
-    cuerpo, restante = acierto
-    return _json_cacheable(cuerpo, restante)
-
-
-def _cachear(clave, ttl: int, cuerpo) -> Response:
-    serializado = serializar_json(cuerpo)
-    CACHE_RESPUESTAS.guardar(clave, serializado, ttl)
-    return _json_cacheable(serializado, ttl)
+def _abrir_conexion():
+    """Lo que reciben los routers de api/rutas/. Busca _conexion en cada
+    llamada, así que un monkeypatch de api.main._conexion (como hacen los
+    tests de degradación y de registro de fallos) también los alcanza."""
+    return _conexion()
 
 
 # Degradación elegante (issue #84): tabla ausente / sin filas no es un
@@ -363,72 +311,6 @@ MOTIVO_COBERTURA_AUSENTE = (
     "La cobertura del observatorio respiratorio no está disponible en "
     "este despliegue (tabla ausente o sin filas)."
 )
-
-
-def _es_tabla_ausente(exc: BaseException) -> bool:
-    """True si Postgres reporta relación inexistente (SQLSTATE 42P01)."""
-    actual: BaseException | None = exc
-    vistos: set[int] = set()
-    while actual is not None and id(actual) not in vistos:
-        vistos.add(id(actual))
-        if isinstance(actual, UndefinedTable):
-            return True
-        if getattr(actual, "pgcode", None) == "42P01":
-            return True
-        actual = actual.__cause__ or actual.__context__
-    return False
-
-
-def _es_fallo_conexion(exc: BaseException) -> bool:
-    return isinstance(exc, (OperationalError, InterfaceError, TimeoutError))
-
-
-_registro_consultas = logging.getLogger("uvicorn.error")
-
-
-def _fallo_base_datos(exc: BaseException) -> NoReturn:
-    """Registra la causa y responde 503 (conexión) o 500 (resto).
-
-    Al cliente nunca se le devuelve la causa. En el registro, mismo criterio
-    que /health: un error de Python (KeyError, TypeError...) va con su traza
-    completa, porque es un fallo del código de la consulta y sin ella no se
-    puede depurar; un error que reporta el servidor (con SQLSTATE) o un
-    OperationalError, con la primera línea de su mensaje; cualquier otro error
-    de psycopg2 (un DSN mal formado, por ejemplo), solo con el nombre de su
-    clase, porque su mensaje puede repetir la URL con la clave.
-    """
-    if not isinstance(exc, (psycopg2.Error, TimeoutError)):
-        _registro_consultas.error(
-            "consulta: error inesperado (%s)", type(exc).__name__, exc_info=exc
-        )
-    else:
-        mensaje = str(exc).strip()
-        con_mensaje = mensaje and (
-            getattr(exc, "pgcode", None) or isinstance(exc, (OperationalError, TimeoutError))
-        )
-        _registro_consultas.error(
-            "consulta: fallo la base de datos (%s)%s",
-            type(exc).__name__,
-            f": {mensaje.splitlines()[0]}" if con_mensaje else "",
-        )
-    raise HTTPException(
-        status_code=503 if _es_fallo_conexion(exc) else 500,
-        detail="Error de conexión a la base de datos",
-    ) from exc
-
-
-def _respuesta_no_disponible(response: Response, motivo: str, aviso: str) -> dict:
-    _cache_control(response, CACHE_TTL_HISTORICO)
-    return {"disponible": False, "motivo": motivo, "aviso": aviso}
-
-
-def _degradar_consulta(
-    exc: BaseException, response: Response, motivo: str, aviso: str
-) -> dict:
-    """UndefinedTable → 200 disponible=false. Conexión → 503. Resto → 500."""
-    if _es_tabla_ausente(exc):
-        return _respuesta_no_disponible(response, motivo, aviso)
-    _fallo_base_datos(exc)
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
@@ -1524,144 +1406,13 @@ def respiratorios_cobertura(response: Response):
     return _cachear(clave, CACHE_TTL_HISTORICO, cobertura)
 
 
-# ---------------------------------------------------------------------------
-# Alertas de campo (ADR 0013, ADR 0015). Decisiones humanas persistidas:
-# no se calculan desde M1–M3 ni desde el clasificador retirado.
-# GET público por defecto: activa=TRUE y etiqueta IS NULL. POST/PATCH
-# exigen Bearer contra ALERTAS_TOKEN. Sin DELETE.
-# ---------------------------------------------------------------------------
-
-
-def _autorizar_escritura_alertas(authorization: str | None) -> None:
-    error = comprobar_token_escritura(authorization)
-    if error is not None:
-        codigo, detalle = error
-        raise HTTPException(status_code=codigo, detail=detalle)
-
-
-@app.get("/api/alertas")
-def alertas_publicas(
-    response: Response,
-    tipo: str | None = None,
-    desde: date | None = None,
-    hasta: date | None = None,
-    incluir_inactivas: bool = False,
-    incluir_etiquetadas: bool = False,
-    departamento: str | None = None,
-):
-    """Lista alertas. Sin parámetros extra: activa=TRUE y etiqueta IS NULL.
-
-    Filtros opcionales combinados con AND: tipo, desde/hasta (solapamiento
-    de vigencia), incluir_inactivas, incluir_etiquetadas, departamento
-    (nacionales más las que lo incluyen, ADR 0022).
-    """
-    if departamento is not None and departamento not in DEPARTAMENTOS_ALERTA:
-        raise HTTPException(
-            status_code=422,
-            detail="El parámetro 'departamento' debe ser un código ISO 3166-2 de El Salvador (SV-AH..SV-US).",
-        )
-    if tipo is not None and tipo not in TIPOS_ALERTA:
-        raise HTTPException(
-            status_code=422,
-            detail="El parámetro 'tipo' debe ser 'dengue' o 'respiratorio'.",
-        )
-    try:
-        with _conexion() as conn:
-            cuerpo = consultar_alertas_publicas(
-                conn,
-                tipo=tipo,
-                desde=desde,
-                hasta=hasta,
-                incluir_inactivas=incluir_inactivas,
-                incluir_etiquetadas=incluir_etiquetadas,
-                departamento=departamento,
-            )
-    except Exception as exc:
-        # Contrato propio ({aviso, ultima_revision, alertas}); no se degrada
-        # a {disponible:false} como los endpoints respiratorios. Solo se
-        # distingue fallo de conexión (503) del resto (500).
-        _fallo_base_datos(exc)
-
-    _cache_control(response, CACHE_TTL_ALERTAS)
-    return cuerpo
-
-
-@app.get("/api/alertas/feed.xml")
-def alertas_feed(request: Request):
-    """Feed Atom con las alertas activas sin etiqueta (mismo criterio que el GET público)."""
-    try:
-        with _conexion() as conn:
-            cuerpo = consultar_alertas_publicas(conn)
-    except Exception as exc:
-        _fallo_base_datos(exc)
-
-    sitio = os.environ.get("SITIO_PUBLICO", "https://epi-aetheris.dev")
-    xml = construir_feed_atom(
-        cuerpo["alertas"],
-        cuerpo["ultima_revision"],
-        sitio=sitio,
-        api_url=str(request.url),
+app.include_router(
+    _rutas_alertas.crear_router(
+        limiter=limiter,
+        abrir_conexion=_abrir_conexion,
+        limite_escritura=RATE_LIMIT_WRITE,
     )
-    return Response(
-        content=xml,
-        media_type="application/atom+xml",
-        headers={"Cache-Control": f"public, max-age={CACHE_TTL_ALERTAS}"},
-    )
-
-
-@app.post("/api/alertas", status_code=201)
-@limiter.limit(RATE_LIMIT_WRITE)
-def alertas_crear(
-    request: Request,
-    cuerpo: AlertaCrear,
-    response: Response,
-    authorization: str | None = Header(default=None),
-):
-    """Crea una alerta redactada por el equipo. Exige Bearer ALERTAS_TOKEN."""
-    _autorizar_escritura_alertas(authorization)
-    response.headers["Cache-Control"] = "no-store"
-    try:
-        with _conexion() as conn:
-            creada = crear_alerta(conn, cuerpo)
-            conn.commit()
-    except HTTPException:
-        raise
-    except Exception as exc:
-        _fallo_base_datos(exc)
-    return creada
-
-
-@app.patch("/api/alertas/{alerta_id}")
-@limiter.limit(RATE_LIMIT_WRITE)
-def alertas_parchear(
-    alerta_id: int,
-    request: Request,
-    cuerpo: AlertaParche,
-    response: Response,
-    authorization: str | None = Header(default=None),
-):
-    """Edita una alerta. Como mínimo puede poner activa=false. Sin DELETE."""
-    _autorizar_escritura_alertas(authorization)
-    response.headers["Cache-Control"] = "no-store"
-    if not cuerpo.model_dump(exclude_unset=True):
-        raise HTTPException(
-            status_code=422,
-            detail="El cuerpo debe incluir al menos un campo a modificar.",
-        )
-    try:
-        with _conexion() as conn:
-            actualizada = parchear_alerta(conn, alerta_id, cuerpo)
-            if actualizada is None:
-                raise HTTPException(
-                    status_code=404,
-                    detail=f"No existe una alerta con id {alerta_id}.",
-                )
-            conn.commit()
-    except HTTPException:
-        raise
-    except Exception as exc:
-        _fallo_base_datos(exc)
-    return actualizada
+)
 
 
 # --- Cuentas de usuario (ADR 0024) -----------------------------------------------
