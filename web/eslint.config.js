@@ -1,9 +1,12 @@
 import js from '@eslint/js';
+import { defineConfig } from 'eslint/config';
 import astro from 'eslint-plugin-astro';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
-export default tseslint.config(
+// defineConfig de ESLint reemplaza a tseslint.config(), que typescript-eslint
+// marcó como obsoleto.
+export default defineConfig(
   {
     ignores: ['.astro/**', 'dist/**'],
   },

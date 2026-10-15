@@ -134,10 +134,8 @@ const idPrefijo = `curva-${evento}${departamentoFijo ? `-${departamentoFijo}` : 
 <script>
   import type {
     DepartamentoIRA,
-    EventoRespiratorio,
     RespuestaIraDepartamental,
   } from '../lib/tipos-analisis';
-  import { obtenerResumenDepartamentalRespiratorio } from '../lib/analisis-api';
   import { colorCualitativo } from '../lib/colores';
   import { montarGrafico } from '../lib/echarts-montaje';
   import type { GraficoMontado } from '../lib/echarts-montaje';
@@ -363,15 +361,14 @@ const idPrefijo = `curva-${evento}${departamentoFijo ? `-${departamentoFijo}` : 
 
     let departamentos: DepartamentoIRA[];
     try {
-      const datos = await obtenerResumenDepartamentalRespiratorio(
-        (seccion.dataset.curvaEvento ?? 'ira') as EventoRespiratorio,
-      );
+      const resp = await fetch(`${API_BASE}${apiBase}/departamental`);
+      if (!resp.ok) throw new Error('respuesta no OK');
+      const datos = await resp.json();
       if (esNoDisponible(datos)) {
         renderSinDato(contenedor, motivoNoDisponible(datos));
         return;
       }
-      // Copia: la respuesta se comparte con MapaIRA y se ordena abajo.
-      departamentos = [...(datos as RespuestaIraDepartamental).departamentos];
+      departamentos = (datos as RespuestaIraDepartamental).departamentos;
     } catch {
       // Los <select> nunca llegaron a poblarse en este punto, así que
       // reintentar es volver a ejecutar iniciarSeccion sin duplicar opciones.
