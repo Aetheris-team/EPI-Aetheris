@@ -17,6 +17,7 @@ BACKEND_DIR = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(BACKEND_DIR))
 
 from api import main  # noqa: E402
+from api.rutas import dengue as rutas_dengue  # noqa: E402
 
 RUTAS = {
     "/api/nowcast-dengue": "NOWCAST_DENGUE_PATH",
@@ -31,7 +32,7 @@ def client():
 
 @pytest.mark.parametrize("ruta", RUTAS)
 def test_sin_artefacto_responde_disponible_false(client, ruta, tmp_path):
-    with patch.object(main, RUTAS[ruta], tmp_path / "no-existe.json"):
+    with patch.object(rutas_dengue, RUTAS[ruta], tmp_path / "no-existe.json"):
         respuesta = client.get(ruta)
     assert respuesta.status_code == 200
     cuerpo = respuesta.json()
@@ -44,7 +45,7 @@ def test_sin_artefacto_responde_disponible_false(client, ruta, tmp_path):
 def test_con_artefacto_lo_sirve_con_aviso(client, ruta, tmp_path):
     archivo = tmp_path / "artefacto.json"
     archivo.write_text('{"horizontes": [1, 2]}', encoding="utf-8")
-    with patch.object(main, RUTAS[ruta], archivo):
+    with patch.object(rutas_dengue, RUTAS[ruta], archivo):
         respuesta = client.get(ruta)
     assert respuesta.status_code == 200
     cuerpo = respuesta.json()
@@ -59,10 +60,10 @@ def test_retrospectivo_versionado_es_coherente():
     serie observada que termina en el ancla."""
     import json
 
-    if not main.NOWCAST_DENGUE_RETRO_PATH.exists():
+    if not rutas_dengue.NOWCAST_DENGUE_RETRO_PATH.exists():
         pytest.skip("artefacto retrospectivo no generado")
-    retro = json.loads(main.NOWCAST_DENGUE_RETRO_PATH.read_text(encoding="utf-8"))
-    principal = json.loads(main.NOWCAST_DENGUE_PATH.read_text(encoding="utf-8"))
+    retro = json.loads(rutas_dengue.NOWCAST_DENGUE_RETRO_PATH.read_text(encoding="utf-8"))
+    principal = json.loads(rutas_dengue.NOWCAST_DENGUE_PATH.read_text(encoding="utf-8"))
 
     assert retro["observado"][-1][0] == principal["ancla"]["fecha"]
     assert len(retro["origenes"]) == len(retro["observado"]) - 1
