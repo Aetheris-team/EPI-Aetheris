@@ -94,7 +94,7 @@ def test_segundo_request_sale_del_cache_sin_abrir_conexion():
     mock_cx = _conexion_contada()
     client = TestClient(app)
     with patch("api.main._conexion", mock_cx), patch(
-        "api.main.listar_virus", return_value=series
+        "api.rutas.respiratorio.listar_virus", return_value=series
     ):
         primera = client.get("/api/respiratorios/virus")
         segunda = client.get("/api/respiratorios/virus")
@@ -109,7 +109,7 @@ def test_respuesta_degradada_no_se_guarda():
     mock_cx = _conexion_contada()
     client = TestClient(app)
     with patch("api.main._conexion", mock_cx), patch(
-        "api.main.listar_virus", return_value=[]
+        "api.rutas.respiratorio.listar_virus", return_value=[]
     ):
         client.get("/api/respiratorios/virus")
         respuesta = client.get("/api/respiratorios/virus")
