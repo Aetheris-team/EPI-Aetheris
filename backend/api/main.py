@@ -1,4 +1,3 @@
-import csv
 import json
 import logging
 import os
@@ -6,8 +5,9 @@ import threading
 from contextlib import contextmanager
 from datetime import date
 from pathlib import Path
+from typing import NoReturn
 
-import joblib
+import psycopg2
 from fastapi import FastAPI, Header, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
@@ -81,16 +81,11 @@ from .alertas import (
     parchear_alerta,
 )
 
-# Artefactos de la tarjeta 23/24 -- generados por
-# backend/ingestion/construir_dataset_modelado.py y entrenar_clasificador.py,
-# leidos aqui via el mismo bind mount de ./backend (docker-compose.yml). No
-# hay tabla de predicciones en el esquema (punto G de las decisiones
-# abiertas, sin resolver) -- esta es la opcion "on-demand": recalcula desde
-# el dataset ya generado en vez de persistir nada nuevo en Postgres.
-INGESTION_DIR = Path(__file__).parent.parent / "ingestion"
-DATASET_RIESGO_PATH = INGESTION_DIR / "data" / "interim" / "dataset_modelado" / "dataset_modelado.csv"
-MODELO_PATH = INGESTION_DIR / "data" / "interim" / "modelo" / "clasificador_riesgo_nacional_v1.joblib"
-METRICAS_MODELO_PATH = INGESTION_DIR / "data" / "interim" / "modelo" / "metricas_modelo.json"
+# Salidas congeladas del clasificador retirado (ADR 0025), generadas por
+# backend/ingestion/congelar_clasificador.py a partir del modelo y el dataset
+# versionados en ingestion/data/interim/. La API ya no carga el modelo: sin
+# scikit-learn ni joblib en la imagen.
+RIESGO_NACIONAL_PATH = Path(__file__).parent / "datos" / "riesgo_nacional_congelado.json"
 
 AVISO_HONESTIDAD_RIESGO_NACIONAL = (
     "Clasificación entrenada sobre la serie nacional agregada de El Salvador. "
@@ -388,6 +383,40 @@ def _es_fallo_conexion(exc: BaseException) -> bool:
     return isinstance(exc, (OperationalError, InterfaceError, TimeoutError))
 
 
+_registro_consultas = logging.getLogger("uvicorn.error")
+
+
+def _fallo_base_datos(exc: BaseException) -> NoReturn:
+    """Registra la causa y responde 503 (conexión) o 500 (resto).
+
+    Al cliente nunca se le devuelve la causa. En el registro, mismo criterio
+    que /health: un error de Python (KeyError, TypeError...) va con su traza
+    completa, porque es un fallo del código de la consulta y sin ella no se
+    puede depurar; un error que reporta el servidor (con SQLSTATE) o un
+    OperationalError, con la primera línea de su mensaje; cualquier otro error
+    de psycopg2 (un DSN mal formado, por ejemplo), solo con el nombre de su
+    clase, porque su mensaje puede repetir la URL con la clave.
+    """
+    if not isinstance(exc, (psycopg2.Error, TimeoutError)):
+        _registro_consultas.error(
+            "consulta: error inesperado (%s)", type(exc).__name__, exc_info=exc
+        )
+    else:
+        mensaje = str(exc).strip()
+        con_mensaje = mensaje and (
+            getattr(exc, "pgcode", None) or isinstance(exc, (OperationalError, TimeoutError))
+        )
+        _registro_consultas.error(
+            "consulta: fallo la base de datos (%s)%s",
+            type(exc).__name__,
+            f": {mensaje.splitlines()[0]}" if con_mensaje else "",
+        )
+    raise HTTPException(
+        status_code=503 if _es_fallo_conexion(exc) else 500,
+        detail="Error de conexión a la base de datos",
+    ) from exc
+
+
 def _respuesta_no_disponible(response: Response, motivo: str, aviso: str) -> dict:
     _cache_control(response, CACHE_TTL_HISTORICO)
     return {"disponible": False, "motivo": motivo, "aviso": aviso}
@@ -399,11 +428,7 @@ def _degradar_consulta(
     """UndefinedTable → 200 disponible=false. Conexión → 503. Resto → 500."""
     if _es_tabla_ausente(exc):
         return _respuesta_no_disponible(response, motivo, aviso)
-    status = 503 if _es_fallo_conexion(exc) else 500
-    raise HTTPException(
-        status_code=status,
-        detail="Error de conexión a la base de datos",
-    )
+    _fallo_base_datos(exc)
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
@@ -520,11 +545,8 @@ def casos_nacional(response: Response):
                     """
                 )
                 filas = cursor.fetchall()
-    except Exception:
-        raise HTTPException(
-            status_code=500,
-            detail="Error de conexión a la base de datos"
-        )
+    except Exception as exc:
+        _fallo_base_datos(exc)
 
     return _cachear(clave, CACHE_TTL_HISTORICO, [
         {
@@ -538,44 +560,24 @@ def casos_nacional(response: Response):
     ])
 
 
-# Artefactos derivados del clasificador historico (dataset CSV + joblib +
-# metricas). La carga es perezosa y se protege con un lock (issue #71): sin
-# el, dos requests concurrentes en cold start leen la cache como None a la
-# vez y ambos deserializan el joblib / parsean el CSV completo de forma
-# redundante -- justo en la rafaga de trafico que el rate limiter busca
-# absorber. Double-checked locking: el chequeo rapido sin lock cubre el
-# caso normal (cache ya poblada), el lock solo se toma en el arranque.
-_artefactos_lock = threading.Lock()
-_modelo_cache = None
-_dataset_riesgo_cache = None
+_riesgo_nacional_lock = threading.Lock()
+_riesgo_nacional_cache = None
 
 
-def _cargar_modelo():
-    """Devuelve el paquete del modelo, o None si el joblib no existe en este
-    despliegue (issue #72) -- el handler traduce None a una respuesta 200
-    explicita en vez de un 503."""
-    global _modelo_cache
-    if _modelo_cache is None:
-        with _artefactos_lock:
-            if _modelo_cache is None:
-                if not MODELO_PATH.exists():
+def _cargar_riesgo_nacional():
+    """Devuelve el artefacto congelado, o None si no existe en este
+    despliegue. Carga perezosa con double-checked locking (issue #71): en
+    cold start dos requests no lo parsean a la vez."""
+    global _riesgo_nacional_cache
+    if _riesgo_nacional_cache is None:
+        with _riesgo_nacional_lock:
+            if _riesgo_nacional_cache is None:
+                if not RIESGO_NACIONAL_PATH.exists():
                     return None
-                _modelo_cache = joblib.load(MODELO_PATH)
-    return _modelo_cache
-
-
-def _cargar_dataset_riesgo():
-    """Devuelve las filas del dataset de modelado, o None si el CSV no
-    existe en este despliegue (issue #72)."""
-    global _dataset_riesgo_cache
-    if _dataset_riesgo_cache is None:
-        with _artefactos_lock:
-            if _dataset_riesgo_cache is None:
-                if not DATASET_RIESGO_PATH.exists():
-                    return None
-                with open(DATASET_RIESGO_PATH, newline="", encoding="utf-8") as f:
-                    _dataset_riesgo_cache = list(csv.DictReader(f))
-    return _dataset_riesgo_cache
+                datos = json.loads(RIESGO_NACIONAL_PATH.read_text(encoding="utf-8"))
+                datos["por_semana"] = {(f["anio"], f["semana_epi"]): f for f in datos["semanas"]}
+                _riesgo_nacional_cache = datos
+    return _riesgo_nacional_cache
 
 
 @app.get("/api/riesgo-nacional")
@@ -586,68 +588,46 @@ def riesgo_nacional(
     anio: int | None = None,
     semana: int | None = None,
 ):
-    """Clasificación de riesgo NACIONAL para una semana epidemiológica dada
-    (tarjetas 23/24/25, primera versión: semana fija, colores planos --
-    selector de semanas viene después). Recalcula on-demand desde el dataset
-    ya generado, no persiste nada nuevo en Postgres (ver comentario junto a
-    DATASET_RIESGO_PATH).
+    """Clasificación de riesgo NACIONAL del clasificador retirado para una
+    semana epidemiológica dada (tarjetas 23/24/25). Sirve las salidas
+    congeladas por congelar_clasificador.py (ADR 0025); el contrato es el
+    mismo que cuando el modelo corría en cada request.
 
     Sin parámetros, devuelve la última semana disponible del dataset (fin
     de 2023, año de prueba de la tarjeta 24) -- el sistema no tiene forma
     de verificar en vivo lo que predice, no hay fuente departamental
     automatizable después de 2023.
     """
-    filas = _cargar_dataset_riesgo()
-    modelo_paquete = _cargar_modelo() if filas is not None else None
-    if filas is None or modelo_paquete is None:
-        # Los artefactos derivados (dataset_modelado.csv + joblib) estan en
-        # .gitignore y no se generan en el build de Render, asi que faltan en
-        # produccion (issue #72). No es un error del servidor: se responde
-        # 200 con disponible=false y el frontend muestra un aviso explicito,
-        # mismo patron que /ira cuando falta su extracto exploratorio.
+    artefacto = _cargar_riesgo_nacional()
+    if artefacto is None:
+        # Sin el artefacto (un checkout o una imagen que no lo trae) no es un
+        # error del servidor: se responde 200 con disponible=false y el
+        # frontend muestra un aviso explicito.
         _cache_control(response, CACHE_TTL_COMPUTO)
         return {
             "disponible": False,
             "motivo": (
-                "El clasificador nacional historico no esta generado en este "
-                "despliegue (dataset de modelado y/o modelo entrenado ausentes)."
+                "El clasificador nacional historico no esta disponible en este "
+                "despliegue (falta el artefacto congelado del modelo)."
             ),
             "aviso": AVISO_HONESTIDAD_RIESGO_NACIONAL,
         }
 
     if anio is None or semana is None:
-        fila = max(filas, key=lambda r: (int(r["anio"]), int(r["semana_epi"])))
+        fila = max(artefacto["semanas"], key=lambda f: (f["anio"], f["semana_epi"]))
     else:
-        coincidencias = [r for r in filas if int(r["anio"]) == anio and int(r["semana_epi"]) == semana]
-        if not coincidencias:
+        fila = artefacto["por_semana"].get((anio, semana))
+        if fila is None:
             raise HTTPException(
                 status_code=404,
                 detail=f"No hay datos de modelado para año={anio}, semana={semana}.",
             )
-        fila = coincidencias[0]
-
-    modelo = modelo_paquete["modelo"]
-    columnas_feature = modelo_paquete["columnas_feature"]
-    clases = modelo_paquete["clases"]
-
-    X = [[float(fila[c]) for c in columnas_feature]]
-    etiqueta_predicha = modelo.predict(X)[0]
-    probabilidades = dict(zip(modelo.classes_, modelo.predict_proba(X)[0].tolist()))
-
-    metricas_modelo = None
-    if METRICAS_MODELO_PATH.exists():
-        metricas_modelo = json.loads(METRICAS_MODELO_PATH.read_text(encoding="utf-8"))
 
     _cache_control(response, CACHE_TTL_COMPUTO)
     return {
         "disponible": True,
-        "anio": int(fila["anio"]),
-        "semana_epi": int(fila["semana_epi"]),
-        "etiqueta_predicha": etiqueta_predicha,
-        "etiqueta_real": fila["etiqueta_riesgo"],
-        "probabilidades": {clase: round(probabilidades.get(clase, 0.0), 4) for clase in clases},
-        "casos_observados": float(fila["casos"]),
-        "metricas_modelo": metricas_modelo,
+        **fila,
+        "metricas_modelo": artefacto["metricas_modelo"],
         "aviso": AVISO_HONESTIDAD_RIESGO_NACIONAL,
     }
 
@@ -818,11 +798,8 @@ def casos_departamentales(request: Request, response: Response):
                     """
                 )
                 filas = cursor.fetchall()
-    except Exception:
-        raise HTTPException(
-            status_code=500,
-            detail="Error de conexión a la base de datos"
-        )
+    except Exception as exc:
+        _fallo_base_datos(exc)
 
     return _cachear(clave, CACHE_TTL_HISTORICO, {
         "departamentos": [
@@ -893,8 +870,8 @@ def idoneidad_espacial_actual(request: Request, response: Response, week: int, y
                 cursor.execute("SELECT codigo, nombre FROM regiones WHERE nivel_admin = 1 ORDER BY nombre")
                 departamentos = cursor.fetchall()
             clima = cargar_clima_departamentos(conn, anios=ANIOS_CLIMA, semanas=semanas_necesarias)
-    except Exception:
-        raise HTTPException(status_code=500, detail="Error de conexión a la base de datos")
+    except Exception as exc:
+        _fallo_base_datos(exc)
 
     serie_iv = calcular_serie_iv(clima)
 
@@ -968,8 +945,8 @@ def dataset_analitico_dengue(request: Request, response: Response, year: int):
     try:
         with _conexion() as conn:
             respuesta = construir_dataset_dengue(conn, anio=year)
-    except Exception:
-        raise HTTPException(status_code=500, detail="Error de conexión a la base de datos")
+    except Exception as exc:
+        _fallo_base_datos(exc)
 
     respuesta["avisos"] = {
         "idoneidad": AVISO_HONESTIDAD_IDONEIDAD,
@@ -1008,8 +985,8 @@ def procedencia_analitica_dengue(request: Request, response: Response, year: int
                 departamento_codigo=dept,
                 serie=serie,
             )
-    except Exception:
-        raise HTTPException(status_code=500, detail="Error de conexión a la base de datos")
+    except Exception as exc:
+        _fallo_base_datos(exc)
 
     if respuesta is None:
         raise HTTPException(
@@ -1051,8 +1028,8 @@ def presion_espacial_actual(request: Request, response: Response, week: int, yea
                 cursor.execute("SELECT codigo, nombre FROM regiones WHERE nivel_admin = 1 ORDER BY nombre")
                 departamentos = cursor.fetchall()
             casos = cargar_casos_departamentales(conn, anios=anios_necesarios, semanas=semanas_necesarias)
-    except Exception:
-        raise HTTPException(status_code=500, detail="Error de conexión a la base de datos")
+    except Exception as exc:
+        _fallo_base_datos(exc)
 
     resultado = []
     for codigo, nombre in departamentos:
@@ -1097,8 +1074,8 @@ def presion_temporal_departamento(departamento_id: str, anio: int, response: Res
             casos_depto = cargar_casos_departamento(conn, codigo=departamento_id, anios=anios_necesarios)
     except HTTPException:
         raise
-    except Exception:
-        raise HTTPException(status_code=500, detail="Error de conexión a la base de datos")
+    except Exception as exc:
+        _fallo_base_datos(exc)
 
     codigo, nombre = fila_region
 
@@ -1158,8 +1135,8 @@ def idoneidad_temporal_departamento(departamento_id: str, anio: int, response: R
             clima_depto = cargar_clima_departamento(conn, codigo=departamento_id, anios=ANIOS_CLIMA)
     except HTTPException:
         raise
-    except Exception:
-        raise HTTPException(status_code=500, detail="Error de conexión a la base de datos")
+    except Exception as exc:
+        _fallo_base_datos(exc)
 
     codigo, nombre = fila_region
 
@@ -1224,8 +1201,8 @@ def ira_departamental(request: Request, response: Response):
     try:
         with _conexion() as conn:
             departamentos = cargar_ira_departamental(conn)
-    except Exception:
-        raise HTTPException(status_code=500, detail="Error de conexión a la base de datos")
+    except Exception as exc:
+        _fallo_base_datos(exc)
 
     return _cachear(clave, CACHE_TTL_HISTORICO, {
         "departamentos": departamentos,
@@ -1247,8 +1224,8 @@ def ira_temporal_departamento(departamento_id: str, response: Response):
     try:
         with _conexion() as conn:
             resultado = cargar_ira_departamento_temporal(conn, codigo=departamento_id)
-    except Exception:
-        raise HTTPException(status_code=500, detail="Error de conexión a la base de datos")
+    except Exception as exc:
+        _fallo_base_datos(exc)
     if resultado is None:
         raise HTTPException(
             status_code=404,
@@ -1523,8 +1500,8 @@ def vigilancia_integridad(
     try:
         with _conexion() as conn:
             cuerpo = construir_integridad(conn, week=week, year=year)
-    except Exception:
-        raise HTTPException(status_code=500, detail="Error de conexión a la base de datos")
+    except Exception as exc:
+        _fallo_base_datos(exc)
 
     return _cachear(clave, CACHE_TTL_COMPUTO, cuerpo)
 
@@ -1560,14 +1537,6 @@ def _autorizar_escritura_alertas(authorization: str | None) -> None:
     if error is not None:
         codigo, detalle = error
         raise HTTPException(status_code=codigo, detail=detalle)
-
-
-def _alertas_http_error(exc: BaseException) -> None:
-    status = 503 if _es_fallo_conexion(exc) else 500
-    raise HTTPException(
-        status_code=status,
-        detail="Error de conexión a la base de datos",
-    )
 
 
 @app.get("/api/alertas")
@@ -1611,7 +1580,7 @@ def alertas_publicas(
         # Contrato propio ({aviso, ultima_revision, alertas}); no se degrada
         # a {disponible:false} como los endpoints respiratorios. Solo se
         # distingue fallo de conexión (503) del resto (500).
-        _alertas_http_error(exc)
+        _fallo_base_datos(exc)
 
     _cache_control(response, CACHE_TTL_ALERTAS)
     return cuerpo
@@ -1624,7 +1593,7 @@ def alertas_feed(request: Request):
         with _conexion() as conn:
             cuerpo = consultar_alertas_publicas(conn)
     except Exception as exc:
-        _alertas_http_error(exc)
+        _fallo_base_datos(exc)
 
     sitio = os.environ.get("SITIO_PUBLICO", "https://epi-aetheris.dev")
     xml = construir_feed_atom(
@@ -1658,7 +1627,7 @@ def alertas_crear(
     except HTTPException:
         raise
     except Exception as exc:
-        _alertas_http_error(exc)
+        _fallo_base_datos(exc)
     return creada
 
 
@@ -1691,7 +1660,7 @@ def alertas_parchear(
     except HTTPException:
         raise
     except Exception as exc:
-        _alertas_http_error(exc)
+        _fallo_base_datos(exc)
     return actualizada
 
 

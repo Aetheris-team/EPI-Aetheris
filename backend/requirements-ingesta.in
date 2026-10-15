@@ -1,0 +1,13 @@
+# Dependencias de la ingesta y de los experimentos (backend/ingestion/), que
+# no entran a la imagen de producción (ADR 0025): la API no las importa. Los
+# cargadores que se corren contra la base (cargar_*.py) solo usan psycopg2 y
+# python-dotenv, que ya están en requirements.txt. Se compila contra
+# requirements.txt (-c) para que no pueda mover ninguna versión de la API. Ver
+# las instrucciones en requirements.in.
+-c requirements.txt
+
+pdfplumber==0.11.10
+requests==2.34.2
+scikit-learn==1.5.1
+joblib==1.6.0
+numpy==2.4.6
