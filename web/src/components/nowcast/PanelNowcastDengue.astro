@@ -427,7 +427,7 @@ const { variante = 'completo', demo = false } = Astro.props;
       barraDemo.className = 'mb-3 flex flex-wrap items-end gap-3';
       barraDemo.innerHTML =
         '<label class="flex flex-col gap-1">' +
-        '<span class="font-sans text-[11px] font-medium text-ink-muted">Semana de anclaje</span>' +
+        '<span class="font-sans text-micro font-medium text-ink-muted">Semana de anclaje</span>' +
         '<select class="rounded-lg border border-border bg-surface px-3 py-2 font-sans text-sm text-ink" aria-label="Semana de anclaje">' +
         `<option>${fmtFecha.format(fecha(datos.ancla.fecha))} · última semana observada</option>` +
         '</select></label>' +
@@ -617,7 +617,7 @@ const { variante = 'completo', demo = false } = Astro.props;
         extra.appendChild(
           parrafo(
             'Reducción del error de intervalo (WIS) respecto a la persistencia, por año.',
-            'mt-2 font-sans text-[11px] leading-relaxed text-ink-muted',
+            'mt-2 font-sans text-micro leading-relaxed text-ink-muted',
           ),
         );
       }
@@ -638,7 +638,7 @@ const { variante = 'completo', demo = false } = Astro.props;
         'pointer-events-none absolute bottom-12 left-3 max-w-[min(92%,320px)] translate-y-1 rounded-xl border border-accent/25 bg-surface/95 p-3 opacity-0 shadow-lg transition-all duration-500 sm:left-4';
       const cartelEyebrow = document.createElement('div');
       cartelEyebrow.className =
-        'font-sans text-[10px] font-semibold uppercase tracking-wide text-ink-muted';
+        'font-sans text-micro font-semibold uppercase tracking-wide text-ink-muted';
       const cartelEyebrowTxt = 'Predicción · próximas 1 a 8 semanas';
       const cartelCifras = document.createElement('div');
       cartelCifras.className =

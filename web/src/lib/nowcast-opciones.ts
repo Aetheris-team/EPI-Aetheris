@@ -127,7 +127,7 @@ export function tooltipHtml(
   },
 ): string {
   const estado = contenido.estado
-    ? `<span style="margin-left:12px;padding:1px 8px;border-radius:999px;border:1px solid ${t.borde};font-size:10px;font-weight:600;color:${t.tintaSuave};white-space:nowrap">${escapeHtml(contenido.estado)}</span>`
+    ? `<span style="margin-left:12px;padding:1px 8px;border-radius:999px;border:1px solid ${t.borde};font-size:11px;font-weight:600;color:${t.tintaSuave};white-space:nowrap">${escapeHtml(contenido.estado)}</span>`
     : '';
   const filas = contenido.filas
     .map(

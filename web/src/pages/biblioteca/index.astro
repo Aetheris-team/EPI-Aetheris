@@ -301,7 +301,7 @@ const METADATOS_FICHAS: Record<
                         class="h-6 w-6 xl:h-7 xl:w-7"
                       />
                     </span>
-                    <span class="shrink-0 rounded-full border border-secondary bg-secondary/80 px-3 py-1 font-mono text-[11px] font-semibold text-secondary-ink xl:text-xs">
+                    <span class="shrink-0 rounded-full border border-secondary bg-secondary/80 px-3 py-1 font-mono text-micro font-semibold text-secondary-ink xl:text-xs">
                       {meta.insignia}
                     </span>
                   </div>
@@ -316,7 +316,7 @@ const METADATOS_FICHAS: Record<
                   {ficha.etiquetas && ficha.etiquetas.length > 0 && (
                     <div class="mt-4 flex flex-wrap gap-1.5 pt-1">
                       {ficha.etiquetas.map((etiqueta) => (
-                        <span class="rounded-md border border-border bg-bg px-2.5 py-1 font-mono text-[11px] text-ink-muted">
+                        <span class="rounded-md border border-border bg-bg px-2.5 py-1 font-mono text-micro text-ink-muted">
                           {etiqueta}
                         </span>
                       ))}
