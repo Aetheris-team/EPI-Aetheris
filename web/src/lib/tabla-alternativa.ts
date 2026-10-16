@@ -1,4 +1,4 @@
-import { escapeHtml } from '../utils/security';
+import { escapeHtml } from '../utils/security.ts';
 
 // Todo lo que se interpola en innerHTML pasa por escapeHtml (regla de la casa,
 // CLAUDE.md): los valores de las celdas vienen de la API -- el nombre del
@@ -84,21 +84,35 @@ export class TablaAlternativa<T = any> {
     const filasHtml = filasVisibles
       .map((fila) => {
         const celdas = this.columnas
-          .map((col) => {
+          .map((col, i) => {
             const raw = (fila as any)[col.clave];
             const val = col.formato ? col.formato(raw, fila) : (raw ?? '—');
             const esDerecha = col.alineacion === 'derecha';
-            return `<td class="px-3 py-1.5 text-xs text-ink ${
+            const clase = `px-3 py-1.5 text-xs text-ink ${
               esDerecha ? 'text-right cifra' : 'font-sans'
-            }">${textoSeguro(val)}</td>`;
+            }`;
+            // La primera columna identifica la fila (semana, año,
+            // departamento): es su encabezado, y en el diseño apilado
+            // encabeza cada tarjeta. El resto lleva su encabezado de columna
+            // en data-etiqueta, que el CSS muestra cuando se ocultan los <th>.
+            return i === 0
+              ? `<th scope="row" class="${clase} font-semibold">${textoSeguro(val)}</th>`
+              : `<td class="${clase}" data-etiqueta="${textoSeguro(col.encabezado)}">${textoSeguro(val)}</td>`;
           })
           .join('');
         return `<tr class="border-b border-border/50 hover:bg-secondary/20">${celdas}</tr>`;
       })
       .join('');
 
+    // Con tres columnas o más, en un contenedor angosto la tabla se apila en
+    // tarjetas (global.css, .tabla-alternativa). Con dos cabe tal cual.
+    this.contenedor.classList.add('tabla-alternativa');
+    this.contenedor.classList.toggle(
+      'tabla-apilable',
+      this.columnas.length >= 3,
+    );
     this.contenedor.innerHTML = `
-      <div tabindex="0" role="region" aria-label="${textoSeguro(this.caption)}" class="mt-2 max-h-64 overflow-y-auto overflow-x-auto rounded-lg border border-border">
+      <div tabindex="0" role="region" aria-label="${textoSeguro(this.caption)}" class="tabla-alternativa-region mt-2 max-h-64 overflow-y-auto overflow-x-auto rounded-lg border border-border">
         <table class="w-full border-collapse text-left font-sans">
           <caption class="sr-only">${textoSeguro(this.caption)}</caption>
           <thead class="sticky top-0 bg-surface border-b border-border">

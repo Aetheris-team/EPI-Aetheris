@@ -75,7 +75,7 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8000';
                 API pública de cómputo y datos
               </h2>
               <p class="font-sans text-xs text-ink-muted">
-                Servicio FastAPI en Oregon (<code class="font-mono text-[11px]"
+                Servicio FastAPI en Oregon (<code class="font-mono text-micro"
                   >{apiBase}</code
                 >).
               </p>
@@ -200,7 +200,7 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8000';
         contenedor.innerHTML = `<p class="font-sans text-xs text-ink-muted">La API respondió correctamente con código <code>${res.status}</code> en <strong>${latencia} ms</strong>.</p>`;
       } else {
         dot.className = 'flex h-3 w-3 rounded-full bg-rose-500';
-        badge.innerHTML = `<span class="rounded-full bg-rose-500/10 px-3 py-1 font-mono text-xs font-medium text-rose-600">Error ${res.status}</span>`;
+        badge.innerHTML = `<span class="rounded-full bg-rose-500/10 px-3 py-1 font-mono text-xs font-medium text-[light-dark(oklch(51.4%_0.222_16.935),oklch(81%_0.117_11.638))]">Error ${res.status}</span>`;
         mostrarReintento(
           'El servidor respondió con un error. Vuelve a comprobarlo en unos segundos.',
           `Código HTTP ${res.status}`,
@@ -209,7 +209,7 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8000';
     } catch (err) {
       dot.className = 'flex h-3 w-3 rounded-full bg-rose-500';
       badge.innerHTML =
-        '<span class="rounded-full bg-rose-500/10 px-3 py-1 font-mono text-xs font-medium text-rose-600">Sin conexión</span>';
+        '<span class="rounded-full bg-rose-500/10 px-3 py-1 font-mono text-xs font-medium text-[light-dark(oklch(51.4%_0.222_16.935),oklch(81%_0.117_11.638))]">Sin conexión</span>';
       mostrarReintento(
         'No hay respuesta del servidor. Si lleva un rato inactivo, tarda hasta un minuto en arrancar. Vuelve a comprobarlo en unos segundos.',
         err instanceof Error ? err.message : '',
@@ -231,7 +231,7 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8000';
 
     if (detalle) {
       const pDetalle = document.createElement('p');
-      pDetalle.className = 'mt-1 font-mono text-[11px] text-ink-muted';
+      pDetalle.className = 'mt-1 font-mono text-micro text-ink-muted';
       pDetalle.textContent = `Detalle técnico: ${detalle}`;
       caja.appendChild(pDetalle);
     }

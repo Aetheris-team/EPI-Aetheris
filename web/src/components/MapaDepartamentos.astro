@@ -27,225 +27,246 @@ const mapaSvg = proyectarDepartamentos(geo, 720, 14, 0.4);
 ---
 
 <PanelWorkspace tipo="visor" titulo="Mapa departamental" idTitulo="mapa-titulo">
-  <div
-    class="flex flex-col border-t border-border bg-bg lg:flex-row lg:items-stretch"
-  >
-    <!-- Contenedor del mapa SVG interactivo -->
+  {
+    /* El mapa y su barra de controles se ponen lado a lado según el ancho
+    del PANEL (container query), no de la ventana: en escritorio el panel
+    puede ocupar 1/2 o 7/12 de la rejilla, y con `lg:` el mapa quedaba en
+    ~260 px junto a la barra de 320 px. Con @3xl (48rem de panel) solo se
+    divide cuando hay sitio para los dos. */
+  }
+  <div class="@container">
     <div
-      id="mapa-departamentos"
-      role="region"
-      aria-label="Mapa interactivo de departamentos de El Salvador"
-      class="relative flex flex-col h-[380px] w-full overflow-hidden shadow-inner sm:h-[480px] lg:h-auto lg:min-h-[520px] lg:flex-1 bg-bg/30"
+      class="flex flex-col border-t border-border bg-bg @3xl:flex-row @3xl:items-stretch"
     >
-      <!-- Barra superior de controles del mapa: etiquetas y exportación (SVG/PNG sin CORS) -->
+      <!-- Contenedor del mapa SVG interactivo -->
       <div
-        class="absolute top-3 right-3 z-10 flex items-center gap-2 rounded-lg border border-border/80 bg-surface/90 px-2.5 py-1.5 shadow-xs backdrop-blur-xs"
+        id="mapa-departamentos"
+        role="region"
+        aria-label="Mapa interactivo de departamentos de El Salvador"
+        class="relative flex flex-col h-[380px] w-full overflow-hidden shadow-inner @lg:h-[480px] @3xl:h-auto @3xl:min-h-[520px] @3xl:flex-1 bg-bg/30"
       >
-        <label
-          class="inline-flex cursor-pointer items-center gap-1.5 font-sans text-xs text-ink-muted hover:text-ink select-none"
-        >
-          <input
-            type="checkbox"
-            id="mapa-toggle-etiquetas"
-            class="rounded border-border text-accent focus:ring-accent"
-            checked
-          />
-          <span>Nombres</span>
-        </label>
-        <div class="flex items-center gap-1 border-l border-border pl-2">
-          <button
-            type="button"
-            id="mapa-exportar-svg"
-            title="Exportar mapa como imagen vectorial SVG limpia"
-            class="inline-flex items-center gap-1 rounded-md border border-border bg-surface px-2 py-1 font-sans text-xs font-medium text-ink hover:bg-bg hover:border-accent transition-colors"
-          >
-            <Icono nombre="file-type-svg" class="h-3.5 w-3.5 text-accent" />
-            <span>SVG</span>
-          </button>
-          <button
-            type="button"
-            id="mapa-exportar-png"
-            title="Exportar mapa como imagen PNG en alta definición"
-            class="inline-flex items-center gap-1 rounded-md border border-border bg-surface px-2 py-1 font-sans text-xs font-medium text-ink hover:bg-bg hover:border-accent transition-colors"
-          >
-            <Icono nombre="photo" class="h-3.5 w-3.5 text-accent" />
-            <span>PNG</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Lienzo SVG -->
-      <div
-        class="relative flex h-full w-full items-center justify-center p-3 sm:p-5"
-      >
-        <svg
-          id="mapa-svg"
-          viewBox={`0 0 ${mapaSvg.ancho} ${mapaSvg.alto}`}
-          role="group"
-          aria-label="Mapa coroplético departamental de El Salvador"
-          class="h-full w-full max-h-[520px] select-none drop-shadow-2xs"
-          preserveAspectRatio="xMidYMid meet"
-        >
-          <defs>
-            <filter
-              id="mapa-sombra-hover"
-              x="-10%"
-              y="-10%"
-              width="120%"
-              height="120%"
-            >
-              <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.25"
-              ></feDropShadow>
-            </filter>
-          </defs>
-
-          <!-- Trazados poligonales de los 14 departamentos -->
-          <g
-            id="mapa-poligonos-grupo"
-            role="group"
-            aria-label="Departamentos de El Salvador"
-          >
-            {
-              mapaSvg.departamentos.map((d) => {
-                const nombre =
-                  d.nombre ??
-                  DEPARTAMENTOS_POR_CODIGO[d.codigo]?.nombre ??
-                  d.codigo;
-                return (
-                  <path
-                    d={d.d}
-                    data-codigo={d.codigo}
-                    data-departamento={d.codigo}
-                    data-nombre={nombre}
-                    tabindex="0"
-                    role="button"
-                    aria-label={`Seleccionar ${nombre}`}
-                    aria-pressed="false"
-                    class="mapa-departamento-path cursor-pointer stroke-border focus:outline-none"
-                    style="fill: var(--color-surface); stroke: #8a8a90; stroke-width: 1.2px; stroke-linejoin: round; transition: fill 0.35s ease, stroke 0.2s ease, stroke-width 0.2s ease;"
-                  />
-                );
-              })
-            }
-          </g>
-
-          <!-- Etiquetas de texto en centroides óptimos -->
-          <g
-            id="mapa-etiquetas-grupo"
-            class="pointer-events-none transition-opacity duration-200"
-          >
-            {
-              mapaSvg.departamentos.map((d) => {
-                const nombre =
-                  d.nombre ??
-                  DEPARTAMENTOS_POR_CODIGO[d.codigo]?.nombre ??
-                  d.codigo;
-                const corta =
-                  d.abreviatura ??
-                  d.codigoCorto ??
-                  d.codigo.replace(/^SV-/, '');
-                return (
-                  <text
-                    x={d.centroX}
-                    y={d.centroY}
-                    data-etiqueta-codigo={d.codigo}
-                    text-anchor="middle"
-                    dominant-baseline="central"
-                    class="mapa-etiqueta-texto font-sans text-[10.5px] font-semibold tracking-tight fill-ink select-none"
-                    style="paint-order: stroke; stroke: var(--color-surface); stroke-width: 2.5px; stroke-linejoin: round;"
-                  >
-                    <tspan class="etiqueta-larga">{nombre}</tspan>
-                    <tspan class="etiqueta-corta">{corta}</tspan>
-                  </text>
-                );
-              })
-            }
-          </g>
-        </svg>
-
-        <!-- Tooltip flotante enriquecido -->
+        <!-- Barra superior de controles del mapa: etiquetas y exportación (SVG/PNG sin CORS) -->
         <div
-          id="mapa-tooltip"
-          role="tooltip"
-          aria-hidden="true"
-          class="pointer-events-none absolute z-20 hidden -translate-x-1/2 -translate-y-full rounded-lg border border-border bg-surface px-3 py-2 text-xs font-sans shadow-md backdrop-blur-xs transition-opacity duration-150 leading-relaxed text-ink"
+          class="absolute top-3 right-3 z-10 flex items-center gap-2 rounded-lg border border-border/80 bg-surface/90 px-2.5 py-1.5 shadow-xs backdrop-blur-xs"
+        >
+          <label
+            class="inline-flex cursor-pointer items-center gap-1.5 font-sans text-xs text-ink-muted hover:text-ink select-none"
+          >
+            <input
+              type="checkbox"
+              id="mapa-toggle-etiquetas"
+              class="rounded border-border text-accent focus:ring-accent"
+              checked
+            />
+            <span>Nombres</span>
+          </label>
+          <div class="flex items-center gap-1 border-l border-border pl-2">
+            <button
+              type="button"
+              id="mapa-exportar-svg"
+              title="Exportar mapa como imagen vectorial SVG limpia"
+              class="inline-flex items-center gap-1 rounded-md border border-border bg-surface px-2 py-1 font-sans text-xs font-medium text-ink hover:bg-bg hover:border-accent transition-colors"
+            >
+              <Icono nombre="file-type-svg" class="h-3.5 w-3.5 text-accent" />
+              <span>SVG</span>
+            </button>
+            <button
+              type="button"
+              id="mapa-exportar-png"
+              title="Exportar mapa como imagen PNG en alta definición"
+              class="inline-flex items-center gap-1 rounded-md border border-border bg-surface px-2 py-1 font-sans text-xs font-medium text-ink hover:bg-bg hover:border-accent transition-colors"
+            >
+              <Icono nombre="photo" class="h-3.5 w-3.5 text-accent" />
+              <span>PNG</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Lienzo SVG -->
+        <div
+          class="relative flex h-full w-full items-center justify-center p-3 sm:p-5"
+        >
+          <svg
+            id="mapa-svg"
+            viewBox={`0 0 ${mapaSvg.ancho} ${mapaSvg.alto}`}
+            role="group"
+            aria-label="Mapa coroplético departamental de El Salvador"
+            class="h-full w-full max-h-[520px] select-none drop-shadow-2xs"
+            preserveAspectRatio="xMidYMid meet"
+          >
+            <defs>
+              <filter
+                id="mapa-sombra-hover"
+                x="-10%"
+                y="-10%"
+                width="120%"
+                height="120%"
+              >
+                <feDropShadow
+                  dx="0"
+                  dy="2"
+                  stdDeviation="3"
+                  flood-opacity="0.25"></feDropShadow>
+              </filter>
+            </defs>
+
+            <!-- Trazados poligonales de los 14 departamentos -->
+            <g
+              id="mapa-poligonos-grupo"
+              role="group"
+              aria-label="Departamentos de El Salvador"
+            >
+              {
+                mapaSvg.departamentos.map((d) => {
+                  const nombre =
+                    d.nombre ??
+                    DEPARTAMENTOS_POR_CODIGO[d.codigo]?.nombre ??
+                    d.codigo;
+                  return (
+                    <path
+                      d={d.d}
+                      data-codigo={d.codigo}
+                      data-departamento={d.codigo}
+                      data-nombre={nombre}
+                      tabindex="0"
+                      role="button"
+                      aria-label={`Seleccionar ${nombre}`}
+                      aria-pressed="false"
+                      class="mapa-departamento-path cursor-pointer stroke-border focus:outline-none"
+                      style="fill: var(--color-surface); stroke: #8a8a90; stroke-width: 1.2px; stroke-linejoin: round; transition: fill 0.35s ease, stroke 0.2s ease, stroke-width 0.2s ease;"
+                    />
+                  );
+                })
+              }
+            </g>
+
+            <!-- Etiquetas de texto en centroides óptimos -->
+            <g
+              id="mapa-etiquetas-grupo"
+              class="pointer-events-none transition-opacity duration-200"
+            >
+              {
+                mapaSvg.departamentos.map((d) => {
+                  const nombre =
+                    d.nombre ??
+                    DEPARTAMENTOS_POR_CODIGO[d.codigo]?.nombre ??
+                    d.codigo;
+                  const corta =
+                    d.abreviatura ??
+                    d.codigoCorto ??
+                    d.codigo.replace(/^SV-/, '');
+                  return (
+                    <text
+                      x={d.centroX}
+                      y={d.centroY}
+                      data-etiqueta-codigo={d.codigo}
+                      text-anchor="middle"
+                      dominant-baseline="central"
+                      class="mapa-etiqueta-texto font-sans text-[10.5px] font-semibold tracking-tight fill-ink select-none"
+                      style="paint-order: stroke; stroke: var(--color-surface); stroke-width: 2.5px; stroke-linejoin: round;"
+                    >
+                      <tspan class="etiqueta-larga">{nombre}</tspan>
+                      <tspan class="etiqueta-corta">{corta}</tspan>
+                    </text>
+                  );
+                })
+              }
+            </g>
+          </svg>
+
+          <!-- Tooltip flotante enriquecido -->
+          <div
+            id="mapa-tooltip"
+            role="tooltip"
+            aria-hidden="true"
+            class="pointer-events-none absolute z-20 hidden -translate-x-1/2 -translate-y-full rounded-lg border border-border bg-surface px-3 py-2 text-xs font-sans shadow-md backdrop-blur-xs transition-opacity duration-150 leading-relaxed text-ink"
+          >
+          </div>
+        </div>
+      </div>
+
+      <!-- Barra lateral de controles y leyenda -->
+      <div
+        class="flex flex-col gap-3 p-4 @lg:p-5 @3xl:w-[320px] @3xl:shrink-0 @3xl:overflow-y-auto @3xl:border-l @3xl:border-border"
+      >
+        {
+          /* flex-wrap: en teléfono (y en la barra lateral de 320 px de lg) los
+        cuatro botones de ayuda junto al texto lo aplastaban a una columna de
+        ~90 px y una palabra por línea. Con base mínima para el párrafo, los
+        botones bajan a su propia fila cuando no caben. */
+        }
+        <div
+          class="flex flex-wrap gap-x-2 gap-y-3 rounded-lg border border-dashed border-border bg-surface p-3"
+        >
+          <Icono
+            nombre="list-details"
+            class="mt-0.5 h-4 w-4 shrink-0 text-accent"
+          />
+          <p
+            class="min-w-0 flex-1 basis-48 font-sans text-xs leading-relaxed text-ink-muted"
+          >
+            <strong class="font-semibold text-ink"
+              >Cómo interpretar el mapa:</strong
+            > el significado del color depende de la capa seleccionada. La explicación
+            específica aparece en el aviso de la capa. El gris indica ausencia de
+            dato.
+          </p>
+          <div class="flex shrink-0 items-start gap-3 ps-6" data-ayudas-mapa>
+            <AyudaTermino clave="iv" />
+            <AyudaTermino clave="anomalia" />
+            <AyudaTermino clave="percentil-presion" />
+            <AyudaTermino clave="integridad" />
+          </div>
+        </div>
+
+        <div
+          id="mapa-selector"
+          class="flex flex-wrap gap-2"
+          role="tablist"
+          aria-label="Capas del mapa"
         >
         </div>
-      </div>
-    </div>
 
-    <!-- Barra lateral de controles y leyenda -->
-    <div
-      class="flex flex-col gap-3 p-4 sm:p-5 lg:w-[320px] lg:shrink-0 lg:overflow-y-auto lg:border-l lg:border-border"
-    >
-      <div
-        class="flex gap-2 rounded-lg border border-dashed border-border bg-surface p-3"
-      >
-        <Icono
-          nombre="list-details"
-          class="mt-0.5 h-4 w-4 shrink-0 text-accent"
-        />
-        <p class="font-sans text-xs leading-relaxed text-ink-muted">
-          <strong class="font-semibold text-ink"
-            >Cómo interpretar el mapa:</strong
-          > el significado del color depende de la capa seleccionada. La explicación
-          específica aparece en el aviso de la capa. El gris indica ausencia de dato.
-        </p>
-        <div class="flex shrink-0 items-start gap-2" data-ayudas-mapa>
-          <AyudaTermino clave="iv" />
-          <AyudaTermino clave="anomalia" />
-          <AyudaTermino clave="percentil-presion" />
-          <AyudaTermino clave="integridad" />
-        </div>
-      </div>
-
-      <div
-        id="mapa-selector"
-        class="flex flex-wrap gap-2"
-        role="tablist"
-        aria-label="Capas del mapa"
-      >
-      </div>
-
-      <div class="flex gap-2 rounded-lg border border-border bg-surface p-3">
-        <Icono
-          nombre="info-circle"
-          class="mt-0.5 h-4 w-4 shrink-0 text-accent"
-        />
-        <div class="min-w-0 flex-1">
-          <p
-            id="mapa-aviso"
-            role="status"
-            aria-live="polite"
-            class="font-sans text-sm text-ink"
-          >
-          </p>
-        </div>
-      </div>
-
-      <div
-        id="mapa-no-disponible"
-        class="hidden rounded-lg border border-secondary bg-secondary/25 p-3"
-      >
-        <div class="flex gap-2">
+        <div class="flex gap-2 rounded-lg border border-border bg-surface p-3">
           <Icono
-            nombre="alert-triangle"
-            class="mt-0.5 h-4 w-4 shrink-0 text-secondary-ink"
+            nombre="info-circle"
+            class="mt-0.5 h-4 w-4 shrink-0 text-accent"
           />
-          <p class="font-sans text-sm text-ink">
-            No se pudo cargar esta capa. El mapa se muestra en gris hasta que
-            los datos vuelvan a estar disponibles.
-          </p>
+          <div class="min-w-0 flex-1">
+            <p
+              id="mapa-aviso"
+              role="status"
+              aria-live="polite"
+              class="font-sans text-sm text-ink"
+            >
+            </p>
+          </div>
         </div>
+
+        <div
+          id="mapa-no-disponible"
+          class="hidden rounded-lg border border-secondary bg-secondary/25 p-3"
+        >
+          <div class="flex gap-2">
+            <Icono
+              nombre="alert-triangle"
+              class="mt-0.5 h-4 w-4 shrink-0 text-secondary-ink"
+            />
+            <p class="font-sans text-sm text-ink">
+              No se pudo cargar esta capa. El mapa se muestra en gris hasta que
+              los datos vuelvan a estar disponibles.
+            </p>
+          </div>
+        </div>
+
+        <p
+          id="mapa-alertas-nacionales"
+          class="hidden font-sans text-xs text-ink-muted"
+        >
+        </p>
+
+        <div id="mapa-leyenda"></div>
       </div>
-
-      <p
-        id="mapa-alertas-nacionales"
-        class="hidden font-sans text-xs text-ink-muted"
-      >
-      </p>
-
-      <div id="mapa-leyenda"></div>
     </div>
   </div>
 
@@ -494,7 +515,7 @@ const mapaSvg = proyectarDepartamentos(geo, 720, 14, 0.4);
     const item = (color: string, etiqueta: string) =>
       `<span class="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-2 py-1">` +
       `<span style="background:${color}" class="inline-block h-2.5 w-2.5 rounded-full ring-1 ring-black/5"></span>` +
-      `<span class="font-mono text-[11px] text-ink-muted">${escapeHtml(etiqueta)}</span></span>`;
+      `<span class="font-mono text-micro text-ink-muted">${escapeHtml(etiqueta)}</span></span>`;
     const items = capa.rampa.map((color, i) => item(color, rangos[i])).join('');
     contenedor.innerHTML = `
       <div class="flex flex-wrap items-center gap-1.5 font-sans text-xs text-ink-muted">
