@@ -1,0 +1,102 @@
+{
+  "alcance_anio_min": 2014,
+  "horizonte": 2,
+  "n_origenes": 258,
+  "anios_prueba": [
+    2019,
+    2021,
+    2022,
+    2023,
+    2024
+  ],
+  "comparador_decisivo": "persistencia_rw",
+  "baselines": {
+    "persistencia_rw": {
+      "nombre": "persistencia_rw",
+      "n_pred": 258,
+      "wis_medio_natural": 50.77187914548449,
+      "wis_medio_log": 0.26389737669881974,
+      "mae_mediana": 60.56605297832217,
+      "cobertura_50": 0.6589147286821705,
+      "cobertura_95": 0.9496124031007752,
+      "wis_por_anio": {
+        "2019": 124.86816556767187,
+        "2021": 16.99628335758335,
+        "2022": 51.75592564458687,
+        "2023": 32.527879737609865,
+        "2024": 26.412080043512766
+      }
+    },
+    "climatologia_estacional": {
+      "nombre": "climatologia_estacional",
+      "n_pred": 258,
+      "wis_medio_natural": 127.76094333501854,
+      "wis_medio_log": 0.4403783091537419,
+      "mae_mediana": 176.9496124031008,
+      "cobertura_50": 0.7131782945736435,
+      "cobertura_95": 0.9806201550387597,
+      "wis_por_anio": {
+        "2019": 168.89897901337795,
+        "2021": 147.21156573913044,
+        "2022": 145.21822796822744,
+        "2023": 105.03951250000003,
+        "2024": 73.18453231605352
+      }
+    },
+    "persistencia_estacional": {
+      "nombre": "persistencia_estacional",
+      "n_pred": 258,
+      "wis_medio_natural": 57.19178763095162,
+      "wis_medio_log": 0.2905174626932284,
+      "mae_mediana": 69.14578856141317,
+      "cobertura_50": 0.5,
+      "cobertura_95": 0.9534883720930233,
+      "wis_por_anio": {
+        "2019": 136.50238787554346,
+        "2021": 23.646575641412756,
+        "2022": 61.48177436626359,
+        "2023": 33.065658009393275,
+        "2024": 29.97234180100892
+      }
+    }
+  },
+  "cadencia_reajuste_semanas": 2,
+  "hgbr_kw": {
+    "loss": "quantile",
+    "max_iter": 150,
+    "max_leaf_nodes": 7,
+    "min_samples_leaf": 20,
+    "l2_regularization": 1.0,
+    "learning_rate": 0.05,
+    "early_stopping": false,
+    "random_state": 0
+  },
+  "modelo": {
+    "nombre": "modelo_hgbr_quantile",
+    "n_pred": 258,
+    "wis_medio_natural": 38.25523210258999,
+    "wis_medio_log": 0.19216270655235118,
+    "mae_mediana": 54.23707473373773,
+    "cobertura_50": 0.4573643410852713,
+    "cobertura_95": 0.9457364341085271,
+    "wis_por_anio": {
+      "2019": 103.34262624512945,
+      "2021": 12.544896421682756,
+      "2022": 41.19258781993408,
+      "2023": 20.801175642904337,
+      "2024": 12.406015318649061
+    }
+  },
+  "skill_por_anio_vs_decisivo": {
+    "2019": 0.17238612599683567,
+    "2021": 0.2619035492788774,
+    "2022": 0.20409909963145645,
+    "2023": 0.3605124031846043,
+    "2024": 0.5302901059586869
+  },
+  "skill_medio_por_anio_vs_decisivo": 0.30583825681009214,
+  "anios_ganados_vs_decisivo": 5,
+  "cumple_criterio_firmado": true,
+  "gana_wis_agrupado_nat_y_log": true,
+  "cumple_criterio_exito": true
+}

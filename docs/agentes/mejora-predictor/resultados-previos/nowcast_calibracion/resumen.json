@@ -1,0 +1,970 @@
+[
+  {
+    "alcance_anio_min": 2016,
+    "horizonte": 4,
+    "n_cal": 52,
+    "n_origenes": 256,
+    "comparador_decisivo": "persistencia_rw",
+    "baseline_decisivo": {
+      "nombre": "persistencia_rw",
+      "n_pred": 256,
+      "wis_medio_natural": 76.36414581836858,
+      "wis_medio_log": 0.31508878034390503,
+      "mae_mediana": 88.29180003891764,
+      "cobertura_50": 0.5859375,
+      "cobertura_95": 0.9453125,
+      "wis_por_anio": {
+        "2019": 199.60017178431343,
+        "2021": 23.49070095083053,
+        "2022": 79.45701849867959,
+        "2023": 36.72333732699908,
+        "2024": 38.48231246428659
+      }
+    },
+    "variantes": {
+      "sin_calibrar": {
+        "nombre": "sin_calibrar",
+        "n_pred": 256,
+        "wis_medio_natural": 78.23278100098918,
+        "wis_medio_log": 0.28933576483924894,
+        "mae_mediana": 102.32946702415106,
+        "cobertura_50": 0.37890625,
+        "cobertura_95": 0.84765625,
+        "wis_por_anio": {
+          "2019": 264.6816036089564,
+          "2021": 13.9726827318825,
+          "2022": 67.99377266245666,
+          "2023": 22.36280757425031,
+          "2024": 17.2099539451611
+        },
+        "skill_por_anio_vs_decisivo": {
+          "2019": -0.3260589970582264,
+          "2021": 0.405182384249437,
+          "2022": 0.14426977066114577,
+          "2023": 0.3910464243725168,
+          "2024": 0.5527827502275817
+        },
+        "skill_medio_por_anio": 0.23344446649049097,
+        "n_fallback": 8,
+        "anios_ganados_vs_decisivo": 4,
+        "cumple_criterio_firmado": false,
+        "gana_wis_agrupado_nat_y_log": false,
+        "cumple_criterio_exito": false,
+        "veredicto": "NO CUMPLE",
+        "cob50_en_objetivo": false,
+        "cob95_en_objetivo": false
+      },
+      "cqr_r": {
+        "nombre": "cqr_r",
+        "n_pred": 256,
+        "wis_medio_natural": 90.80219546123321,
+        "wis_medio_log": 0.34224739468455345,
+        "mae_mediana": 109.69550346076653,
+        "cobertura_50": 0.546875,
+        "cobertura_95": 0.84765625,
+        "wis_por_anio": {
+          "2019": 296.8644404590395,
+          "2021": 26.940511490951916,
+          "2022": 82.06758643964811,
+          "2023": 23.19109632613694,
+          "2024": 20.034905361906397
+        },
+        "skill_por_anio_vs_decisivo": {
+          "2019": -0.4872955158567156,
+          "2021": -0.1468585610681581,
+          "2022": -0.0328550956264726,
+          "2023": 0.3684915910655322,
+          "2024": 0.4793736634070591
+        },
+        "skill_medio_por_anio": 0.03617121638424901,
+        "n_fallback": 8,
+        "anios_ganados_vs_decisivo": 2,
+        "cumple_criterio_firmado": false,
+        "gana_wis_agrupado_nat_y_log": false,
+        "cumple_criterio_exito": false,
+        "veredicto": "NO CUMPLE",
+        "cob50_en_objetivo": true,
+        "cob95_en_objetivo": false
+      },
+      "inflado_global": {
+        "nombre": "inflado_global",
+        "n_pred": 256,
+        "wis_medio_natural": 105.82419753581436,
+        "wis_medio_log": 0.35236818469610287,
+        "mae_mediana": 109.69550346076653,
+        "cobertura_50": 0.55859375,
+        "cobertura_95": 0.875,
+        "wis_por_anio": {
+          "2019": 313.7116817109907,
+          "2021": 81.19041155075887,
+          "2022": 87.84285678168251,
+          "2023": 24.56958137937346,
+          "2024": 19.9115496420313
+        },
+        "skill_por_anio_vs_decisivo": {
+          "2019": -0.5717004595065449,
+          "2021": -2.4562787939237007,
+          "2022": -0.1055393021466351,
+          "2023": 0.3309545600227938,
+          "2024": 0.482579180746735
+        },
+        "skill_medio_por_anio": -0.4639969629614704,
+        "n_fallback": 8,
+        "anios_ganados_vs_decisivo": 2,
+        "cumple_criterio_firmado": false,
+        "gana_wis_agrupado_nat_y_log": false,
+        "cumple_criterio_exito": false,
+        "veredicto": "NO CUMPLE",
+        "cob50_en_objetivo": true,
+        "cob95_en_objetivo": false
+      }
+    }
+  },
+  {
+    "alcance_anio_min": 2016,
+    "horizonte": 1,
+    "n_cal": 52,
+    "n_origenes": 259,
+    "comparador_decisivo": "persistencia_rw",
+    "baseline_decisivo": {
+      "nombre": "persistencia_rw",
+      "n_pred": 259,
+      "wis_medio_natural": 54.46487341764541,
+      "wis_medio_log": 0.2092232077952035,
+      "mae_mediana": 47.40963716735647,
+      "cobertura_50": 0.637065637065637,
+      "cobertura_95": 0.9575289575289575,
+      "wis_por_anio": {
+        "2019": 146.97245283393482,
+        "2021": 18.302548338118942,
+        "2022": 48.380727379389164,
+        "2023": 34.832830044292784,
+        "2024": 23.140379164038865
+      }
+    },
+    "variantes": {
+      "sin_calibrar": {
+        "nombre": "sin_calibrar",
+        "n_pred": 259,
+        "wis_medio_natural": 55.768001388884414,
+        "wis_medio_log": 0.2121267330052817,
+        "mae_mediana": 81.5675420317903,
+        "cobertura_50": 0.4864864864864865,
+        "cobertura_95": 0.915057915057915,
+        "wis_por_anio": {
+          "2019": 195.44412622980522,
+          "2021": 10.60908894324272,
+          "2022": 42.653996505493325,
+          "2023": 19.684316865614328,
+          "2024": 9.580037776311881
+        },
+        "skill_por_anio_vs_decisivo": {
+          "2019": -0.3298010781016145,
+          "2021": 0.42034908214682654,
+          "2022": 0.11836801933522612,
+          "2023": 0.43489182932928183,
+          "2024": 0.5860034224849838
+        },
+        "skill_medio_por_anio": 0.24596225503894073,
+        "n_fallback": 5,
+        "anios_ganados_vs_decisivo": 4,
+        "cumple_criterio_firmado": true,
+        "gana_wis_agrupado_nat_y_log": false,
+        "cumple_criterio_exito": false,
+        "veredicto": "PARCIAL",
+        "cob50_en_objetivo": true,
+        "cob95_en_objetivo": true
+      },
+      "cqr_r": {
+        "nombre": "cqr_r",
+        "n_pred": 259,
+        "wis_medio_natural": 79.27360871195955,
+        "wis_medio_log": 0.2768893146699249,
+        "mae_mediana": 99.40271849106418,
+        "cobertura_50": 0.5675675675675675,
+        "cobertura_95": 0.861003861003861,
+        "wis_por_anio": {
+          "2019": 281.7144265073423,
+          "2021": 21.164521369887606,
+          "2022": 61.6763341177318,
+          "2023": 20.685374910460567,
+          "2024": 10.00990420548947
+        },
+        "skill_por_anio_vs_decisivo": {
+          "2019": -0.9167838671485828,
+          "2021": -0.15637019386027218,
+          "2022": -0.27481204724521646,
+          "2023": 0.40615290563076767,
+          "2024": 0.5674269581094294
+        },
+        "skill_medio_por_anio": -0.07487724890277488,
+        "n_fallback": 5,
+        "anios_ganados_vs_decisivo": 2,
+        "cumple_criterio_firmado": false,
+        "gana_wis_agrupado_nat_y_log": false,
+        "cumple_criterio_exito": false,
+        "veredicto": "NO CUMPLE",
+        "cob50_en_objetivo": true,
+        "cob95_en_objetivo": false
+      },
+      "inflado_global": {
+        "nombre": "inflado_global",
+        "n_pred": 259,
+        "wis_medio_natural": 85.1646620670797,
+        "wis_medio_log": 0.2853697390973612,
+        "mae_mediana": 99.40271849106418,
+        "cobertura_50": 0.5984555984555985,
+        "cobertura_95": 0.9034749034749034,
+        "wis_por_anio": {
+          "2019": 292.0229098456549,
+          "2021": 41.23217779771545,
+          "2022": 60.83561479327092,
+          "2023": 20.71557231860728,
+          "2024": 10.172180113431398
+        },
+        "skill_por_anio_vs_decisivo": {
+          "2019": -0.986922747867681,
+          "2021": -1.2528107581522234,
+          "2022": -0.2574348937793711,
+          "2023": 0.40528598186636744,
+          "2024": 0.5604142852922911
+        },
+        "skill_medio_por_anio": -0.3062936265281234,
+        "n_fallback": 5,
+        "anios_ganados_vs_decisivo": 2,
+        "cumple_criterio_firmado": false,
+        "gana_wis_agrupado_nat_y_log": false,
+        "cumple_criterio_exito": false,
+        "veredicto": "NO CUMPLE",
+        "cob50_en_objetivo": false,
+        "cob95_en_objetivo": true
+      }
+    }
+  },
+  {
+    "alcance_anio_min": 2016,
+    "horizonte": 2,
+    "n_cal": 52,
+    "n_origenes": 258,
+    "comparador_decisivo": "persistencia_rw",
+    "baseline_decisivo": {
+      "nombre": "persistencia_rw",
+      "n_pred": 258,
+      "wis_medio_natural": 54.0763773750733,
+      "wis_medio_log": 0.2629442238105169,
+      "mae_mediana": 60.80752917179076,
+      "cobertura_50": 0.6356589147286822,
+      "cobertura_95": 0.9457364341085271,
+      "wis_por_anio": {
+        "2019": 136.50526946604597,
+        "2021": 18.35264779513291,
+        "2022": 53.96659021618112,
+        "2023": 33.76398032086349,
+        "2024": 26.419409477914517
+      }
+    },
+    "variantes": {
+      "sin_calibrar": {
+        "nombre": "sin_calibrar",
+        "n_pred": 258,
+        "wis_medio_natural": 62.72146774347492,
+        "wis_medio_log": 0.23197330689885756,
+        "mae_mediana": 89.99259518996396,
+        "cobertura_50": 0.4418604651162791,
+        "cobertura_95": 0.8953488372093024,
+        "wis_por_anio": {
+          "2019": 218.47704944727292,
+          "2021": 11.026813012586535,
+          "2022": 51.33277256479773,
+          "2023": 20.091235382545392,
+          "2024": 10.691212358983929
+        },
+        "skill_por_anio_vs_decisivo": {
+          "2019": -0.6005026787747298,
+          "2021": 0.39917045563796927,
+          "2022": 0.04880459634067591,
+          "2023": 0.4049506251450281,
+          "2024": 0.595327353250597
+        },
+        "skill_medio_por_anio": 0.1695500703199081,
+        "n_fallback": 6,
+        "anios_ganados_vs_decisivo": 4,
+        "cumple_criterio_firmado": true,
+        "gana_wis_agrupado_nat_y_log": false,
+        "cumple_criterio_exito": false,
+        "veredicto": "PARCIAL",
+        "cob50_en_objetivo": true,
+        "cob95_en_objetivo": false
+      },
+      "cqr_r": {
+        "nombre": "cqr_r",
+        "n_pred": 258,
+        "wis_medio_natural": 81.55175008738854,
+        "wis_medio_log": 0.28831130281079576,
+        "mae_mediana": 102.59867441783796,
+        "cobertura_50": 0.6046511627906976,
+        "cobertura_95": 0.8488372093023255,
+        "wis_por_anio": {
+          "2019": 290.74696204942813,
+          "2021": 20.901955831157128,
+          "2022": 60.686588552174044,
+          "2023": 21.23058942817879,
+          "2024": 11.859970181534202
+        },
+        "skill_por_anio_vs_decisivo": {
+          "2019": -1.1299321497749792,
+          "2021": -0.13890682502501295,
+          "2022": -0.12452145501640444,
+          "2023": 0.37120596486487256,
+          "2024": 0.5510887481626483
+        },
+        "skill_medio_por_anio": -0.09421314335777513,
+        "n_fallback": 6,
+        "anios_ganados_vs_decisivo": 2,
+        "cumple_criterio_firmado": false,
+        "gana_wis_agrupado_nat_y_log": false,
+        "cumple_criterio_exito": false,
+        "veredicto": "NO CUMPLE",
+        "cob50_en_objetivo": false,
+        "cob95_en_objetivo": false
+      },
+      "inflado_global": {
+        "nombre": "inflado_global",
+        "n_pred": 258,
+        "wis_medio_natural": 89.11569974935836,
+        "wis_medio_log": 0.29731779936754016,
+        "mae_mediana": 102.59867441783796,
+        "cobertura_50": 0.5968992248062015,
+        "cobertura_95": 0.8914728682170543,
+        "wis_por_anio": {
+          "2019": 298.98553881692897,
+          "2021": 47.986196146351155,
+          "2022": 64.09070364586195,
+          "2023": 21.474534383130376,
+          "2024": 11.459621769788319
+        },
+        "skill_por_anio_vs_decisivo": {
+          "2019": -1.1902856936324935,
+          "2021": -1.6146742792654152,
+          "2022": -0.18759964987829192,
+          "2023": 0.363980959026303,
+          "2024": 0.5662423197093762
+        },
+        "skill_medio_por_anio": -0.41246726880810425,
+        "n_fallback": 6,
+        "anios_ganados_vs_decisivo": 2,
+        "cumple_criterio_firmado": false,
+        "gana_wis_agrupado_nat_y_log": false,
+        "cumple_criterio_exito": false,
+        "veredicto": "NO CUMPLE",
+        "cob50_en_objetivo": false,
+        "cob95_en_objetivo": false
+      }
+    }
+  },
+  {
+    "alcance_anio_min": 2016,
+    "horizonte": 8,
+    "n_cal": 52,
+    "n_origenes": 252,
+    "comparador_decisivo": "persistencia_estacional",
+    "baseline_decisivo": {
+      "nombre": "persistencia_estacional",
+      "n_pred": 252,
+      "wis_medio_natural": 103.70089089384936,
+      "wis_medio_log": 0.39581410298994163,
+      "mae_mediana": 130.0462558087942,
+      "cobertura_50": 0.5476190476190477,
+      "cobertura_95": 0.9444444444444444,
+      "wis_por_anio": {
+        "2019": 266.29928095836254,
+        "2021": 32.991378474019136,
+        "2022": 122.62263025052002,
+        "2023": 41.2754454323652,
+        "2024": 44.43733282785227
+      }
+    },
+    "variantes": {
+      "sin_calibrar": {
+        "nombre": "sin_calibrar",
+        "n_pred": 252,
+        "wis_medio_natural": 100.91690847703337,
+        "wis_medio_log": 0.37036477550395197,
+        "mae_mediana": 121.48975844286203,
+        "cobertura_50": 0.376984126984127,
+        "cobertura_95": 0.8174603174603174,
+        "wis_por_anio": {
+          "2019": 325.8451901225251,
+          "2021": 25.014914631698307,
+          "2022": 95.63876182428514,
+          "2023": 27.936027265466098,
+          "2024": 18.472418718832934
+        },
+        "skill_por_anio_vs_decisivo": {
+          "2019": -0.22360521947287149,
+          "2021": 0.2417741910542578,
+          "2022": 0.22005618678303018,
+          "2023": 0.32318047757370305,
+          "2024": 0.5843040627484541
+        },
+        "skill_medio_por_anio": 0.22914193973731473,
+        "n_fallback": 12,
+        "anios_ganados_vs_decisivo": 4,
+        "cumple_criterio_firmado": false,
+        "gana_wis_agrupado_nat_y_log": true,
+        "cumple_criterio_exito": false,
+        "veredicto": "NO CUMPLE",
+        "cob50_en_objetivo": false,
+        "cob95_en_objetivo": false
+      },
+      "cqr_r": {
+        "nombre": "cqr_r",
+        "n_pred": 252,
+        "wis_medio_natural": 103.64684895136091,
+        "wis_medio_log": 0.398830862034853,
+        "mae_mediana": 129.166769477324,
+        "cobertura_50": 0.6309523809523809,
+        "cobertura_95": 0.8253968253968254,
+        "wis_por_anio": {
+          "2019": 316.2589039279801,
+          "2021": 34.073593450917194,
+          "2022": 109.96477100638415,
+          "2023": 27.876670752249403,
+          "2024": 19.35672784997457
+        },
+        "skill_por_anio_vs_decisivo": {
+          "2019": -0.18760705169695524,
+          "2021": -0.03280296328782706,
+          "2022": 0.1032261273329046,
+          "2023": 0.32461853626925263,
+          "2024": 0.5644039230490848
+        },
+        "skill_medio_por_anio": 0.15436771433329194,
+        "n_fallback": 12,
+        "anios_ganados_vs_decisivo": 3,
+        "cumple_criterio_firmado": false,
+        "gana_wis_agrupado_nat_y_log": false,
+        "cumple_criterio_exito": false,
+        "veredicto": "NO CUMPLE",
+        "cob50_en_objetivo": false,
+        "cob95_en_objetivo": false
+      },
+      "inflado_global": {
+        "nombre": "inflado_global",
+        "n_pred": 252,
+        "wis_medio_natural": 117.9654022966331,
+        "wis_medio_log": 0.40326888839125685,
+        "mae_mediana": 129.166769477324,
+        "cobertura_50": 0.6309523809523809,
+        "cobertura_95": 0.9166666666666666,
+        "wis_por_anio": {
+          "2019": 294.89272131879784,
+          "2021": 102.9745398494243,
+          "2022": 125.84708630068862,
+          "2023": 37.746795921902454,
+          "2024": 26.059581562012433
+        },
+        "skill_por_anio_vs_decisivo": {
+          "2019": -0.10737332920138853,
+          "2021": -2.1212560557455102,
+          "2022": -0.026295766479490723,
+          "2023": 0.08549028298785699,
+          "2024": 0.41356557867760013
+        },
+        "skill_medio_por_anio": -0.3511738579521865,
+        "n_fallback": 12,
+        "anios_ganados_vs_decisivo": 2,
+        "cumple_criterio_firmado": false,
+        "gana_wis_agrupado_nat_y_log": false,
+        "cumple_criterio_exito": false,
+        "veredicto": "NO CUMPLE",
+        "cob50_en_objetivo": false,
+        "cob95_en_objetivo": true
+      }
+    }
+  },
+  {
+    "alcance_anio_min": 2014,
+    "horizonte": 4,
+    "n_cal": 52,
+    "n_origenes": 256,
+    "comparador_decisivo": "persistencia_rw",
+    "baseline_decisivo": {
+      "nombre": "persistencia_rw",
+      "n_pred": 256,
+      "wis_medio_natural": 74.56830933775089,
+      "wis_medio_log": 0.31596993397331136,
+      "mae_mediana": 88.24642268465954,
+      "cobertura_50": 0.6484375,
+      "cobertura_95": 0.9609375,
+      "wis_por_anio": {
+        "2019": 195.0545863505904,
+        "2021": 23.378139676957684,
+        "2022": 76.87635171220525,
+        "2023": 36.415826764459126,
+        "2024": 37.178936826019466
+      }
+    },
+    "variantes": {
+      "sin_calibrar": {
+        "nombre": "sin_calibrar",
+        "n_pred": 256,
+        "wis_medio_natural": 53.071368648123084,
+        "wis_medio_log": 0.2400647535251942,
+        "mae_mediana": 72.8443150192811,
+        "cobertura_50": 0.421875,
+        "cobertura_95": 0.9375,
+        "wis_por_anio": {
+          "2019": 140.29744475740694,
+          "2021": 15.043860285647435,
+          "2022": 65.26344061034771,
+          "2023": 22.16978766542883,
+          "2024": 19.657116970824845
+        },
+        "skill_por_anio_vs_decisivo": {
+          "2019": 0.28072727033838196,
+          "2021": 0.3564988278141228,
+          "2022": 0.15105960211706837,
+          "2023": 0.39120460428304893,
+          "2024": 0.4712835102625118
+        },
+        "skill_medio_por_anio": 0.3301547629630268,
+        "n_fallback": 0,
+        "anios_ganados_vs_decisivo": 5,
+        "cumple_criterio_firmado": true,
+        "gana_wis_agrupado_nat_y_log": true,
+        "cumple_criterio_exito": true,
+        "veredicto": "CUMPLE",
+        "cob50_en_objetivo": true,
+        "cob95_en_objetivo": true
+      },
+      "cqr_r": {
+        "nombre": "cqr_r",
+        "n_pred": 256,
+        "wis_medio_natural": 56.62488895551842,
+        "wis_medio_log": 0.25453409069902566,
+        "mae_mediana": 74.64886312604402,
+        "cobertura_50": 0.55078125,
+        "cobertura_95": 0.87890625,
+        "wis_por_anio": {
+          "2019": 150.70005489666227,
+          "2021": 15.582957772979881,
+          "2022": 67.36593933046787,
+          "2023": 22.1294506367391,
+          "2024": 24.188970511316942
+        },
+        "skill_por_anio_vs_decisivo": {
+          "2019": 0.2273954808435289,
+          "2021": 0.3334389310566489,
+          "2022": 0.12371050615591928,
+          "2023": 0.3923122827919191,
+          "2024": 0.34939047276929047
+        },
+        "skill_medio_por_anio": 0.2852495347234613,
+        "n_fallback": 0,
+        "anios_ganados_vs_decisivo": 5,
+        "cumple_criterio_firmado": true,
+        "gana_wis_agrupado_nat_y_log": true,
+        "cumple_criterio_exito": true,
+        "veredicto": "CUMPLE",
+        "cob50_en_objetivo": true,
+        "cob95_en_objetivo": false
+      },
+      "inflado_global": {
+        "nombre": "inflado_global",
+        "n_pred": 256,
+        "wis_medio_natural": 58.80968137115781,
+        "wis_medio_log": 0.2512995083612056,
+        "mae_mediana": 74.64886312604402,
+        "cobertura_50": 0.55078125,
+        "cobertura_95": 0.96484375,
+        "wis_por_anio": {
+          "2019": 151.03449134193409,
+          "2021": 23.238537106272588,
+          "2022": 69.40508543400293,
+          "2023": 24.518103089143988,
+          "2024": 23.115948017905847
+        },
+        "skill_por_anio_vs_decisivo": {
+          "2019": 0.22568090211185676,
+          "2021": 0.0059715004108172876,
+          "2022": 0.09718549478221594,
+          "2023": 0.3267184829352,
+          "2024": 0.3782515049831042
+        },
+        "skill_medio_por_anio": 0.20676157704463885,
+        "n_fallback": 0,
+        "anios_ganados_vs_decisivo": 5,
+        "cumple_criterio_firmado": true,
+        "gana_wis_agrupado_nat_y_log": true,
+        "cumple_criterio_exito": true,
+        "veredicto": "CUMPLE",
+        "cob50_en_objetivo": true,
+        "cob95_en_objetivo": true
+      }
+    }
+  },
+  {
+    "alcance_anio_min": 2014,
+    "horizonte": 1,
+    "n_cal": 52,
+    "n_origenes": 259,
+    "comparador_decisivo": "persistencia_rw",
+    "baseline_decisivo": {
+      "nombre": "persistencia_rw",
+      "n_pred": 259,
+      "wis_medio_natural": 46.73474005913158,
+      "wis_medio_log": 0.20963060322464502,
+      "mae_mediana": 47.06694397079238,
+      "cobertura_50": 0.6332046332046332,
+      "cobertura_95": 0.9575289575289575,
+      "wis_por_anio": {
+        "2019": 123.3844260915333,
+        "2021": 15.033016545900303,
+        "2022": 41.36503434350597,
+        "2023": 32.14333183956505,
+        "2024": 21.138242946052664
+      }
+    },
+    "variantes": {
+      "sin_calibrar": {
+        "nombre": "sin_calibrar",
+        "n_pred": 259,
+        "wis_medio_natural": 33.682325040986996,
+        "wis_medio_log": 0.17416436321215784,
+        "mae_mediana": 44.4975267826023,
+        "cobertura_50": 0.5173745173745173,
+        "cobertura_95": 0.9536679536679536,
+        "wis_por_anio": {
+          "2019": 91.44412534325372,
+          "2021": 11.69058100027763,
+          "2022": 34.28591385462959,
+          "2023": 20.72739906634053,
+          "2024": 9.84068778580452
+        },
+        "skill_por_anio_vs_decisivo": {
+          "2019": 0.2588681712924168,
+          "2021": 0.2223396439042833,
+          "2022": 0.171137788260721,
+          "2023": 0.3551571078631217,
+          "2024": 0.534460465284691
+        },
+        "skill_medio_por_anio": 0.30839263532104677,
+        "n_fallback": 0,
+        "anios_ganados_vs_decisivo": 5,
+        "cumple_criterio_firmado": true,
+        "gana_wis_agrupado_nat_y_log": true,
+        "cumple_criterio_exito": true,
+        "veredicto": "CUMPLE",
+        "cob50_en_objetivo": true,
+        "cob95_en_objetivo": true
+      },
+      "cqr_r": {
+        "nombre": "cqr_r",
+        "n_pred": 259,
+        "wis_medio_natural": 35.628371380101676,
+        "wis_medio_log": 0.18484717287360178,
+        "mae_mediana": 48.44723496015391,
+        "cobertura_50": 0.5752895752895753,
+        "cobertura_95": 0.915057915057915,
+        "wis_por_anio": {
+          "2019": 96.32301144184679,
+          "2021": 11.748145104252233,
+          "2022": 38.49211370535052,
+          "2023": 21.19289650393095,
+          "2024": 9.9264550244385
+        },
+        "skill_por_anio_vs_decisivo": {
+          "2019": 0.2193260163127142,
+          "2021": 0.21851046538919006,
+          "2022": 0.06945287689834778,
+          "2023": 0.34067517923438384,
+          "2024": 0.5304030212079591
+        },
+        "skill_medio_por_anio": 0.275673511808519,
+        "n_fallback": 0,
+        "anios_ganados_vs_decisivo": 5,
+        "cumple_criterio_firmado": true,
+        "gana_wis_agrupado_nat_y_log": true,
+        "cumple_criterio_exito": true,
+        "veredicto": "CUMPLE",
+        "cob50_en_objetivo": true,
+        "cob95_en_objetivo": true
+      },
+      "inflado_global": {
+        "nombre": "inflado_global",
+        "n_pred": 259,
+        "wis_medio_natural": 36.063532950740424,
+        "wis_medio_log": 0.18516887893714346,
+        "mae_mediana": 48.44723496015391,
+        "cobertura_50": 0.5328185328185329,
+        "cobertura_95": 0.9652509652509652,
+        "wis_por_anio": {
+          "2019": 94.37241094225925,
+          "2021": 13.551663799796836,
+          "2022": 40.36997908376146,
+          "2023": 21.741197401075475,
+          "2024": 9.849492966214056
+        },
+        "skill_por_anio_vs_decisivo": {
+          "2019": 0.2351351468600369,
+          "2021": 0.09853995314782316,
+          "2022": 0.024055467994570368,
+          "2023": 0.32361718101935055,
+          "2024": 0.5340439131411657
+        },
+        "skill_medio_por_anio": 0.2430783324325893,
+        "n_fallback": 0,
+        "anios_ganados_vs_decisivo": 5,
+        "cumple_criterio_firmado": true,
+        "gana_wis_agrupado_nat_y_log": true,
+        "cumple_criterio_exito": true,
+        "veredicto": "CUMPLE",
+        "cob50_en_objetivo": true,
+        "cob95_en_objetivo": true
+      }
+    }
+  },
+  {
+    "alcance_anio_min": 2014,
+    "horizonte": 2,
+    "n_cal": 52,
+    "n_origenes": 258,
+    "comparador_decisivo": "persistencia_rw",
+    "baseline_decisivo": {
+      "nombre": "persistencia_rw",
+      "n_pred": 258,
+      "wis_medio_natural": 50.77187914548449,
+      "wis_medio_log": 0.26389737669881974,
+      "mae_mediana": 60.56605297832217,
+      "cobertura_50": 0.6589147286821705,
+      "cobertura_95": 0.9496124031007752,
+      "wis_por_anio": {
+        "2019": 124.86816556767187,
+        "2021": 16.99628335758335,
+        "2022": 51.75592564458687,
+        "2023": 32.527879737609865,
+        "2024": 26.412080043512766
+      }
+    },
+    "variantes": {
+      "sin_calibrar": {
+        "nombre": "sin_calibrar",
+        "n_pred": 258,
+        "wis_medio_natural": 38.25523210258999,
+        "wis_medio_log": 0.19216270655235118,
+        "mae_mediana": 54.23707473373773,
+        "cobertura_50": 0.4573643410852713,
+        "cobertura_95": 0.9457364341085271,
+        "wis_por_anio": {
+          "2019": 103.34262624512945,
+          "2021": 12.544896421682756,
+          "2022": 41.19258781993408,
+          "2023": 20.801175642904337,
+          "2024": 12.406015318649061
+        },
+        "skill_por_anio_vs_decisivo": {
+          "2019": 0.17238612599683567,
+          "2021": 0.2619035492788774,
+          "2022": 0.20409909963145645,
+          "2023": 0.3605124031846043,
+          "2024": 0.5302901059586869
+        },
+        "skill_medio_por_anio": 0.30583825681009214,
+        "n_fallback": 0,
+        "anios_ganados_vs_decisivo": 5,
+        "cumple_criterio_firmado": true,
+        "gana_wis_agrupado_nat_y_log": true,
+        "cumple_criterio_exito": true,
+        "veredicto": "CUMPLE",
+        "cob50_en_objetivo": true,
+        "cob95_en_objetivo": true
+      },
+      "cqr_r": {
+        "nombre": "cqr_r",
+        "n_pred": 258,
+        "wis_medio_natural": 37.93413693746769,
+        "wis_medio_log": 0.20204049881098726,
+        "mae_mediana": 54.4224252186218,
+        "cobertura_50": 0.5968992248062015,
+        "cobertura_95": 0.9147286821705426,
+        "wis_por_anio": {
+          "2019": 98.89526086123985,
+          "2021": 13.751774090354445,
+          "2022": 41.592116996158104,
+          "2023": 21.080335287402626,
+          "2024": 13.421106573448357
+        },
+        "skill_por_anio_vs_decisivo": {
+          "2019": 0.20800261290261446,
+          "2021": 0.19089522097084133,
+          "2022": 0.19637961299783635,
+          "2023": 0.3519302377698842,
+          "2024": 0.49185726563990184
+        },
+        "skill_medio_por_anio": 0.28781299005621563,
+        "n_fallback": 0,
+        "anios_ganados_vs_decisivo": 5,
+        "cumple_criterio_firmado": true,
+        "gana_wis_agrupado_nat_y_log": true,
+        "cumple_criterio_exito": true,
+        "veredicto": "CUMPLE",
+        "cob50_en_objetivo": false,
+        "cob95_en_objetivo": true
+      },
+      "inflado_global": {
+        "nombre": "inflado_global",
+        "n_pred": 258,
+        "wis_medio_natural": 38.63440945625705,
+        "wis_medio_log": 0.20155599615929,
+        "mae_mediana": 54.4224252186218,
+        "cobertura_50": 0.5775193798449613,
+        "cobertura_95": 0.9612403100775194,
+        "wis_por_anio": {
+          "2019": 97.70813609859027,
+          "2021": 16.58942680703411,
+          "2022": 43.31037424961134,
+          "2023": 22.023342280475166,
+          "2024": 12.692883897527338
+        },
+        "skill_por_anio_vs_decisivo": {
+          "2019": 0.21750963782968613,
+          "2021": 0.02393797173119694,
+          "2022": 0.16318037576937516,
+          "2023": 0.3229395073355792,
+          "2024": 0.5194288417793541
+        },
+        "skill_medio_por_anio": 0.2493992668890383,
+        "n_fallback": 0,
+        "anios_ganados_vs_decisivo": 5,
+        "cumple_criterio_firmado": true,
+        "gana_wis_agrupado_nat_y_log": true,
+        "cumple_criterio_exito": true,
+        "veredicto": "CUMPLE",
+        "cob50_en_objetivo": true,
+        "cob95_en_objetivo": true
+      }
+    }
+  },
+  {
+    "alcance_anio_min": 2014,
+    "horizonte": 8,
+    "n_cal": 52,
+    "n_origenes": 252,
+    "comparador_decisivo": "persistencia_estacional",
+    "baseline_decisivo": {
+      "nombre": "persistencia_estacional",
+      "n_pred": 252,
+      "wis_medio_natural": 105.8502912743508,
+      "wis_medio_log": 0.42763792345376705,
+      "mae_mediana": 137.27031979452127,
+      "cobertura_50": 0.5833333333333334,
+      "cobertura_95": 0.9365079365079365,
+      "wis_por_anio": {
+        "2019": 251.69601717193186,
+        "2021": 49.1004894810695,
+        "2022": 132.88972919179022,
+        "2023": 38.944842078115165,
+        "2024": 47.88963971141936
+      }
+    },
+    "variantes": {
+      "sin_calibrar": {
+        "nombre": "sin_calibrar",
+        "n_pred": 252,
+        "wis_medio_natural": 75.11206874144915,
+        "wis_medio_log": 0.3046562194549865,
+        "mae_mediana": 107.29111339841667,
+        "cobertura_50": 0.4007936507936508,
+        "cobertura_95": 0.9206349206349206,
+        "wis_por_anio": {
+          "2019": 196.59603600454844,
+          "2021": 23.123655947089404,
+          "2022": 99.77099828769353,
+          "2023": 28.544519697713646,
+          "2024": 19.526916417222346
+        },
+        "skill_por_anio_vs_decisivo": {
+          "2019": 0.2189147916859765,
+          "2021": 0.5290544719313921,
+          "2022": 0.24921964327505552,
+          "2023": 0.26705262688036224,
+          "2024": 0.5922517576893334
+        },
+        "skill_medio_por_anio": 0.3712986582924239,
+        "n_fallback": 0,
+        "anios_ganados_vs_decisivo": 5,
+        "cumple_criterio_firmado": true,
+        "gana_wis_agrupado_nat_y_log": true,
+        "cumple_criterio_exito": true,
+        "veredicto": "CUMPLE",
+        "cob50_en_objetivo": false,
+        "cob95_en_objetivo": true
+      },
+      "cqr_r": {
+        "nombre": "cqr_r",
+        "n_pred": 252,
+        "wis_medio_natural": 78.76398436745338,
+        "wis_medio_log": 0.3184179565475494,
+        "mae_mediana": 109.6457348290957,
+        "cobertura_50": 0.5714285714285714,
+        "cobertura_95": 0.8809523809523809,
+        "wis_por_anio": {
+          "2019": 205.72070851598494,
+          "2021": 22.219604757989703,
+          "2022": 106.70776735839696,
+          "2023": 29.278466517073337,
+          "2024": 21.194239363289096
+        },
+        "skill_por_anio_vs_decisivo": {
+          "2019": 0.18266204277893472,
+          "2021": 0.547466736221512,
+          "2022": 0.197020206095888,
+          "2023": 0.24820682393969173,
+          "2024": 0.5574358151156587
+        },
+        "skill_medio_por_anio": 0.346558324830337,
+        "n_fallback": 0,
+        "anios_ganados_vs_decisivo": 5,
+        "cumple_criterio_firmado": true,
+        "gana_wis_agrupado_nat_y_log": true,
+        "cumple_criterio_exito": true,
+        "veredicto": "CUMPLE",
+        "cob50_en_objetivo": true,
+        "cob95_en_objetivo": false
+      },
+      "inflado_global": {
+        "nombre": "inflado_global",
+        "n_pred": 252,
+        "wis_medio_natural": 88.29383927870981,
+        "wis_medio_log": 0.3170172283662647,
+        "mae_mediana": 109.6457348290957,
+        "cobertura_50": 0.5436507936507936,
+        "cobertura_95": 0.9880952380952381,
+        "wis_por_anio": {
+          "2019": 218.5381956537481,
+          "2021": 33.01370394755951,
+          "2022": 112.67296124909669,
+          "2023": 42.63692413595186,
+          "2024": 26.102775202400565
+        },
+        "skill_por_anio_vs_decisivo": {
+          "2019": 0.1317375693534868,
+          "2021": 0.3276298404257698,
+          "2022": 0.15213190715074842,
+          "2023": -0.09480285092519192,
+          "2024": 0.4549389939098599
+        },
+        "skill_medio_por_anio": 0.1943270919829346,
+        "n_fallback": 0,
+        "anios_ganados_vs_decisivo": 4,
+        "cumple_criterio_firmado": true,
+        "gana_wis_agrupado_nat_y_log": true,
+        "cumple_criterio_exito": true,
+        "veredicto": "CUMPLE",
+        "cob50_en_objetivo": true,
+        "cob95_en_objetivo": false
+      }
+    }
+  }
+]
