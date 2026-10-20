@@ -1,7 +1,7 @@
 # Nota: docker-compose.yml usa container_name y puertos fijos (5432/8000/4321),
 # compartidos a nivel del daemon Docker del host, no por worktree. Solo un
-# worktree a la vez debe correr `docker-compose up` — ver AGENTS.md,
-# sección "Multi-agent / multi-worktree note (Orca ADE)".
+# worktree a la vez debe correr `docker compose up` — ver AGENTS.md,
+# sección 17, "Comandos" (punto "Multi-worktree (Orca ADE)").
 scripts:
   setup: |
     python3 -m venv backend/.venv

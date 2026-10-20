@@ -21,7 +21,7 @@ Detalles sobre cómo se podría implementar o abordar este cambio.
 ## Componentes involucrados
 
 - [ ] Backend (FastAPI)
-- [ ] Frontend (Astro / Leaflet)
+- [ ] Frontend (Astro, se desarrolla en aetheris-nitor)
 - [ ] Ingestión y procesamiento de datos
 - [ ] Base de datos / Migraciones (requiere ADR si modifica esquema)
 - [ ] Documentación / Contexto

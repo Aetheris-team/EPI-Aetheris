@@ -223,12 +223,23 @@ El frontend se encuentra en:
 
 `web/`
 
+**`web/` es una copia.** El frontend se desarrolla en el repositorio
+`aetheris-team/aetheris-nitor`, que es también el que Render publica como sitio
+estático. Su workflow `sincronizar-monorepo.yml` reemplaza `web/src`,
+`web/tests`, `web/public` y la configuración del paquete con cada cambio en
+`main` de aetheris-nitor y abre aquí un PR (`chore/web-sincronizado-auto`). Un
+cambio hecho solo en `web/` se pierde en la siguiente sincronización: hazlo en
+aetheris-nitor. `docs/biblioteca/` no se sincroniza; aetheris-nitor tiene su
+propia copia y un cambio de contenido va en las dos.
+
 Tecnologías principales:
 
 * Astro;
 * TypeScript;
 * Tailwind;
-* Leaflet.
+* ECharts (gráficos);
+* Leaflet (aetheris-nitor ya lo reemplazó por mapas SVG propios; llega aquí
+  con la sincronización).
 
 Antes de instalar una librería nueva, revisa si existe una decisión previa sobre el stack.
 
@@ -239,8 +250,10 @@ No introduzcas React, Vue u otro framework de componentes salvo decisión explí
 IRA y neumonías son secciones de `/respiratorio`)— pero **no** un interruptor de
 "modo": son secciones, sin estado
 persistido, y ninguna esconde a la otra. No agregues un toggle de enfoque en la
-barra. Ninguna vista se titula "hoy" ni "esta semana": la ventana cargada llega
-hasta 2023 y `regiones.nivel_admin = 2` (municipio) sigue reservado sin filas.
+barra. Ninguna vista se titula "hoy" ni "esta semana": la serie departamental
+llega hasta 2023, la nacional del tablero de MINSAL solo hasta la última captura
+manual (ADR 0021), y `regiones.nivel_admin = 2` (municipio) sigue reservado sin
+filas.
 
 **Service worker (`web/public/sw.js`).** Escrito a mano, sin dependencias.
 `GET /api/alertas` va **network-first** —una alerta ya apagada tiene
@@ -435,7 +448,7 @@ docs/
 ├── adr/                    # decisiones arquitectónicas formales
 ├── biblioteca/             # documentos públicos de /biblioteca (colección de Astro; no mover)
 ├── experimentos/           # experimentos firmados que respaldan un ADR aceptado (ver abajo)
-├── seguridad/              # procedimiento de respuesta a incidentes (excepción del ADR 0024)
+├── seguridad/              # respuesta a incidentes y roles de base de datos (excepción del ADR 0024)
 └── despliegue-render.md    # procedimiento de despliegue (referenciado por render.yaml)
 ```
 
@@ -448,7 +461,7 @@ Cuando surja conocimiento nuevo:
 
 Excepción acotada: `docs/experimentos/` guarda **solo** experimentos firmados (protocolo fechado y resultado) que respaldan un ADR aceptado y que ese ADR o el código citan, como la mezcla C del nowcast (ADR 0020, ADR 0021). Un experimento exploratorio, uno sin firmar o uno que ningún ADR usa sigue sin versionarse.
 
-No crees carpetas de documentación nuevas fuera de `docs/adr/`, `docs/biblioteca/`, `docs/experimentos/` y `docs/seguridad/`. Esta última, por el ADR 0024, contiene solo el procedimiento de respuesta a incidentes.
+No crees carpetas de documentación nuevas fuera de `docs/adr/`, `docs/biblioteca/`, `docs/experimentos/` y `docs/seguridad/`. Esta última, por el ADR 0024, contiene solo el procedimiento de respuesta a incidentes y la guía de los roles de base de datos (punto E, citada por `render.yaml`).
 
 ---
 
@@ -458,7 +471,7 @@ Referencia rápida de lo vigente. Ante una contradicción, aplica la precedencia
 
 ### Qué es y qué no es
 
-EPI-Aetheris es un sistema de vigilancia epidemiológica **descriptiva** (piloto: dengue e IRA en El Salvador). Ingesta casos históricos y predictores ambientales, los alinea por semana epidemiológica y los expone vía FastAPI + mapa Leaflet.
+EPI-Aetheris es un sistema de vigilancia epidemiológica **descriptiva** (piloto: dengue e IRA en El Salvador). Ingesta casos históricos y predictores ambientales, los alinea por semana epidemiológica y los expone vía FastAPI + un mapa departamental.
 
 - **El clasificador de riesgo de brote interanual está retirado** (pivote a herramienta descriptiva, cerrado 2026-08-18). Clasificaba semanas en alto/medio/bajo y obtuvo recall de "alto" = 0 en 2019 y 2022. El código entrenado (`entrenar_clasificador.py` y afines) se conserva como referencia histórica: **no lo extiendas ni lo reactives.** Es un modelo distinto de la predicción de conteo de abajo. `/prediccion` lo sigue mostrando a partir de salidas **congeladas** (ADR 0025): `congelar_clasificador.py` escribe `backend/api/datos/riesgo_nacional_congelado.json` y `GET /api/riesgo-nacional` lo sirve tal cual; la API no carga el modelo ni importa scikit-learn/joblib.
 - **Predicción de casos a corto plazo** (autorizada por Eduardo el 2026-09-09): la página de dengue predice el conteo nacional de casos a 1–8 semanas desde la última semana observada, con intervalo calibrado. Validada con WIS + segunda confirmación independiente (ADR 0020). Artefactos: `nowcast_estimacion_dengue.py` y `nowcast_retrospectivo_dengue.py` generan la base de OpenDengue (`backend/api/datos/*_opendengue.json`) y `nowcast_tablero_dengue.py` la combina con la serie del tablero de MINSAL en `nowcast_dengue.json` y `nowcast_dengue_retrospectivo.json`; endpoint `GET /api/nowcast-dengue`. Desde 2025 el método publicado es la mezcla C de `docs/experimentos/experimento-nowcast-tendencia.md`, en prueba hasta el corte de 2027-S05. Se llama **predicción**: al inicio del proyecto se creyó que ni un proto-predictor era viable y de ahí venía el veto a esa palabra; el experimento mostró lo contrario para la serie nacional agregada. Nota técnica para mantenimiento (no es copy de producto): el método sólo gana a la persistencia cuando el historial de entrenamiento ya contiene una temporada de brote grande — no reutilizarlo en otra serie sin verificar esa condición.
@@ -478,11 +491,11 @@ Nada de M1–M4 se persiste (se calcula on-request, sin cambios de esquema). El 
 
 ### Arquitectura
 
-Tres servicios Docker (`docker-compose.yml`, red `aetheris_network`):
+Servicios Docker (`docker-compose.yml`, red `aetheris_network`). `docker compose up` levanta solo `db` y `backend`; `web` (perfil `web`), `mailpit` (perfil `cuentas`, bandeja de correo de desarrollo) y `e2e` (perfil `test`, Playwright) se levantan aparte:
 
 - **`db`** — PostgreSQL 15. El esquema se carga desde `db/migrations/*.sql` **solo una vez, sobre volumen vacío**. Para una base ya inicializada usa el runner de ADR 0009: `python db/aplicar_migraciones.py --bootstrap` una vez, luego `python db/aplicar_migraciones.py` tras añadir cada migración (corre desde el host contra `localhost:5432`, sin rollback — una migración mala se corrige con otra migración).
 - **`backend`** (`./backend`) — FastAPI + `psycopg2` directo, sin ORM. Entrada: `backend/api/main.py` (app, middleware, pool, rate limiting, `/health`). Los endpoints viven en routers por dominio en `backend/api/rutas/` (`dengue`, `modulos`, `respiratorio`, `alertas`; las cuentas en `api/cuentas/rutas.py`): cada uno expone `crear_router(limiter=..., abrir_conexion=..., límite)` y `main.py` los crea al importarse, así que un `importlib.reload(api.main)` en los tests los rehace con la configuración nueva. Cache-Control, cache de respuestas y la traducción de fallos de Postgres a HTTP están en `backend/api/respuestas.py`. Los tests parchean `api.main._conexion` (llega a los routers vía `_abrir_conexion`) y las constantes de cada router en su módulo (p. ej. `api.rutas.dengue.NOWCAST_DENGUE_PATH`). Los GET públicos de solo lectura pasan por un cache en memoria (`backend/api/cache_respuestas.py`) con el mismo TTL de su `Cache-Control`: un dato recién ingerido tarda hasta ese TTL en verse (o reinicia el servicio). No lo uses para alertas, `/health` ni cuentas; los tests lo vacían en `api/tests/conftest.py`.
-- **`web`** (`./web`) — Astro + TypeScript + Leaflet.
+- **`web`** (`./web`) — Astro + TypeScript, copia sincronizada de aetheris-nitor (sección 10). Por defecto se levanta fuera de Docker con `pnpm dev`; en contenedor, `docker compose --profile web up -d web`.
 
 ### Valores controlados del esquema — reutiliza verbatim, nunca inventes
 
@@ -492,11 +505,11 @@ Tres servicios Docker (`docker-compose.yml`, red `aetheris_network`):
 
 (`et0_fao` está deprecado, nunca se carga. `oni_anom` = anomalía ONI de NOAA, ADR 0008, bajo región `SV` nacional. Añadir un predictor = añadir su string a esta lista en la misma sesión, no en el call site.)
 
-- `casos_epidemiologicos.clasificacion`: `probable`, `confirmado`, `total` (agregado de OpenDengue, solo `fuente_id=opendengue_v1_3` nacional — **NO** equivale a `confirmado`), `notificado` (departamental sin split probable/confirmado, p.ej. IRA — ADR 0011). Nunca sumes `conteo` entre valores de `clasificacion` sin filtrar primero.
+- `casos_epidemiologicos.clasificacion`: `probable`, `confirmado`, `total` (agregado de OpenDengue, solo `fuente_id=opendengue_v1_3` nacional — **NO** equivale a `confirmado`), `notificado` (sin split probable/confirmado, p.ej. IRA — ADR 0011), `sospechoso` (dengue del tablero de MINSAL, solo `fuente_id=minsal_tablero` nacional — ADR 0021, migración `0012`). Nunca sumes `conteo` entre valores de `clasificacion` sin filtrar primero.
 - `boletines_procesados.estado`: `pendiente`, `ok`, `revision_manual`, `error`, `ausencia_esperada` (ADR 0004), `sin_texto_extraible` (ADR 0007).
 - `boletines_procesados.familia_esquema`: `A` o `B`.
-- `fuentes_datos.codigo`: `opendengue_v1_3`, `minsal_pdf`, `open_meteo_era5_land`, `open_meteo_era5` (ADR 0006 — `era5` es exclusivo para `precipitation_sum`/`precipitation_hours`), `noaa_oni`.
-- `regiones.codigo`: ISO 3166-2:SV (**sin verificar aún** contra el GeoJSON de Leaflet — confírmalo antes de usarlo como clave de join).
+- `fuentes_datos.codigo`: `opendengue_v1_3`, `minsal_pdf`, `minsal_tablero` (ADR 0021), `open_meteo_era5_land`, `open_meteo_era5` (ADR 0006 — `era5` es exclusivo para `precipitation_sum`/`precipitation_hours`), `noaa_oni`.
+- `regiones.codigo`: ISO 3166-2:SV. El GeoJSON de límites no trae `shapeISO`: la unión es por nombre normalizado, hecha una vez en `backend/ingestion/build_geo_departamentos.py`, que escribe `properties.codigo` en `web/public/geo/slv-adm1.geojson` (ADR 0002, verificada 14 a 14). El frontend une por igualdad estricta sobre ese campo.
 - `alertas.tipo`: `dengue`, `respiratorio`. `alertas.nivel`: `informativo`, `atencion`, `intensificacion` (ADR 0013). `alertas.etiqueta`: `NULL` | `test` | `simulacro` | `historica` (ADR 0015; `NULL` = producción). `activa` es el filtro de la vista pública; no lo infieras de `vigente_hasta`.
 - Semanas epidemiológicas: **PAHO/CDC (MMWR), no ISO 8601** — usa la librería `epiweeks`, no recalcules límites a mano.
 
@@ -510,7 +523,7 @@ Trampas empíricas de las fuentes: MINSAL (el año impreso en el PDF no es fiabl
 
 - Contenido de dominio (tablas, columnas, comentarios, docstrings) en **español**.
 - Extiende los catálogos (`tipos_evento` / `regiones` / `fuentes_datos`) en vez de añadir columnas por enfermedad o país.
-- Datos crudos e intermedios **no se versionan** (`backend/ingestion/data/raw/` y `.../interim/` gitignoreados). Excepción: el modelo y el dataset del clasificador retirado en `.../interim/` (issue #72; fuente del artefacto congelado, ADR 0025). Excepción deliberada: `db/seed/seed_datos_reales.sql` (ADR 0010, volcado `pg_dump --data-only` de las tablas de hechos, montado en `/docker-entrypoint-initdb.d/` para que `git clone` + `docker compose up` dé un sistema con datos reales).
+- Datos crudos e intermedios **no se versionan** (`backend/ingestion/data/raw/` y `.../interim/` gitignoreados). Excepción: el modelo y el dataset del clasificador retirado en `.../interim/` (issue #72; fuente del artefacto congelado, ADR 0025). Excepción deliberada: `db/seed/seed_datos_reales.sql` (ADR 0010, volcado `pg_dump --data-only` de las tablas de hechos, montado en `/docker-entrypoint-initdb.d/` para que `git clone` + `docker compose up` dé un sistema con datos reales). Su última regeneración (2026-09-10) es anterior al ADR 0021: no trae las series del tablero de MINSAL (2025–2026), que se cargan con `cargar_minsal_tablero.py`.
 - Valida PDFs descargados por firma de bytes (`%PDF`), no por `Content-Type` (el servidor devuelve `application/octet-stream`).
 
 ### Decisiones abiertas
@@ -520,7 +533,8 @@ No resuelvas unilateralmente: las coordenadas departamentales para Open-Meteo, s
 ### Comandos
 
 ```bash
-docker-compose up --build          # todo: API :8000 (/health), web :4321, Postgres :5432
+docker compose up --build                     # API :8000 (/health) y Postgres :5432
+docker compose --profile web up -d web        # opcional: web :4321 en contenedor
 ```
 
 Variables de entorno desde `.env` (copiar de `.env.example`; nunca commitear `.env`).
@@ -528,8 +542,8 @@ Variables de entorno desde `.env` (copiar de `.env.example`; nunca commitear `.e
 - **Backend fuera de Docker:** `cd backend && pip install -r requirements.txt && uvicorn api.main:app --reload` (entorno Arch — prefiere virtualenv).
 - **Web fuera de Docker:** `cd web && pnpm install && pnpm dev|build|preview` (pnpm vía Corepack, fijado a v9 — **no `npm`**).
 - **Dependencias Python (ADR 0025):** `requirements.txt` = API (lo único que entra en la imagen de Render); `requirements-ingesta.txt` = `backend/ingestion/`; `requirements-dev.txt` = suite. Se compilan desde sus `.in` con `uv pip compile --generate-hashes` en ese orden (comando en `requirements.in`); no edites los `.txt` a mano.
-- **Tests:** pytest **desde `backend/`** (`pip install --require-hashes -r requirements.txt -r requirements-ingesta.txt -r requirements-dev.txt`, luego `python -m pytest ingestion/tests/ api/tests/`). Los tests con BD se **saltan** (no fallan) si no hay Postgres en `localhost:5432`. CI (`.github/workflows/`): `backend-tests.yml` corre esa suite contra Postgres con migraciones + seed, y `seguridad.yml` audita dependencias y secretos. No hay linter de Python; `web/` trae ESLint/Prettier (`pnpm lint`, `pnpm format:check`), que ningún workflow de este repo corre.
-- **Multi-worktree (Orca ADE):** `docker-compose.yml` usa `container_name` y puertos fijos compartidos a nivel del daemon Docker — **solo un worktree corre `docker-compose up` a la vez**. No lo "arregles" namespaceando puertos/nombres por worktree sin preguntar.
+- **Tests:** pytest **desde `backend/`** (`pip install --require-hashes -r requirements.txt -r requirements-ingesta.txt -r requirements-dev.txt`, luego `python -m pytest ingestion/tests/ api/tests/`). Los tests con BD se **saltan** (no fallan) si no hay Postgres en `localhost:5432`. CI (`.github/workflows/`): `backend-tests.yml` corre esa suite contra Postgres con migraciones + seed, y `seguridad.yml` audita dependencias y secretos. No hay linter de Python; `web/` trae ESLint/Prettier (`pnpm lint`, `pnpm format:check`), que ningún workflow de este repo corre: los corre, con `astro check` y las pruebas unitarias, el CI de aetheris-nitor (`ci.yml`).
+- **Multi-worktree (Orca ADE):** `docker-compose.yml` usa `container_name` y puertos fijos compartidos a nivel del daemon Docker — **solo un worktree corre `docker compose up` a la vez**. No lo "arregles" namespaceando puertos/nombres por worktree sin preguntar.
 
 ---
 

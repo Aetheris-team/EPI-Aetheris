@@ -1,11 +1,11 @@
 ---
 titulo: "Qué hace hoy"
-descripcion: "Catálogo de módulos descriptivos (M1–M3), mapa, observatorio respiratorio, alertas de campo, PWA y pipeline de datos."
+descripcion: "Catálogo de módulos descriptivos (M1–M4), mapa, observatorio respiratorio, alertas de campo, PWA y pipeline de datos."
 orden: 3
 categoria: "Cómo funciona"
 ---
 
-Cada función del sistema tiene un contrato visible: qué mide, qué la alimenta y qué deja fuera. Los módulos M1–M3 se calculan al consultar la API, sin tabla propia y sin cambio de esquema.
+Cada función del sistema tiene un contrato visible: qué mide, qué la alimenta y qué deja fuera. Los módulos M1–M4 se calculan al consultar la API, sin tabla propia y sin cambio de esquema.
 
 ## M1 — Idoneidad biofísica (`Iv`)
 
@@ -97,7 +97,7 @@ La escritura va por `POST /api/alertas` y `PATCH /api/alertas/{id}` con un secre
 
 Los cinco campos clínicos (ADR 0014) se llenaron por tipo con transcripción citada de VIGEPES/OPS (migración `0011`). Lo que no tiene fuente queda `null` — por ejemplo signos de alarma y criterios de referencia en respiratorio. El sistema no inventa teléfono ni correo.
 
-**Qué no hace.** No se genera desde M1–M3 ni desde el clasificador retirado.
+**Qué no hace.** No se genera desde M1–M4 ni desde el clasificador retirado.
 
 ## PWA / offline
 
@@ -111,6 +111,7 @@ Service worker escrito a mano (`web/public/sw.js`), sin dependencias. El shell u
 - Parser de tablas departamentales: dos familias de esquema, detectadas **por documento** (presencia de la columna de tasa), nunca por rango de año. Probable/confirmado son acumulados desde SE1; se desacumulan por diferencias. Huecos y correcciones retroactivas no se reparten ni se fabrican.
 - Bitácora `boletines_procesados` (ADR 0004, 0007): `ok`, `ausencia_esperada`, `sin_texto_extraible`, `revision_manual`, `error`, `pendiente`.
 - Carga de OpenDengue nacional (`clasificacion = 'total'`, ADR 0005) y de Open-Meteo (ERA5-Land + ERA5, ADR 0006).
+- Carga de las series nacionales del tablero de MINSAL desde capturas HAR guardadas a mano desde el navegador (`clasificacion = 'sospechoso'` para dengue, ADR 0021). Ningún script hace peticiones al tablero.
 - Semanas epidemiológicas PAHO/CDC (MMWR) vía la librería `epiweeks`.
 
 **Qué no hace.** No rellena una celda vacía de MINSAL como dato ausente (en esa fuente, vacío = 0) ni convierte un hueco real de vacaciones en un conteo interpolado.

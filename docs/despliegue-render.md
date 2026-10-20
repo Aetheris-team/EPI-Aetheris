@@ -3,8 +3,9 @@
 Decisión tomada 2026-08-22, para tener una URL pública antes del video demo
 (2026-09-05) y la Expo Técnica (2026-09-29). Investigación de costo-beneficio
 comparó Render, Railway, Fly.io y Vercel; Render ganó por encajar directo con
-el `docker-compose.yml` existente (Blueprint declara los 3 servicios como
-IaC), tener el mejor historial de uptime reciente de las opciones evaluadas,
+el `docker-compose.yml` existente (en ese momento el Blueprint declaraba
+los 3 servicios como IaC; hoy el frontend se publica aparte, ver abajo),
+tener el mejor historial de uptime reciente de las opciones evaluadas,
 y no requerir administración manual de Postgres (a diferencia de Fly.io). El
 plan de pago (~$14/mes, Starter + Basic-256mb) se eligió desde el día 1 en
 vez del tier gratuito: el free tier de Render duerme el backend a los 15 min
@@ -56,7 +57,8 @@ tiene un hook `docker-entrypoint-initdb.d` que auto-aplique
 primer deploy del backend fallará ese paso hasta terminar lo siguiente.
 
 1. En el dashboard de Render, conectar el Blueprint a este repo (rama
-   `main`) -- esto crea los 3 servicios. El backend fallará
+   `main`) -- esto crea la base y el backend; el sitio estático se crea
+   aparte desde el repo aetheris-nitor. El backend fallará
    `preDeployCommand` / healthcheck hasta el paso 3, porque la base está
    vacía.
 2. Copiar la **External Connection String** de `epi-aetheris-db` (dashboard

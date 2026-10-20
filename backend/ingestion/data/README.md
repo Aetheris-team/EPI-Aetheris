@@ -15,9 +15,9 @@ constancia de dónde salió cada dato reunido en la Fase 0 de ingesta.
   se filtró a `ISO_A0 == "SLV"` (2208 filas) para mantener el repo liviano.
   Sin otra limpieza — es el dato crudo tal como lo entrega Figshare.
 - **Cobertura confirmada en la muestra filtrada:** Admin0 (nacional)
-  1978–2024, resolución semanal desde 2018; Admin1 (departamental) solo
-  2000–2009, resolución mensual. Coincide con lo documentado en el contexto
-  maestro del proyecto (sección 5.1).
+  1978–2024, resolución semanal desde 2014 (574 filas semanales 2014–2024,
+  las que carga `cargar_opendengue.py`); Admin1 (departamental) solo
+  2000–2009, resolución mensual. Ver `docs/biblioteca/04-fuentes-de-datos.md`.
 
 ## Boletines MINSAL (`data/raw/minsal/`)
 
@@ -28,13 +28,11 @@ constancia de dónde salió cada dato reunido en la Fase 0 de ingesta.
   esos scripts para el mecanismo de descarga: ruta directa vs. ruta de
   respaldo, validación por firma de bytes `%PDF`).
 - **Años reunidos:** 2018, 2019, 2021, 2022, 2023 (2020 queda fuera de la
-  ventana de entrenamiento del modelo; ver decisión de alcance del
-  proyecto).
-- **Dos esquemas de tabla:** Familia A (2018–2020, columnas
-  Probable/Confirmado/Tasa) y Familia B (2021–2023, columnas
-  Probable/Confirmado sin tasa). El detector de esquema debe basarse en la
-  presencia/ausencia de la columna de tasa por documento, no asumirse por
-  año.
+  ventana departamental por subregistro durante la covid; ver AGENTS.md,
+  sección 17).
+- **Dos esquemas de tabla:** Familia A (columnas Probable/Confirmado/Tasa)
+  y Familia B (Probable/Confirmado sin tasa). El detector decide por
+  documento, por la presencia de la columna de tasa, nunca por rango de año.
 
 ## Tablero de vigilancia MINSAL (`data/raw/minsal_tablero/`)
 
