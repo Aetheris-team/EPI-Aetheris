@@ -13,7 +13,7 @@
 #   uv pip compile --generate-hashes --strip-extras --python-version 3.11 \
 #       --python-platform x86_64-unknown-linux-gnu -o requirements-dev.txt requirements-dev.in
 # pip-compile de pip-tools produce el mismo formato y también sirve.
-fastapi==0.142.2
+fastapi==0.143.5
 starlette==1.7.0
 slowapi==0.1.10
 limits==5.8.0
