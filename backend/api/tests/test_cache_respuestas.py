@@ -20,7 +20,8 @@ sys.path.insert(0, str(BACKEND_DIR))
 
 from api import cache_respuestas  # noqa: E402
 from api.cache_respuestas import CacheRespuestas, serializar_json  # noqa: E402
-from api.main import CACHE_TTL_HISTORICO, app  # noqa: E402
+from api.main import app  # noqa: E402
+from api.respuestas import CACHE_TTL_HISTORICO  # noqa: E402
 
 
 def test_guarda_y_devuelve_el_tiempo_restante():
@@ -94,7 +95,7 @@ def test_segundo_request_sale_del_cache_sin_abrir_conexion():
     mock_cx = _conexion_contada()
     client = TestClient(app)
     with patch("api.main._conexion", mock_cx), patch(
-        "api.main.listar_virus", return_value=series
+        "api.rutas.respiratorio.listar_virus", return_value=series
     ):
         primera = client.get("/api/respiratorios/virus")
         segunda = client.get("/api/respiratorios/virus")
@@ -109,7 +110,7 @@ def test_respuesta_degradada_no_se_guarda():
     mock_cx = _conexion_contada()
     client = TestClient(app)
     with patch("api.main._conexion", mock_cx), patch(
-        "api.main.listar_virus", return_value=[]
+        "api.rutas.respiratorio.listar_virus", return_value=[]
     ):
         client.get("/api/respiratorios/virus")
         respuesta = client.get("/api/respiratorios/virus")

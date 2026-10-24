@@ -1,10 +1,12 @@
-"""Degradacion elegante de /api/riesgo-nacional (issue #72).
+"""/api/riesgo-nacional sirve las salidas congeladas del clasificador retirado
+(ADR 0025) con el mismo contrato que cuando el modelo corría en cada request.
 
-Los artefactos del clasificador historico (dataset_modelado.csv + joblib +
-metricas) estan en .gitignore y no se generan en el build de Render, asi que
-faltan en produccion. El endpoint no debe responder 503: responde 200 con
-disponible=false para que el frontend muestre un aviso explicito.
+Sin el artefacto (issue #72) el endpoint no responde 503: responde 200 con
+disponible=false para que el frontend muestre un aviso explicito. Que el
+artefacto coincida con el modelo lo comprueba
+ingestion/tests/test_congelar_clasificador.py.
 """
+import json
 import sys
 from pathlib import Path
 
@@ -16,24 +18,18 @@ sys.path.insert(0, str(BACKEND_DIR))
 from fastapi.testclient import TestClient  # noqa: E402
 
 import api.main  # noqa: E402
-
-_ARTEFACTOS_PRESENTES = (
-    api.main.DATASET_RIESGO_PATH.exists() and api.main.MODELO_PATH.exists()
-)
+import api.rutas.dengue  # noqa: E402
 
 
 @pytest.fixture
 def client():
-    api.main._modelo_cache = None
-    api.main._dataset_riesgo_cache = None
-    return TestClient(api.main.app)
+    api.rutas.dengue._riesgo_nacional_cache = None
+    yield TestClient(api.main.app)
+    api.rutas.dengue._riesgo_nacional_cache = None
 
 
-@pytest.mark.skipif(
-    _ARTEFACTOS_PRESENTES,
-    reason="Los artefactos del modelo existen en este checkout; no hay caso degradado que probar.",
-)
-def test_sin_artefactos_responde_200_disponible_false(client):
+def test_sin_artefacto_responde_200_disponible_false(client, monkeypatch, tmp_path):
+    monkeypatch.setattr(api.rutas.dengue, "RIESGO_NACIONAL_PATH", tmp_path / "no_existe.json")
     respuesta = client.get("/api/riesgo-nacional")
     assert respuesta.status_code == 200
     cuerpo = respuesta.json()
@@ -42,11 +38,36 @@ def test_sin_artefactos_responde_200_disponible_false(client):
     assert cuerpo["aviso"]
 
 
-@pytest.mark.skipif(
-    not _ARTEFACTOS_PRESENTES,
-    reason="Los artefactos del modelo no existen en este checkout.",
-)
-def test_con_artefactos_responde_disponible_true(client):
-    respuesta = client.get("/api/riesgo-nacional")
-    assert respuesta.status_code == 200
-    assert respuesta.json()["disponible"] is True
+def test_sin_parametros_devuelve_la_ultima_semana(client):
+    cuerpo = client.get("/api/riesgo-nacional").json()
+    assert cuerpo["disponible"] is True
+    semanas = json.loads(api.rutas.dengue.RIESGO_NACIONAL_PATH.read_text(encoding="utf-8"))["semanas"]
+    ultima = max(semanas, key=lambda f: (f["anio"], f["semana_epi"]))
+    assert (cuerpo["anio"], cuerpo["semana_epi"]) == (ultima["anio"], ultima["semana_epi"])
+    assert set(cuerpo) == {
+        "disponible", "anio", "semana_epi", "etiqueta_predicha", "etiqueta_real",
+        "probabilidades", "casos_observados", "metricas_modelo", "aviso",
+    }
+    assert list(cuerpo["probabilidades"]) == ["bajo", "medio", "alto"]
+    assert cuerpo["metricas_modelo"]["anio_prueba"] == 2023
+
+
+def test_semana_pedida(client):
+    cuerpo = client.get("/api/riesgo-nacional?anio=2018&semana=31").json()
+    assert (cuerpo["anio"], cuerpo["semana_epi"]) == (2018, 31)
+    assert cuerpo["etiqueta_real"] in {"bajo", "medio", "alto"}
+
+
+def test_semana_sin_datos_responde_404(client):
+    respuesta = client.get("/api/riesgo-nacional?anio=2030&semana=1")
+    assert respuesta.status_code == 404
+    assert "año=2030, semana=1" in respuesta.json()["detail"]
+
+
+def test_la_api_no_importa_scikit_learn_ni_joblib():
+    modulos = [m for m in (BACKEND_DIR / "api").rglob("*.py") if "tests" not in m.parts]
+    assert modulos
+    for modulo in modulos:
+        fuente = modulo.read_text(encoding="utf-8")
+        assert "import joblib" not in fuente, modulo
+        assert "sklearn" not in fuente, modulo

@@ -7,9 +7,9 @@ arquitectura agnóstica al tipo de evento y región.
 ## Stack
 
 - **Backend:** FastAPI + psycopg2 (PostgreSQL raw SQL)
-- **Frontend:** Astro 4 + TypeScript + Leaflet
+- **Frontend:** Astro 7 + TypeScript + Leaflet
 - **Base de datos:** PostgreSQL 15
-- **Infra:** Docker Compose (3 servicios)
+- **Infra:** Docker Compose (`db` y `backend` por defecto; `web`, `mailpit` y `e2e` bajo perfiles)
 
 ## Requisitos
 
@@ -39,7 +39,9 @@ La base queda poblada con datos reales desde el primer arranque (volcado version
 
 ## Variables de entorno
 
-| Variable | Descripción | Default |
+La tabla cubre la base de datos; `.env.example` documenta el resto (CORS, rate limiting, alertas, cuentas). `docker compose` exige las tres primeras en `.env`: no tienen default.
+
+| Variable | Descripción | Valor en `.env.example` |
 |---|---|---|
 | `POSTGRES_USER` | Usuario de BD | `aetheris_user` |
 | `POSTGRES_PASSWORD` | Contraseña de BD | `aetheris_secure_password` |
@@ -50,9 +52,9 @@ La base queda poblada con datos reales desde el primer arranque (volcado version
 ## Estructura
 
 ```
-backend/api/       → FastAPI app (punto de entrada: api/main.py:app)
+backend/api/       → FastAPI app (punto de entrada: api/main.py:app; endpoints en api/rutas/)
 backend/ingestion/ → pipeline de ingesta y experimentos de validación
-backend/model/     → artefactos del clasificador retirado (no versionados, ver issue #72)
+                     (data/interim/modelo/: artefactos versionados del clasificador retirado, issue #72)
 web/               → frontend Astro
 db/migrations/     → schema SQL (cargado automáticamente al iniciar db)
 db/seed/           → volcado de datos reales (ADR 0010)

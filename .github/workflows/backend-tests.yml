@@ -54,7 +54,7 @@ jobs:
 
       - name: Instalar dependencias
         working-directory: backend
-        run: pip install --require-hashes -r requirements.txt -r requirements-dev.txt
+        run: pip install --require-hashes -r requirements.txt -r requirements-ingesta.txt -r requirements-dev.txt
 
       - name: Aplicar migraciones y seed de datos reales
         run: |
