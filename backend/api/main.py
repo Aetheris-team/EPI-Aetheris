@@ -11,7 +11,7 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from slowapi.util import get_remote_address
-from psycopg2 import OperationalError
+from psycopg2 import InterfaceError, OperationalError
 from psycopg2.pool import ThreadedConnectionPool
 
 from .conexion_db import parametros_conexion
@@ -192,6 +192,35 @@ def _obtener_pool() -> ThreadedConnectionPool:
     return _pool
 
 
+def _tomar_conexion_viva(pool: ThreadedConnectionPool):
+    """getconn() con un ping antes de entregar la conexión.
+
+    Con POSTGRES_POOL_MIN >= 1 el pool guarda conexiones ociosas, y si el
+    servidor las cortó mientras esperaban (pg_terminate_backend, reinicio de
+    la base, Neon que suspende el cómputo) psycopg2 no se entera hasta el
+    próximo uso: sin el ping, la primera petición después del corte falla
+    con OperationalError -> 503. El ping corre en autocommit para costar un
+    solo viaje de ida y vuelta (sin BEGIN ni ROLLBACK); cambiar autocommit
+    en una conexión ociosa no habla con el servidor.
+
+    Una conexión muerta se cierra y se pide otra. El pool guarda a lo sumo
+    POSTGRES_POOL_MIN ociosas, así que tras ese número de descartes la que
+    llega es nueva; si también falla, la base está caída de verdad y el
+    error sube."""
+    for intento in range(POSTGRES_POOL_MIN + 1):
+        conn = pool.getconn()
+        try:
+            conn.autocommit = True
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT 1;")
+            conn.autocommit = False
+            return conn
+        except (OperationalError, InterfaceError):
+            pool.putconn(conn, close=True)
+            if intento == POSTGRES_POOL_MIN:
+                raise
+
+
 @contextmanager
 def _conexion():
     """Toma una conexión del pool y la repone al salir -- también en error,
@@ -200,22 +229,29 @@ def _conexion():
     pool rápido). rollback() antes de devolverla: todas las queries de esta
     API son de solo lectura, pero psycopg2 abre una transacción implícita en
     el primer SELECT -- sin esto la conexión volvería "idle in transaction",
-    reteniendo locks hasta el próximo uso."""
+    reteniendo locks hasta el próximo uso.
+
+    Si la conexión quedó cerrada (conn.closed != 0) o el rollback() falló, se
+    devuelve con close=True: el pool la descarta en vez de guardarla para la
+    próxima petición. Sin close=True, putconn() reintenta el rollback sobre
+    una conexión en error, y si ese también falla la excepción sale antes de
+    que el pool libere el slot, que queda ocupado para siempre."""
     if not _pool_semaforo.acquire(timeout=POSTGRES_POOL_ACQUIRE_TIMEOUT):
         raise TimeoutError(
             "Tiempo de espera agotado para obtener una conexión del pool de Postgres."
         )
     try:
         pool = _obtener_pool()
-        conn = pool.getconn()
+        conn = _tomar_conexion_viva(pool)
         try:
             yield conn
         finally:
+            descartar = False
             try:
                 conn.rollback()
             except Exception:
-                pass
-            pool.putconn(conn)
+                descartar = True
+            pool.putconn(conn, close=descartar or conn.closed != 0)
     finally:
         _pool_semaforo.release()
 
