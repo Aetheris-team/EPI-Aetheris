@@ -34,15 +34,15 @@ Fuera de Docker (desarrollo):
 - Backend: `cd backend && pip install -r requirements.txt && uvicorn api.main:app --reload` (virtualenv).
 - Web: `cd web && pnpm install && pnpm dev` (pnpm vía Corepack, v9; no `npm`).
 
-Los datos crudos e intermedios (`backend/ingestion/data/raw/`, `.../interim/`) no se versionan. El volcado en `db/seed/` es la excepción deliberada que hace cierta la promesa de un comando.
+Los datos crudos (boletines en PDF, capturas del tablero) no se versionan. El volcado en `db/seed/` es la excepción deliberada que hace cierta la promesa de un comando. El pipeline que los procesa no viaja en esta versión del sitio: vive en el repositorio original del proyecto.
 
 ## Qué incluye el volcado
 
-Foto en texto plano (~4,4 MB), sin PDF crudos. **No** incluye todavía las series del tablero de MINSAL (2025–2026, ADR 0021): se cargan con `backend/ingestion/cargar_minsal_tablero.py` a partir de capturas que no se versionan. Tablas de hechos: `semanas_epidemiologicas`, `boletines_procesados`, `casos_epidemiologicos`, `variables_ambientales`, y desde la foto del 1 de septiembre de 2026 también `vigilancia_virus_respiratorios` e IRA/neumonías (2.742 / 2.749 filas más 3.028 de vigilancia viral).
+Foto en texto plano (~5,7 MB), sin PDF crudos. Incluye la serie nacional del tablero de MINSAL (2025–2026, ADR 0021). Tablas de hechos: `semanas_epidemiologicas`, `boletines_procesados`, `casos_epidemiologicos`, `variables_ambientales`, y desde la foto del 1 de septiembre de 2026 también `vigilancia_virus_respiratorios` e IRA/neumonías (2.742 / 2.749 filas más 3.028 de vigilancia viral).
 
 **No** incluye `regiones`, `tipos_evento` ni `fuentes_datos`: esas tres las siembran las propias migraciones. Tampoco `schema_migrations`: esa tabla la crea el runner de migraciones, no `initdb`.
 
-Es una foto fija. Regenerarla es manual (`db/generar_seed.sh`) cuando el equipo decide que vale una imagen más reciente. El script post-procesa los `DISABLE/ENABLE TRIGGER ALL` de `pg_dump` porque en el Postgres gestionado de Render el rol de la aplicación no es superuser.
+Es una foto fija. Regenerarla es manual (`db/generar_seed.sh`) cuando el equipo decide que vale una imagen más reciente. El script post-procesa los `DISABLE/ENABLE TRIGGER ALL` de `pg_dump` para que el volcado se pueda cargar también con un rol que no sea superuser.
 
 ## Migraciones en una base que ya existe
 

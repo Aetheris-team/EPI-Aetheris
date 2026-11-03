@@ -6,7 +6,5 @@ venv/
 .git
 .env
 *.md
-# La API no usa la ingesta en ejecución: los datos llegan con db/seed/.
-ingestion/
 api/tests/
 .pytest_cache/

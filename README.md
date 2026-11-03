@@ -39,8 +39,10 @@ del Equipo 4: 8401–8409).
 | `backend` | `backend/Dockerfile` (FastAPI) | API en el puerto 8000 interno. Espera a que la base esté lista |
 | `web` | `web/Dockerfile` (Astro → nginx) | Sirve el sitio compilado en el 8401 y reenvía `/api` al backend, así el navegador usa un solo origen |
 
-El volcado no trae las series nacionales del tablero de MINSAL de 2025–2026
-(ADR 0021); se cargan con `backend/ingestion/cargar_minsal_tablero.py`.
+El volcado incluye las series departamentales de los boletines (2018–2023),
+la serie nacional de OpenDengue, la del tablero de MINSAL (2025–2026), el clima
+y la vigilancia respiratoria. Es una foto fija: el sitio no descarga datos
+nuevos por su cuenta.
 
 `.env.example` documenta las variables. Todas tienen un valor por defecto en el
 compose, así que el archivo `.env` es opcional.
@@ -49,7 +51,6 @@ compose, así que el archivo `.env` es opcional.
 
 ```
 backend/api/       → API FastAPI (punto de entrada: api/main.py:app; endpoints en api/rutas/)
-backend/ingestion/ → pipeline de ingesta y experimentos de validación (no entra en la imagen)
 web/               → frontend Astro + Tailwind + ECharts; nginx.conf sirve el sitio compilado
 db/                → Dockerfile de la base, migraciones (migrations/) y volcado de datos (seed/)
 docs/adr/          → Architecture Decision Records
@@ -66,5 +67,7 @@ docs/seguridad/    → respuesta a incidentes y roles de base de datos
 - Frontend: en `web/`, `pnpm install && pnpm dev` (http://localhost:4321). En
   ese modo llama a la API en `http://localhost:8000`, o en la que indique
   `PUBLIC_API_URL`.
+
+Esta versión es una síntesis para alojarse en Dockyard y no trae el pipeline de ingesta (descarga y parseo de boletines, clima y experimentos), que vive en el repositorio original `aetheris-team/EPI-Aetheris` y en el historial de git de este. Las menciones a `backend/ingestion/` en comentarios y ADR documentan de dónde salió cada dato.
 
 Las instrucciones para agentes y el contexto técnico están en `AGENTS.md`.
