@@ -1,5 +1,6 @@
-# Blueprint de despliegue en Render (backend + Postgres + frontend estático,
-# una sola cuenta). Ver docs/despliegue-render.md para el procedimiento
+# Blueprint de despliegue en Render (backend + Postgres, una sola cuenta). El
+# frontend estático no está aquí: se publica como sitio "aetheris-nitor" desde
+# el repo aetheris-nitor. Ver docs/despliegue-render.md para el procedimiento
 # completo. El primer despliegue sigue siendo manual (aplicar el DDL +
 # --bootstrap + cargar el seed contra la base gestionada: Render no tiene
 # docker-entrypoint-initdb.d). Las migraciones *posteriores* las aplica

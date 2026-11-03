@@ -7,7 +7,7 @@
   "interpretacion": "validacion_forward_chaining_exploratoria",
   "fuente": {
     "seed_relativo": "db/seed/seed_datos_reales.sql",
-    "seed_sha256": "9be39da8f3e7142b712450b1798846f63c533183f20aab747be91fcc58893f36",
+    "seed_sha256": "c5d67d60ac349e7946f16d6ad3c9ebf538a32a003155d3c8955f1979d05195fe",
     "casos": {
       "pais": "SV",
       "nivel": "nacional",
@@ -199,5 +199,5 @@
       "estado": "entrenable"
     }
   },
-  "firma_previa_sha256": "d8c2b907833f799a233d99f18289416803f22370e916dbd212da3943620303ae"
+  "firma_previa_sha256": "1d95d43f21a4a3826598c98e8db310552b579608d3f82d04de482cf7b904d253"
 }
