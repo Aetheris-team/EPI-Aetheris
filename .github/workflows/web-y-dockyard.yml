@@ -1,0 +1,83 @@
+name: Web y Dockyard
+
+# El frontend se mantiene en este repo (ya no se sincroniza con aetheris-nitor),
+# así que sus comprobaciones corren aquí. El segundo job levanta el proyecto
+# como lo hace Dockyard y revisa las reglas de su guía para estudiantes.
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+permissions:
+  contents: read
+
+jobs:
+  web:
+    name: Frontend (lint, tipos y pruebas unitarias)
+    runs-on: ubuntu-latest
+    container:
+      image: node:24-alpine@sha256:8a32c8cf649a49915a66e81e7a609223c708d0adabf288ee3f4077d765542f85
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Instalar dependencias
+        run: |
+          corepack enable
+          pnpm install --frozen-lockfile
+
+      - run: pnpm lint
+      - run: pnpm format:check
+      - run: pnpm check
+      - run: pnpm test:unit
+
+  dockyard:
+    name: Arranque como en Dockyard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Reglas de la guía de Dockyard
+        run: |
+          set -euo pipefail
+          docker compose --profile '*' config --format json > compose.json
+          falla() { echo "::error::$1"; exit 1; }
+          [ "$(jq '[.services[] | select(.container_name)] | length' compose.json)" = 0 ] \
+            || falla "Ningún servicio puede llevar container_name"
+          [ "$(jq '[.services[] | select(.profiles)] | length' compose.json)" = 0 ] \
+            || falla "Dockyard no levanta servicios con perfiles"
+          [ "$(jq '[.services[] | select(.privileged or .network_mode == "host")] | length' compose.json)" = 0 ] \
+            || falla "Sin privileged ni network_mode: host"
+          [ "$(jq '[(.volumes // {})[], (.networks // {})[] | select(.external)] | length' compose.json)" = 0 ] \
+            || falla "Sin volúmenes ni redes external"
+          publicados=$(jq -r '[.services[].ports[]?.published] | map(tostring) | sort | join(",")' compose.json)
+          [ "$publicados" = "8401" ] \
+            || falla "Solo se publica el 8401 (Equipo 4); publicados: $publicados"
+
+      - name: Levantar desde cero
+        run: docker compose up -d --build --wait --wait-timeout 600
+
+      - name: El sitio y la API responden en el 8401
+        run: |
+          set -euo pipefail
+          for ruta in / /dengue/ /respiratorio/ /alertas/ /biblioteca/ /health; do
+            curl -fsS -o /dev/null "http://localhost:8401$ruta" && echo "ok $ruta"
+          done
+          filas=$(curl -fsS http://localhost:8401/api/casos-nacional | jq length)
+          echo "casos-nacional: $filas filas"
+          [ "$filas" -gt 0 ]
+
+      - name: Registro de los servicios si algo falló
+        if: failure()
+        run: docker compose logs --tail 100
+
+      - name: Apagar y borrar
+        if: always()
+        run: docker compose down -v
