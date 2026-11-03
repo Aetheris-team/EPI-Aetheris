@@ -21,7 +21,7 @@ anunciaría. */
           <li>
             <a
               href="/alertas"
-              class="inline-flex items-center gap-1 font-medium text-accent hover:underline underline-offset-2"
+              class="area-tactil inline-flex items-center gap-1 font-medium text-accent hover:underline underline-offset-2"
             >
               <Icono nombre="arrow-left" class="h-3.5 w-3.5" />
               <span>Volver a alertas de campo</span>
@@ -42,7 +42,7 @@ anunciaría. */
           <span>Consola de operadores · Vigilancia activa</span>
         </span>
         <span
-          class="rounded-full bg-secondary/80 px-2.5 py-0.5 font-mono text-[11px] font-medium text-secondary-ink"
+          class="rounded-full bg-secondary/80 px-2.5 py-0.5 font-mono text-micro font-medium text-secondary-ink"
         >
           No enlazado públicamente
         </span>
@@ -137,7 +137,7 @@ anunciaría. */
                   data-alerta-recordar-token
                   class="rounded-sm border-border text-accent focus:ring-accent"
                 />
-                <span>Recordar token en este navegador</span>
+                <span>Recordar token hasta cerrar la pestaña</span>
               </label>
               <button
                 type="button"
@@ -503,8 +503,7 @@ anunciaría. */
             <Icono nombre="eye" class="h-4 w-4" />
             <span>Vista previa interactiva</span>
           </span>
-          <span class="text-[11px] text-ink-muted"
-            >Se actualiza al escribir</span
+          <span class="text-micro text-ink-muted">Se actualiza al escribir</span
           >
         </div>
 
@@ -530,7 +529,7 @@ anunciaría. */
               <span
                 id="preview-etiqueta-pill"
                 hidden
-                class="rounded-full bg-secondary px-2 py-0.5 font-mono text-[10px] font-bold text-secondary-ink"
+                class="rounded-full bg-secondary px-2 py-0.5 font-mono text-micro font-bold text-secondary-ink"
               >
               </span>
             </div>
@@ -574,7 +573,7 @@ anunciaría. */
           </section>
 
           <div
-            class="mt-4 flex flex-wrap items-center gap-3 font-sans text-[11px] text-ink-muted border-t border-border/60 pt-3"
+            class="mt-4 flex flex-wrap items-center gap-3 font-sans text-micro text-ink-muted border-t border-border/60 pt-3"
           >
             <span
               >Fuente: <strong id="preview-fuente" class="text-ink"
@@ -617,7 +616,11 @@ anunciaría. */
 </Layout>
 
 <script>
+  import { escapeHtml } from '../../utils/security';
+
   const API_BASE = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8000';
+  // El token de escritura da acceso a publicar: solo se recuerda en la pestaña
+  // (sessionStorage), no entre sesiones del navegador como hacía localStorage.
   const CLAVE_TOKEN = 'epi-aetheris:alertas-token';
   const form = document.querySelector<HTMLFormElement>('[data-form-alerta]');
   const inputToken = document.querySelector<HTMLInputElement>(
@@ -738,7 +741,7 @@ anunciaría. */
       if (indicaciones) {
         prevIndicaciones.innerHTML = indicaciones
           .split('\n')
-          .map((line) => `<p>${line.replace(/^-\s*/, '• ')}</p>`)
+          .map((line) => `<p>${escapeHtml(line.replace(/^-\s*/, '• '))}</p>`)
           .join('');
       } else {
         prevIndicaciones.innerHTML =
@@ -753,7 +756,15 @@ anunciaría. */
   form?.addEventListener('change', actualizarPreview);
 
   try {
-    const guardado = window.localStorage.getItem(CLAVE_TOKEN);
+    // Versiones anteriores lo guardaban en localStorage, donde sobrevivía al
+    // cierre del navegador: se borra la copia que haya quedado.
+    window.localStorage.removeItem(CLAVE_TOKEN);
+  } catch {
+    /* ignore */
+  }
+
+  try {
+    const guardado = window.sessionStorage.getItem(CLAVE_TOKEN);
     if (guardado && inputToken) {
       inputToken.value = guardado;
       if (recordar) recordar.checked = true;
@@ -764,13 +775,13 @@ anunciaría. */
 
   cerrar?.addEventListener('click', () => {
     try {
-      window.localStorage.removeItem(CLAVE_TOKEN);
+      window.sessionStorage.removeItem(CLAVE_TOKEN);
     } catch {
       /* ignore */
     }
     if (inputToken) inputToken.value = '';
     if (recordar) recordar.checked = false;
-    if (estado) estado.textContent = 'Token olvidado en este navegador.';
+    if (estado) estado.textContent = 'Token olvidado.';
   });
 
   class ErrorPublicacion extends Error {
@@ -858,13 +869,13 @@ anunciaría. */
 
     if (recordar?.checked) {
       try {
-        window.localStorage.setItem(CLAVE_TOKEN, token);
+        window.sessionStorage.setItem(CLAVE_TOKEN, token);
       } catch {
         /* ignore */
       }
     } else {
       try {
-        window.localStorage.removeItem(CLAVE_TOKEN);
+        window.sessionStorage.removeItem(CLAVE_TOKEN);
       } catch {
         /* ignore */
       }

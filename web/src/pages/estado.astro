@@ -1,6 +1,5 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import Icono from '../components/Icono.astro';
 import { rutaFicha } from '../fichas/registro';
 
 const apiBase = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8000';
@@ -76,7 +75,7 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8000';
                 API pública de cómputo y datos
               </h2>
               <p class="font-sans text-xs text-ink-muted">
-                Servicio FastAPI en Oregon (<code class="font-mono text-[11px]"
+                Servicio FastAPI en Oregon (<code class="font-mono text-micro"
                   >{apiBase}</code
                 >).
               </p>
@@ -151,27 +150,12 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8000';
         lentitud inicial o reintento, una vez despierto el contenedor las
         peticiones subsiguientes se responden en milisegundos.
       </p>
-      <div class="mt-4 flex items-center gap-2">
-        <a
-          href={`${apiBase}/docs`}
-          target="_blank"
-          rel="noopener noreferrer"
-          class="inline-flex items-center gap-1.5 font-sans text-xs font-medium text-accent hover:underline"
-        >
-          <Icono nombre="api" class="h-3.5 w-3.5" />
-          <span>Ver documentación interactiva de la API (/docs)</span>
-          <Icono
-            nombre="external-link"
-            class="h-3.5 w-3.5 text-ink-muted shrink-0"
-          />
-          <span class="sr-only"> (abre en una nueva pestaña)</span>
-        </a>
-      </div>
     </section>
   </main>
 </Layout>
 
-<script is:inline define:vars={{ apiBase }}>
+<script>
+  const apiBase = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8000';
   const dot = document.getElementById('api-dot');
   const badge = document.getElementById('api-badge');
   const contenedor = document.getElementById('api-contenedor-estado');
@@ -216,7 +200,7 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8000';
         contenedor.innerHTML = `<p class="font-sans text-xs text-ink-muted">La API respondió correctamente con código <code>${res.status}</code> en <strong>${latencia} ms</strong>.</p>`;
       } else {
         dot.className = 'flex h-3 w-3 rounded-full bg-rose-500';
-        badge.innerHTML = `<span class="rounded-full bg-rose-500/10 px-3 py-1 font-mono text-xs font-medium text-rose-600">Error ${res.status}</span>`;
+        badge.innerHTML = `<span class="rounded-full bg-rose-500/10 px-3 py-1 font-mono text-xs font-medium text-[light-dark(oklch(51.4%_0.222_16.935),oklch(81%_0.117_11.638))]">Error ${res.status}</span>`;
         mostrarReintento(
           'El servidor respondió con un error. Vuelve a comprobarlo en unos segundos.',
           `Código HTTP ${res.status}`,
@@ -225,7 +209,7 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8000';
     } catch (err) {
       dot.className = 'flex h-3 w-3 rounded-full bg-rose-500';
       badge.innerHTML =
-        '<span class="rounded-full bg-rose-500/10 px-3 py-1 font-mono text-xs font-medium text-rose-600">Sin conexión</span>';
+        '<span class="rounded-full bg-rose-500/10 px-3 py-1 font-mono text-xs font-medium text-[light-dark(oklch(51.4%_0.222_16.935),oklch(81%_0.117_11.638))]">Sin conexión</span>';
       mostrarReintento(
         'No hay respuesta del servidor. Si lleva un rato inactivo, tarda hasta un minuto en arrancar. Vuelve a comprobarlo en unos segundos.',
         err instanceof Error ? err.message : '',
@@ -234,7 +218,7 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8000';
   }
 
   // El detalle técnico se muestra aparte, en pequeño, para quien diagnostica.
-  function mostrarReintento(mensaje, detalle) {
+  function mostrarReintento(mensaje: string, detalle: string) {
     if (!contenedor) return;
     contenedor.innerHTML = '';
     const caja = document.createElement('div');
@@ -247,7 +231,7 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8000';
 
     if (detalle) {
       const pDetalle = document.createElement('p');
-      pDetalle.className = 'mt-1 font-mono text-[11px] text-ink-muted';
+      pDetalle.className = 'mt-1 font-mono text-micro text-ink-muted';
       pDetalle.textContent = `Detalle técnico: ${detalle}`;
       caja.appendChild(pDetalle);
     }

@@ -72,6 +72,21 @@ export interface UsuarioAdmin {
   roles: RolCuenta[];
 }
 
+/** Solicitud que espera la confirmación de otro administrador. */
+export interface AprobacionPendiente {
+  id: string;
+  accion: 'restablecer_factores';
+  objetivo: { id: string; nombre: string; correo: string };
+  solicitante: { id: string; nombre: string };
+  motivo: string;
+  creada_en: string;
+  caduca_en: string;
+  /** La pidió quien consulta: no puede confirmarla, sí cancelarla. */
+  es_propia: boolean;
+  /** Quien consulta no la pidió ni es la cuenta afectada. */
+  puede_confirmar: boolean;
+}
+
 export const TIPOS_INSTITUCION = [
   'minsal',
   'sibasi',
