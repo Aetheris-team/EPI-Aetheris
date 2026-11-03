@@ -1,139 +1,82 @@
+# EPI-Aetheris para Dockyard (Equipo 4).
+#
+# Un solo comando lo deja funcionando desde cero:
+#   docker compose up -d --build
+# y el sitio abre en http://localhost:8401.
+#
+# Solo se publica el puerto de la interfaz web (8401, rango del Equipo 4:
+# 8401-8409). La base y la API quedan en la red interna del compose: nginx
+# (servicio web) sirve el sitio compilado y reenvía /api al backend, así que el
+# navegador nunca habla con otro puerto.
+#
+# Todas las variables tienen valor por defecto; .env.example las documenta y
+# Dockyard lo copia como .env si no existe.
+#
+# Sin política restart a propósito: como el resto de proyectos de Dockyard,
+# queda apagado tras reiniciar la PC hasta que el docente lo enciende, y si un
+# servicio se cae Dockyard lo muestra como caído en vez de reiniciándose.
+
 services:
   db:
-    image: postgres:15-alpine
-    container_name: aetheris_db
-    restart: unless-stopped
+    # Imagen propia con las migraciones y el volcado de datos reales dentro
+    # (db/Dockerfile): la base se crea y se llena sola en el primer arranque.
+    build: ./db
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:?Debe definirse POSTGRES_USER en el archivo .env (ver .env.example)}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Debe definirse POSTGRES_PASSWORD en el archivo .env (ver .env.example)}
-      POSTGRES_DB: ${POSTGRES_DB:?Debe definirse POSTGRES_DB en el archivo .env (ver .env.example)}
-    ports:
-      # Solo en el equipo local: la base y la API no se exponen a la red.
-      - "127.0.0.1:5432:5432"
+      POSTGRES_USER: ${POSTGRES_USER:-aetheris_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aetheris_secure_password}
+      POSTGRES_DB: ${POSTGRES_DB:-epi_aetheris}
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./db/migrations:/docker-entrypoint-initdb.d
-      - ./db/seed/seed_datos_reales.sql:/docker-entrypoint-initdb.d/seed_datos_reales.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      # Por TCP a propósito: mientras corren las migraciones y el volcado,
+      # Postgres solo escucha por el socket local, así que la base cuenta
+      # como lista cuando ya terminó de llenarse.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
       interval: 5s
       timeout: 5s
-      retries: 5
-    networks:
-      - aetheris_network
+      retries: 30
+      start_period: 60s
 
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: aetheris_backend
-    restart: unless-stopped
-    ports:
-      - "127.0.0.1:8000:8000"
+    build: ./backend
     environment:
-      # Un solo origen permitido obligaba a que CUALQUIER dev server se
-      # atara al 4321, que es el puerto del contenedor `web`. Eso hacia
-      # imposible levantar un segundo frontend (un worktree, una rama en
-      # paralelo) sin parar este contenedor antes y acordarse de volver a
-      # levantarlo. Con el 4322 tambien permitido, los dos conviven.
-      # El default de backend/api/main.py es solo el 4321, asi que sin esta
-      # linea el contenedor se queda con un unico origen. Produccion no se
-      # ve afectada: Render toma CORS_ALLOWED_ORIGINS de render.yaml.
-      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:4321,http://localhost:4322}
       POSTGRES_HOST: db
-      POSTGRES_USER: ${POSTGRES_USER:?Debe definirse POSTGRES_USER en el archivo .env (ver .env.example)}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Debe definirse POSTGRES_PASSWORD en el archivo .env (ver .env.example)}
-      POSTGRES_DB: ${POSTGRES_DB:?Debe definirse POSTGRES_DB en el archivo .env (ver .env.example)}
       POSTGRES_PORT: 5432
-      # Vacia por defecto: la API usa POSTGRES_* (rol propietario). Definirla en
-      # .env para probar el rol de aplicacion (ADR 0024, punto E).
-      DATABASE_URL: ${DATABASE_URL:-}
-      # Los limites de backend/api/main.py se leian solo del entorno del
-      # proceso, y compose no reenviaba ninguna variable RATE_LIMIT_*: el
-      # contenedor siempre usaba los defaults de produccion, sin importar
-      # el .env. Los defaults de aqui son los mismos que los del codigo; para
-      # correr la suite E2E (muchas llamadas seguidas a los endpoints
-      # pesados) sube RATE_LIMIT_HEAVY en el .env local, p. ej. 1000/minute.
+      POSTGRES_USER: ${POSTGRES_USER:-aetheris_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aetheris_secure_password}
+      POSTGRES_DB: ${POSTGRES_DB:-epi_aetheris}
+      # El navegador llama a /api en el mismo origen (8401), así que CORS no
+      # interviene; se deja el origen local por si alguien abre la API aparte.
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:8401}
+      API_DOCS_ENABLED: ${API_DOCS_ENABLED:-true}
       RATE_LIMIT_ENABLED: ${RATE_LIMIT_ENABLED:-true}
       RATE_LIMIT_DEFAULT: ${RATE_LIMIT_DEFAULT:-120/minute}
       RATE_LIMIT_HEAVY: ${RATE_LIMIT_HEAVY:-30/minute}
       RATE_LIMIT_WRITE: ${RATE_LIMIT_WRITE:-10/minute}
       RATE_LIMIT_AUTH: ${RATE_LIMIT_AUTH:-10/minute}
-      # Cuentas de usuario (ADR 0024): apagadas por defecto.
-      CUENTAS_HABILITADAS: ${CUENTAS_HABILITADAS:-false}
-      AUTH_ORIGEN_CANONICO: ${AUTH_ORIGEN_CANONICO:-http://localhost:4321}
-      AUTH_RP_ID: ${AUTH_RP_ID:-localhost}
-      AUTH_PEPPERS: ${AUTH_PEPPERS:-}
-      AUTH_CLAVES_CIFRADO: ${AUTH_CLAVES_CIFRADO:-}
-      AUTH_HIBP: ${AUTH_HIBP:-true}
-      CORREO_REMITENTE: ${CORREO_REMITENTE:-cuentas@localhost}
-      SMTP_HOST: ${SMTP_HOST:-mailpit}
-      SMTP_PORT: ${SMTP_PORT:-1025}
-      SMTP_STARTTLS: ${SMTP_STARTTLS:-false}
-    volumes:
-      - ./backend:/app
+      # Cuentas de usuario (ADR 0024): apagadas en esta versión.
+      CUENTAS_HABILITADAS: "false"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=4)"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
     depends_on:
       db:
         condition: service_healthy
-    networks:
-      - aetheris_network
-
-  # Bandeja de correo de desarrollo para las cuentas: recibe lo que envía el
-  # backend sin mandarlo a ninguna parte. Bajo demanda:
-  #   docker compose --profile cuentas up -d mailpit
-  # Los mensajes se leen en http://localhost:8025.
-  mailpit:
-    image: axllent/mailpit:v1.27
-    container_name: aetheris_mailpit
-    profiles: ["cuentas"]
-    ports:
-      - "127.0.0.1:8025:8025"
-      - "127.0.0.1:1025:1025"
-    networks:
-      - aetheris_network
 
   web:
+    # El contexto es la raíz del repo: la Biblioteca (web/src/content.config.ts)
+    # lee docs/biblioteca/ al compilar, y docs/ está fuera de web/.
     build:
-      context: ./web
-      dockerfile: Dockerfile
-    container_name: aetheris_web
-    # Bajo demanda: `docker compose --profile web up -d web`. Por defecto el
-    # front se levanta desde el checkout con `pnpm dev`, para que el 4321 no
-    # lo ocupe una imagen con dependencias antiguas.
-    profiles: ["web"]
+      context: .
+      dockerfile: web/Dockerfile
     ports:
-      - "4321:4321"
-    volumes:
-      - ./web:/app
-      - /app/node_modules
-      # Solo lectura -- la pestaña Biblioteca (web/src/content.config.ts) lee
-      # una selección curada de estos .md en build. Montado en /docs (raíz
-      # del contenedor) a propósito: coincide con la ruta relativa
-      # '../../docs' que ese archivo usa también fuera de Docker, donde
-      # docs/ es hermano de web/ en el checkout del host.
-      - ./docs:/docs:ro
+      - "8401:80"
     depends_on:
-      - backend
-    networks:
-      - aetheris_network
-
-  e2e:
-    profiles: ["test"]
-    build:
-      context: ./web
-      dockerfile: Dockerfile.e2e
-    ipc: host
-    network_mode: host
-    environment:
-      PLAYWRIGHT_BASE_URL: http://localhost:4321
-    # Necesita un servidor en 4321: `pnpm dev` en web/ o el perfil `web`
-    # (`docker compose --profile web --profile test up e2e web`).
-    depends_on:
-      - backend
+      backend:
+        condition: service_healthy
 
 volumes:
   pgdata:
-
-networks:
-  aetheris_network:
-    driver: bridge

@@ -6,3 +6,5 @@ venv/
 .git
 .env
 *.md
+api/tests/
+.pytest_cache/

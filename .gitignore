@@ -27,46 +27,12 @@ playwright-report/
 *.log
 pgdata/
 
-# Boletines MINSAL: PDFs crudos descargados localmente para preparar la
-# ingesta. El dato crudo no se trackea; el código de descarga/parsing sí.
-# Excepción deliberada a esta regla: backend/ingestion/geo/slv-adm1-source.geojson
-# SÍ se trackea (es dato descargado, pero pequeño, estático, y necesario para que
-# el build del mapa no dependa de red — ver AGENTS.md y docs/adr/0002-*.md).
-backend/ingestion/data/raw/
-
-# Salida intermedia del parser MINSAL (tabla cruda por boletín, previa a
-# normalizar) — derivada del dato crudo, misma regla de exclusión.
-#
-# Excepción deliberada (issue #72, opción 1): los 3 artefactos del
-# clasificador retirado SÍ se trackean. Son datos ya procesados (no boletines
-# crudos), pesan ~2.7 MB en conjunto (bajo el precedente ya aceptado del seed
-# de 4.4 MB, ADR 0010) y son la fuente de
-# backend/api/datos/riesgo_nacional_congelado.json, que es lo que sirve
-# /api/riesgo-nacional (ADR 0025). Regenerar con:
-# construir_dataset_modelado.py + entrenar_clasificador.py, y después
-# congelar_clasificador.py.
-# (La regla del padre usa /* -- excluye cada entrada directa del directorio,
-# no todo el subárbol de una vez -- porque un directorio excluido por completo
-# ("dir/") no se recorre y sus "!" nunca se evalúan. Con /* cada nivel queda
-# reabrible con su propio "!", y por eso hay que repetir el patrón en cada
-# nivel intermedio.)
-backend/ingestion/data/interim/*
-!backend/ingestion/data/interim/dataset_modelado
-backend/ingestion/data/interim/dataset_modelado/*
-!backend/ingestion/data/interim/dataset_modelado/dataset_modelado.csv
-!backend/ingestion/data/interim/modelo
-backend/ingestion/data/interim/modelo/*
-!backend/ingestion/data/interim/modelo/clasificador_riesgo_nacional_v1.joblib
-!backend/ingestion/data/interim/modelo/metricas_modelo.json
-
-# Extracto exploratorio de IRA para la web (exportar_ira_web.py) — derivado
-# de data/interim/, misma regla: no se versiona; la página /ira muestra un
-# estado vacío explícito cuando no está generado.
+# Extracto exploratorio de IRA para la web: no se versiona; la página /ira
+# muestra un estado vacío explícito cuando no está generado.
 web/public/datos-exploracion/
 
-# db/seed/seed_datos_reales.sql SÍ se trackea: excepción deliberada, igual
-# criterio que el GeoJSON de arriba (ver docs/adr/0010-*.md) — volcado de
-# datos ya procesados (4,4 MB), no boletines crudos.
+# db/seed/seed_datos_reales.sql SÍ se trackea: excepción deliberada (ver
+# docs/adr/0010-*.md) — volcado de datos ya procesados (~5,7 MB).
 
 # graphify: índice de grafo de código, regenerable localmente, no se trackea
 graphify-out/
@@ -97,9 +63,5 @@ PLAN_ALERTAS_OPERABLES.md
 # AGENTS.md — se conservan localmente si hacen falta).
 indicaciones-configuracion-codex-documentacion-EPI-Aetheris.md
 
-# design-sync
-ds-bundle/
-.ds-sync/
-.design-sync/.cache/
 /skills-lock.json
 /db/migrations/seed_datos_reales.sql

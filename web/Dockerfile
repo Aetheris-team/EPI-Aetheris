@@ -1,22 +1,28 @@
-FROM node:22-alpine
+# Se construye desde la raíz del repo (ver docker-compose.yml): la Biblioteca
+# lee ../docs/biblioteca al compilar.
 
-WORKDIR /app
+# Etapa 1: compilar el sitio estático de Astro.
+FROM node:24-alpine AS build
 
-# Activar Corepack fijando pnpm v9 (compatible con Node 22, requerido por Astro 6+)
-RUN corepack enable && corepack prepare pnpm@9 --activate
+WORKDIR /repo/web
 
-# Copiar manifiesto de dependencias
-COPY package*.json pnpm-lock.yaml* ./
+RUN corepack enable && corepack prepare pnpm@9.15.9 --activate
 
-# Instalar dependencias con pnpm v9
-RUN pnpm install
+COPY web/package.json web/pnpm-lock.yaml web/pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile
 
-# Copiar el código fuente
-COPY . .
+COPY web/ ./
+COPY docs/biblioteca/ /repo/docs/biblioteca/
 
-EXPOSE 4321
+# Vacía a propósito: el navegador pide /api/... al mismo origen y nginx lo
+# reenvía al backend. Así no se publica el puerto de la API ni entra CORS.
+ENV PUBLIC_API_URL=""
+RUN pnpm exec astro build
 
-# El PID guardado por Astro en .astro/dev.json puede sobrevivir al contenedor
-# porque /app se monta desde el host. Docker ya controla la instancia del
-# servicio, así que se omite ese lock para evitar falsos positivos al reiniciar.
-CMD ["pnpm", "exec", "astro", "dev", "--host", "0.0.0.0", "--ignore-lock"]
+# Etapa 2: servir lo compilado con nginx.
+FROM nginx:1.29-alpine
+
+COPY web/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /repo/web/dist/ /usr/share/nginx/html/
+
+EXPOSE 80
