@@ -54,7 +54,8 @@ const urlCompleta = new URL(rutaCompleta, sitio);
   }
 </style>
 
-<script is:inline define:vars={{ origen: sitio.origin }}>
+<script>
+  const origen = import.meta.env.SITE ?? 'https://epi-aetheris.dev';
   // Dentro del marco los enlaces relativos apuntan al propio iframe. Se llevan
   // al sitio completo y se abren fuera.
   function reescribir() {

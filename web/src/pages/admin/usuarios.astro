@@ -74,6 +74,47 @@ const ETIQUETAS_TIPO: Record<string, string> = {
         </div>
       </section>
 
+      <section
+        aria-labelledby="titulo-aprobaciones"
+        data-seccion-aprobaciones
+        class={CLASE_TARJETA}
+      >
+        <h2
+          id="titulo-aprobaciones"
+          class="font-sans text-lg font-bold text-ink"
+        >
+          Solicitudes pendientes de aprobación
+        </h2>
+        <p class={`mt-1 ${CLASE_AYUDA}`}>
+          Restablecer los factores de un administrador necesita la confirmación
+          de otro administrador, distinto de quien lo pidió y de la cuenta
+          afectada. Las solicitudes caducan a las 24 horas.
+        </p>
+        <p data-estado-aprobaciones role="status" class={`mt-3 ${CLASE_AYUDA}`}>
+        </p>
+        <div data-tabla-aprobaciones hidden class="mt-3 overflow-x-auto">
+          <table
+            class="w-full min-w-[48rem] border-collapse text-left font-sans text-sm"
+          >
+            <caption class="sr-only"
+              >Solicitudes pendientes de aprobación</caption
+            >
+            <thead>
+              <tr class="border-b border-border text-xs text-ink-muted">
+                <th scope="col" class="py-2 pr-4 font-semibold"
+                  >Cuenta afectada</th
+                >
+                <th scope="col" class="py-2 pr-4 font-semibold">Pidió</th>
+                <th scope="col" class="py-2 pr-4 font-semibold">Motivo</th>
+                <th scope="col" class="py-2 pr-4 font-semibold">Caduca</th>
+                <th scope="col" class="py-2 font-semibold">Acciones</th>
+              </tr>
+            </thead>
+            <tbody data-lista-aprobaciones></tbody>
+          </table>
+        </div>
+      </section>
+
       <section aria-labelledby="titulo-invitar" class={CLASE_TARJETA}>
         <h2 id="titulo-invitar" class="font-sans text-lg font-bold text-ink">
           Invitar a una persona
@@ -294,10 +335,13 @@ const ETIQUETAS_TIPO: Record<string, string> = {
     ErrorCuenta,
     cambiarEstado,
     cambiarRoles,
+    confirmarAprobacion,
     crearInstitucion,
     invitar,
+    listarAprobaciones,
     listarInstituciones,
     listarUsuarios,
+    rechazarAprobacion,
     restablecerFactores,
     verificarInstitucion,
   } from '../../lib/cuenta-api';
@@ -319,6 +363,7 @@ const ETIQUETAS_TIPO: Record<string, string> = {
   import { renderErrorFuente } from '../../components/estado-async';
   import {
     ROLES_CUENTA,
+    type AprobacionPendiente,
     type InstitucionAdmin,
     type RolCuenta,
     type SesionActiva,
@@ -361,6 +406,8 @@ const ETIQUETAS_TIPO: Record<string, string> = {
     let sesion: SesionActiva;
     let usuarios: UsuarioAdmin[] = [];
     let instituciones: InstitucionAdmin[] = [];
+    // null cuando la lista no se pudo cargar (por ejemplo, un servidor anterior).
+    let aprobaciones: AprobacionPendiente[] | null = [];
 
     // --- Listas ------------------------------------------------------------
 
@@ -390,15 +437,16 @@ const ETIQUETAS_TIPO: Record<string, string> = {
     };
 
     const ejecutar = async (
-      tarea: () => Promise<void>,
+      tarea: () => Promise<string | void>,
       exito: string,
       alFallar?: () => void,
     ): Promise<void> => {
       limpiarAviso(avisoGeneral);
       try {
-        await conReautenticacion(tarea);
+        // La tarea puede devolver su propio mensaje de éxito.
+        const mensaje = await conReautenticacion(tarea);
         await recargar();
-        mostrarAviso(avisoGeneral, 'ok', exito);
+        mostrarAviso(avisoGeneral, 'ok', mensaje || exito);
       } catch (error) {
         mostrarAviso(avisoGeneral, 'error', mensajeAdmin(error));
         alFallar?.();
@@ -477,6 +525,87 @@ const ETIQUETAS_TIPO: Record<string, string> = {
       );
     };
 
+    const pintarAprobaciones = (): void => {
+      const estado = pedirElemento<HTMLElement>(
+        raiz,
+        '[data-estado-aprobaciones]',
+      );
+      const tabla = pedirElemento<HTMLElement>(
+        raiz,
+        '[data-tabla-aprobaciones]',
+      );
+      const cuerpo = pedirElemento<HTMLElement>(
+        raiz,
+        '[data-lista-aprobaciones]',
+      );
+      if (aprobaciones === null) {
+        estado.textContent =
+          'No se pudieron cargar las solicitudes pendientes. Recarga la página para intentarlo de nuevo.';
+        tabla.hidden = true;
+        cuerpo.replaceChildren();
+        return;
+      }
+      estado.textContent = aprobaciones.length
+        ? ''
+        : 'No hay solicitudes pendientes.';
+      tabla.hidden = aprobaciones.length === 0;
+      cuerpo.replaceChildren(
+        ...aprobaciones.map((a) => {
+          const fila = document.createElement('tr');
+          fila.className = 'border-b border-border align-top';
+          const cuenta = document.createElement('th');
+          cuenta.scope = 'row';
+          cuenta.className = 'py-2 pr-4 text-left font-normal text-ink';
+          const nombre = document.createElement('div');
+          nombre.className = 'font-semibold';
+          nombre.textContent = a.objetivo.nombre || a.objetivo.correo;
+          const correo = document.createElement('div');
+          correo.className = 'break-all text-xs text-ink-muted';
+          correo.textContent = a.objetivo.correo;
+          cuenta.append(nombre, correo);
+
+          const acciones = document.createElement('td');
+          acciones.className = 'py-2';
+          const lista = document.createElement('div');
+          lista.className = 'flex flex-wrap items-center gap-2';
+          const nombreAria = a.objetivo.nombre || a.objetivo.correo;
+          if (a.puede_confirmar) {
+            lista.append(
+              boton(
+                'Confirmar',
+                `Confirmar el restablecimiento de factores de ${nombreAria}`,
+                (b) => void confirmarDe(a, b),
+              ),
+            );
+          } else {
+            const nota = document.createElement('span');
+            nota.className = 'text-xs text-ink-muted';
+            nota.textContent = a.es_propia
+              ? 'La pediste tú: la confirma otro administrador.'
+              : 'Es tu cuenta: la confirma otro administrador.';
+            lista.append(nota);
+          }
+          lista.append(
+            boton(
+              a.es_propia ? 'Cancelar solicitud' : 'Rechazar',
+              `${a.es_propia ? 'Cancelar' : 'Rechazar'} la solicitud de restablecer los factores de ${nombreAria}`,
+              (b) => void rechazarDe(a, b),
+            ),
+          );
+          acciones.append(lista);
+
+          fila.append(
+            cuenta,
+            celda(a.solicitante.nombre || 'Sin nombre'),
+            celda(a.motivo),
+            celda(formatearFecha(a.caduca_en)),
+            acciones,
+          );
+          return fila;
+        }),
+      );
+    };
+
     const pintarInstituciones = (): void => {
       const cuerpo = pedirElemento<HTMLElement>(
         raiz,
@@ -528,11 +657,14 @@ const ETIQUETAS_TIPO: Record<string, string> = {
     };
 
     const recargar = async (): Promise<void> => {
-      [usuarios, instituciones] = await Promise.all([
+      [usuarios, instituciones, aprobaciones] = await Promise.all([
         listarUsuarios(),
         listarInstituciones(),
+        // Un fallo aquí no debe esconder el resto de la página.
+        listarAprobaciones().catch(() => null),
       ]);
       pintarUsuarios();
+      pintarAprobaciones();
       pintarInstituciones();
     };
 
@@ -646,19 +778,65 @@ const ETIQUETAS_TIPO: Record<string, string> = {
       u: UsuarioAdmin,
       origen: HTMLButtonElement,
     ): Promise<void> => {
+      const nombre = u.nombre || u.correo;
+      const esAdmin = u.roles.includes('administrador');
       const respuesta = await confirmarAccion({
-        titulo: 'Restablecer factores',
-        texto: `Se quitarán todos los factores de ${u.nombre || u.correo}. Tendrá que registrar otros para volver a ingresar.`,
-        etiquetaConfirmar: 'Restablecer',
+        titulo: esAdmin ? 'Pedir restablecer factores' : 'Restablecer factores',
+        texto: esAdmin
+          ? `${nombre} es administrador. Se creará una solicitud que otro administrador debe confirmar antes de quitar sus factores; mientras tanto la cuenta sigue como está.`
+          : `Se quitarán todos los factores de ${nombre}. Tendrá que registrar otros para volver a ingresar.`,
+        etiquetaConfirmar: esAdmin ? 'Pedir' : 'Restablecer',
         pedirMotivo: true,
       });
       if (!respuesta) {
         origen.focus();
         return;
       }
+      await ejecutar(async () => {
+        const resultado = await restablecerFactores(u.id, respuesta.motivo);
+        return resultado.pendiente
+          ? 'Solicitud creada. Otro administrador debe confirmarla antes de que caduque.'
+          : undefined;
+      }, 'Factores restablecidos.');
+    };
+
+    const confirmarDe = async (
+      a: AprobacionPendiente,
+      origen: HTMLButtonElement,
+    ): Promise<void> => {
+      const nombre = a.objetivo.nombre || a.objetivo.correo;
+      const respuesta = await confirmarAccion({
+        titulo: 'Confirmar restablecimiento',
+        texto: `Se quitarán todos los factores de ${nombre} y se cerrarán sus sesiones. Lo pidió ${a.solicitante.nombre || 'otro administrador'}: «${a.motivo}». Confirma solo si lo reconoces.`,
+        etiquetaConfirmar: 'Confirmar',
+      });
+      if (!respuesta) {
+        origen.focus();
+        return;
+      }
       await ejecutar(
-        () => restablecerFactores(u.id, respuesta.motivo),
+        () => confirmarAprobacion(a.id),
         'Factores restablecidos.',
+      );
+    };
+
+    const rechazarDe = async (
+      a: AprobacionPendiente,
+      origen: HTMLButtonElement,
+    ): Promise<void> => {
+      const nombre = a.objetivo.nombre || a.objetivo.correo;
+      const respuesta = await confirmarAccion({
+        titulo: a.es_propia ? 'Cancelar solicitud' : 'Rechazar solicitud',
+        texto: `Los factores de ${nombre} se quedan como están.`,
+        etiquetaConfirmar: a.es_propia ? 'Cancelar solicitud' : 'Rechazar',
+      });
+      if (!respuesta) {
+        origen.focus();
+        return;
+      }
+      await ejecutar(
+        () => rechazarAprobacion(a.id),
+        a.es_propia ? 'Solicitud cancelada.' : 'Solicitud rechazada.',
       );
     };
 
