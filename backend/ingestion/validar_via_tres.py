@@ -96,33 +96,33 @@ def calcular_features(
     return {
         "racha_termica_transmision_8s": _racha_termica(datos, anteriores[:8]),
         "grados_dia_desarrollo_4s": float(
-            sum(7.0 * max(min(temperatura, 35.0) - 16.0, 0.0) for temperatura in temperaturas)
+            base.suma_ingenua(7.0 * max(min(temperatura, 35.0) - 16.0, 0.0) for temperatura in temperaturas)
         ),
         "semanas_optimas_temp_humedad_4s": float(
-            sum(
+            base.suma_ingenua(
                 27.0 <= temperatura <= 29.5 and humedad > 75.0
                 for temperatura, humedad in zip(temperaturas, humedades)
             )
         ),
         "interaccion_termohigrometrica_4s": float(
-            sum(
+            base.suma_ingenua(
                 _exceso_termico_humedo(temperatura, humedad)
                 for temperatura, humedad in zip(temperaturas, humedades)
             )
             / 4.0
         ),
         "amplitud_termica_media_4s": float(
-            sum(
+            base.suma_ingenua(
                 datos.clima[clave]["temp_max"] - datos.clima[clave]["temp_min"]
                 for clave in cuatro
             )
             / 4.0
         ),
         "duracion_lluvia_4s": float(
-            sum(datos.clima[clave]["precipitation_hours"] for clave in cuatro)
+            base.suma_ingenua(datos.clima[clave]["precipitation_hours"] for clave in cuatro)
         ),
         "pulso_seco_humedo_1s": float(
-            max(precipitaciones[0] - sum(precipitaciones[1:4]) / 3.0, 0.0)
+            max(precipitaciones[0] - base.suma_ingenua(precipitaciones[1:4]) / 3.0, 0.0)
         ),
     }
 
@@ -183,7 +183,7 @@ def _resumen_feature(valores: Sequence[float]) -> dict[str, float | int]:
     return {
         "min": float(min(valores)),
         "max": float(max(valores)),
-        "media": float(sum(valores) / len(valores)),
+        "media": float(base.suma_ingenua(valores) / len(valores)),
         "valores_unicos": len(set(valores)),
     }
 
