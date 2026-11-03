@@ -1,7 +1,7 @@
 """Ruta interna del refresco recurrente de clima (ADR 0027, A2 del ADR 0018).
 
-Bearer contra CLIMA_REFRESCO_TOKEN, disparada por el workflow
-.github/workflows/refrescar-clima.yml. Encola cargar_clima.py en segundo plano
+Bearer contra CLIMA_REFRESCO_TOKEN. En la versión para Dockyard no hay
+workflow que la dispare y sin el token responde 503. Encola cargar_clima.py en segundo plano
 y responde 202 de inmediato: el backoff por rate-limit de Open-Meteo puede
 tardar varios minutos.
 """

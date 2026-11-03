@@ -1,73 +1,70 @@
 # EPI-Aetheris
 
-Sistema descriptivo de vigilancia epidemiológica para El Salvador,
-contenedorizado y reproducible a costo cero. Piloto con dengue y eventos
-respiratorios (IRA, neumonías, virus); arquitectura agnóstica al tipo de
-evento y región. Sitio público: https://epi-aetheris.dev
+Sistema descriptivo de vigilancia epidemiológica para El Salvador: dengue y
+eventos respiratorios (IRA, neumonías, virus) por departamento, con alertas,
+análisis y predicción a corto plazo a partir de datos públicos de MINSAL.
+Esta es la versión preparada para alojarse en Dockyard: se levanta con un solo
+comando y trae sus datos reales incluidos.
 
-## Stack
-
-- **Backend:** FastAPI + psycopg2 (PostgreSQL raw SQL)
-- **Frontend:** Astro 7 + TypeScript + Tailwind 4 + ECharts (se desarrolla en aetheris-nitor; ver abajo)
-- **Base de datos:** PostgreSQL 15
-- **Infra:** Docker Compose (`db` y `backend` por defecto; `web`, `mailpit` y `e2e` bajo perfiles)
-
-## Requisitos
-
-- Docker + Docker Compose
-- Git
-
-## Clonar
-
-```bash
-git clone git@github.com:aetheris-team/EPI-Aetheris.git
-cd EPI-Aetheris
-```
+| Dato | Valor |
+|---|---|
+| Proyecto | EPI-Aetheris |
+| Equipo responsable | Equipo 4 |
+| Interfaz web | http://localhost:8401 |
+| Usuarios de prueba | No hay: el sitio es público y las cuentas están apagadas |
 
 ## Inicio rápido
 
+Requisitos: Docker con Docker Compose y conexión a internet en la primera
+compilación (descarga dependencias y fuentes).
+
 ```bash
-cp .env.example .env
-docker compose up -d
+docker compose up -d --build
 ```
 
-- API: http://localhost:8000
-- DB: localhost:5432
+La primera vez tarda unos minutos en compilar. Después, el sitio abre en
+http://localhost:8401 con los datos ya cargados.
 
-El frontend no arranca con `docker compose up`. Se levanta desde `web/` con `pnpm install && pnpm dev` (http://localhost:4321). Para usar el contenedor: `docker compose --profile web up -d web`.
+Para apagarlo: `docker compose stop`. Para borrar también los datos y volver a
+empezar: `docker compose down -v`.
 
-La base queda poblada con datos reales desde el primer arranque (volcado versionado de casos/clima/boletines, `db/seed/`, ~4,4 MB — ver `docs/adr/0010-versionar-volcado-de-datos-reales.md`), sin depender de red ni de re-parsear los boletines. El volcado no trae todavía las series nacionales del tablero de MINSAL de 2025–2026 (ADR 0021); se cargan con `backend/ingestion/cargar_minsal_tablero.py`.
+## Cómo está armado
 
-## Variables de entorno
+Tres servicios en `docker-compose.yml`; solo se publica el puerto 8401 (rango
+del Equipo 4: 8401–8409).
 
-La tabla cubre la base de datos; `.env.example` documenta el resto (CORS, rate limiting, alertas, cuentas). `docker compose` exige las tres primeras en `.env`: no tienen default.
-
-| Variable | Descripción | Valor en `.env.example` |
+| Servicio | Imagen | Qué hace |
 |---|---|---|
-| `POSTGRES_USER` | Usuario de BD | `aetheris_user` |
-| `POSTGRES_PASSWORD` | Contraseña de BD | `aetheris_secure_password` |
-| `POSTGRES_DB` | Nombre de la BD | `epi_aetheris` |
-| `POSTGRES_HOST` | Host de la BD | `db` |
-| `POSTGRES_PORT` | Puerto de la BD | `5432` |
+| `db` | `db/Dockerfile` (PostgreSQL 15) | Crea el esquema con `db/migrations/` y carga el volcado de datos reales de `db/seed/` (ADR 0010) en el primer arranque. No publica puerto |
+| `backend` | `backend/Dockerfile` (FastAPI) | API en el puerto 8000 interno. Espera a que la base esté lista |
+| `web` | `web/Dockerfile` (Astro → nginx) | Sirve el sitio compilado en el 8401 y reenvía `/api` al backend, así el navegador usa un solo origen |
+
+El volcado no trae las series nacionales del tablero de MINSAL de 2025–2026
+(ADR 0021); se cargan con `backend/ingestion/cargar_minsal_tablero.py`.
+
+`.env.example` documenta las variables. Todas tienen un valor por defecto en el
+compose, así que el archivo `.env` es opcional.
 
 ## Estructura
 
 ```
-backend/api/       → FastAPI app (punto de entrada: api/main.py:app; endpoints en api/rutas/)
-backend/ingestion/ → pipeline de ingesta y experimentos de validación
-                     (data/interim/modelo/: artefactos versionados del clasificador retirado, issue #72)
-web/               → frontend Astro: copia sincronizada de aetheris-nitor (ver abajo)
-db/migrations/     → schema SQL (cargado automáticamente al iniciar db)
-db/seed/           → volcado de datos reales (ADR 0010)
+backend/api/       → API FastAPI (punto de entrada: api/main.py:app; endpoints en api/rutas/)
+backend/ingestion/ → pipeline de ingesta y experimentos de validación (no entra en la imagen)
+web/               → frontend Astro + Tailwind + ECharts; nginx.conf sirve el sitio compilado
+db/                → Dockerfile de la base, migraciones (migrations/) y volcado de datos (seed/)
 docs/adr/          → Architecture Decision Records
 docs/biblioteca/   → documentos públicos de /biblioteca
 docs/experimentos/ → experimentos firmados que respaldan un ADR
 docs/seguridad/    → respuesta a incidentes y roles de base de datos
-docs/despliegue-render.md → despliegue del backend en Render
 ```
 
-## Frontend y aetheris-nitor
+## Desarrollo sin Docker
 
-El frontend se desarrolla en [aetheris-nitor](https://github.com/aetheris-team/aetheris-nitor), que es el sitio que se publica. Un workflow de ese repo copia `src/`, `tests/`, `public/` y la configuración a `web/` y abre aquí un PR (`chore/web-sincronizado-auto`). Los cambios al frontend van en aetheris-nitor: lo que se edite solo en `web/` se pierde en la siguiente sincronización. `docs/biblioteca/` no se sincroniza; cada repo tiene su copia.
+- API: en `backend/`, `pip install -r requirements.txt -r requirements-dev.txt`
+  y `uvicorn api.main:app --reload` (necesita una base Postgres y las variables
+  `POSTGRES_*`).
+- Frontend: en `web/`, `pnpm install && pnpm dev` (http://localhost:4321). En
+  ese modo llama a la API en `http://localhost:8000`, o en la que indique
+  `PUBLIC_API_URL`.
 
-Las instrucciones para agentes y el contexto técnico vigente están en `AGENTS.md`.
+Las instrucciones para agentes y el contexto técnico están en `AGENTS.md`.

@@ -1,9 +1,0 @@
-# Configuración de zizmor (auditor de workflows de GitHub Actions).
-# Los dos workflows de Claude Code dejan las credenciales del checkout
-# persistidas a propósito: la acción anthropics/claude-code-action las usa para
-# comentar y empujar commits. El resto de workflows las desactiva.
-rules:
-  artipacked:
-    ignore:
-      - claude.yml
-      - claude-code-review.yml

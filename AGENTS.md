@@ -223,14 +223,10 @@ El frontend se encuentra en:
 
 `web/`
 
-**`web/` es una copia.** El frontend se desarrolla en el repositorio
-`aetheris-team/aetheris-nitor`, que es también el que Render publica como sitio
-estático. Su workflow `sincronizar-monorepo.yml` reemplaza `web/src`,
-`web/tests`, `web/public` y la configuración del paquete con cada cambio en
-`main` de aetheris-nitor y abre aquí un PR (`chore/web-sincronizado-auto`). Un
-cambio hecho solo en `web/` se pierde en la siguiente sincronización: hazlo en
-aetheris-nitor. `docs/biblioteca/` no se sincroniza; aetheris-nitor tiene su
-propia copia y un cambio de contenido va en las dos.
+**`web/` se mantiene aquí.** El frontend nació en
+`aetheris-team/aetheris-nitor`, pero esta versión (preparada para alojarse en
+Dockyard) no se sincroniza con ese repositorio: los cambios al frontend se
+hacen directamente en `web/`.
 
 Tecnologías principales:
 
@@ -394,9 +390,9 @@ Solo implementa cambios cuando la solicitud incluya explícitamente corregir, mo
 
 ### Flujo de ramas
 
-* `main` es la rama de **release**: es lo que Render despliega (ver `render.yaml`). Solo recibe PRs desde `dev`.
+* `main` es la rama de **release**: es la versión que se entrega para alojar en Dockyard. Solo recibe PRs desde `dev`.
 * `dev` es la rama de **integración** y la rama por defecto del repo. Todas las PRs de features y fixes van contra `dev`.
-* Cuando `dev` está estable se abre una PR `dev → main`; ese merge dispara el despliegue.
+* Cuando `dev` está estable se abre una PR `dev → main`.
 * Ramas de trabajo: `feat/*`, `fix/*`, `chore/*`, `docs/*`, partiendo de `dev`.
 
 Respeta el estado actual del repositorio.
@@ -448,8 +444,7 @@ docs/
 ├── adr/                    # decisiones arquitectónicas formales
 ├── biblioteca/             # documentos públicos de /biblioteca (colección de Astro; no mover)
 ├── experimentos/           # experimentos firmados que respaldan un ADR aceptado (ver abajo)
-├── seguridad/              # respuesta a incidentes y roles de base de datos (excepción del ADR 0024)
-└── despliegue-render.md    # procedimiento de despliegue (referenciado por render.yaml)
+└── seguridad/              # respuesta a incidentes y roles de base de datos (excepción del ADR 0024)
 ```
 
 Cuando surja conocimiento nuevo:
@@ -461,7 +456,7 @@ Cuando surja conocimiento nuevo:
 
 Excepción acotada: `docs/experimentos/` guarda **solo** experimentos firmados (protocolo fechado y resultado) que respaldan un ADR aceptado y que ese ADR o el código citan, como la mezcla C del nowcast (ADR 0020, ADR 0021). Un experimento exploratorio, uno sin firmar o uno que ningún ADR usa sigue sin versionarse.
 
-No crees carpetas de documentación nuevas fuera de `docs/adr/`, `docs/biblioteca/`, `docs/experimentos/` y `docs/seguridad/`. Esta última, por el ADR 0024, contiene solo el procedimiento de respuesta a incidentes y la guía de los roles de base de datos (punto E, citada por `render.yaml`).
+No crees carpetas de documentación nuevas fuera de `docs/adr/`, `docs/biblioteca/`, `docs/experimentos/` y `docs/seguridad/`. Esta última, por el ADR 0024, contiene solo el procedimiento de respuesta a incidentes y la guía de los roles de base de datos (punto E).
 
 ---
 
@@ -491,11 +486,11 @@ Nada de M1–M4 se persiste (se calcula on-request, sin cambios de esquema). El 
 
 ### Arquitectura
 
-Servicios Docker (`docker-compose.yml`, red `aetheris_network`). `docker compose up` levanta solo `db` y `backend`; `web` (perfil `web`), `mailpit` (perfil `cuentas`, bandeja de correo de desarrollo) y `e2e` (perfil `test`, Playwright) se levantan aparte:
+Servicios Docker (`docker-compose.yml`). El proyecto se aloja en Dockyard, que lo levanta con `docker compose up -d` y exige las reglas de su guía para estudiantes: sin `container_name`, sin perfiles, sin puertos de base de datos publicados, variables con valor por defecto y arranque sin pasos manuales. Solo se publica el **8401** (rango del Equipo 4: 8401–8409). No reintroduzcas `container_name`, perfiles ni puertos de `db`/`backend`:
 
-- **`db`** — PostgreSQL 15. El esquema se carga desde `db/migrations/*.sql` **solo una vez, sobre volumen vacío**. Para una base ya inicializada usa el runner de ADR 0009: `python db/aplicar_migraciones.py --bootstrap` una vez, luego `python db/aplicar_migraciones.py` tras añadir cada migración (corre desde el host contra `localhost:5432`, sin rollback — una migración mala se corrige con otra migración).
+- **`db`** (`db/Dockerfile`) — PostgreSQL 15 con `db/migrations/*.sql` y el volcado de `db/seed/` copiados a `/docker-entrypoint-initdb.d/` (el volcado como `9999_…`, para que corra al final). Se cargan **solo una vez, sobre volumen vacío**; el healthcheck usa TCP para no dar la base por lista mientras se llena. Una migración nueva entra en la imagen al reconstruirla, pero sobre una base ya inicializada hace falta el runner de ADR 0009 (`python db/aplicar_migraciones.py`, sin rollback — una migración mala se corrige con otra migración) o `docker compose down -v`.
 - **`backend`** (`./backend`) — FastAPI + `psycopg2` directo, sin ORM. Entrada: `backend/api/main.py` (app, middleware, pool, rate limiting, `/health`). Los endpoints viven en routers por dominio en `backend/api/rutas/` (`dengue`, `modulos`, `respiratorio`, `alertas`; las cuentas en `api/cuentas/rutas.py`): cada uno expone `crear_router(limiter=..., abrir_conexion=..., límite)` y `main.py` los crea al importarse, así que un `importlib.reload(api.main)` en los tests los rehace con la configuración nueva. Cache-Control, cache de respuestas y la traducción de fallos de Postgres a HTTP están en `backend/api/respuestas.py`. Los tests parchean `api.main._conexion` (llega a los routers vía `_abrir_conexion`) y las constantes de cada router en su módulo (p. ej. `api.rutas.dengue.NOWCAST_DENGUE_PATH`). Los GET públicos de solo lectura pasan por un cache en memoria (`backend/api/cache_respuestas.py`) con el mismo TTL de su `Cache-Control`: un dato recién ingerido tarda hasta ese TTL en verse (o reinicia el servicio). No lo uses para alertas, `/health` ni cuentas; los tests lo vacían en `api/tests/conftest.py`.
-- **`web`** (`./web`) — Astro + TypeScript, copia sincronizada de aetheris-nitor (sección 10). Por defecto se levanta fuera de Docker con `pnpm dev`; en contenedor, `docker compose --profile web up -d web`.
+- **`web`** (`web/Dockerfile`, contexto en la raíz porque la Biblioteca lee `docs/biblioteca/`) — Astro + TypeScript compilado como sitio estático y servido por nginx (`web/nginx.conf`), que reenvía `/api` y `/health` al backend. Se compila con `PUBLIC_API_URL=""`: el navegador llama a `/api/...` en el mismo origen, así que la API no se publica y CORS no interviene. Fuera de Docker, `pnpm dev` sigue usando `http://localhost:8000`.
 
 ### Valores controlados del esquema — reutiliza verbatim, nunca inventes
 
@@ -523,7 +518,7 @@ Trampas empíricas de las fuentes: MINSAL (el año impreso en el PDF no es fiabl
 
 - Contenido de dominio (tablas, columnas, comentarios, docstrings) en **español**.
 - Extiende los catálogos (`tipos_evento` / `regiones` / `fuentes_datos`) en vez de añadir columnas por enfermedad o país.
-- Datos crudos e intermedios **no se versionan** (`backend/ingestion/data/raw/` y `.../interim/` gitignoreados). Excepción: el modelo y el dataset del clasificador retirado en `.../interim/` (issue #72; fuente del artefacto congelado, ADR 0025). Excepción deliberada: `db/seed/seed_datos_reales.sql` (ADR 0010, volcado `pg_dump --data-only` de las tablas de hechos, montado en `/docker-entrypoint-initdb.d/` para que `git clone` + `docker compose up` dé un sistema con datos reales). Su última regeneración (2026-09-10) es anterior al ADR 0021: no trae las series del tablero de MINSAL (2025–2026), que se cargan con `cargar_minsal_tablero.py`.
+- Datos crudos e intermedios **no se versionan** (`backend/ingestion/data/raw/` y `.../interim/` gitignoreados). Excepción: el modelo y el dataset del clasificador retirado en `.../interim/` (issue #72; fuente del artefacto congelado, ADR 0025). Excepción deliberada: `db/seed/seed_datos_reales.sql` (ADR 0010, volcado `pg_dump --data-only` de las tablas de hechos, copiado a `/docker-entrypoint-initdb.d/` por `db/Dockerfile` para que `git clone` + `docker compose up` dé un sistema con datos reales). Su última regeneración (2026-09-10) es anterior al ADR 0021: no trae las series del tablero de MINSAL (2025–2026), que se cargan con `cargar_minsal_tablero.py`.
 - Valida PDFs descargados por firma de bytes (`%PDF`), no por `Content-Type` (el servidor devuelve `application/octet-stream`).
 
 ### Decisiones abiertas
@@ -533,17 +528,16 @@ No resuelvas unilateralmente: las coordenadas departamentales para Open-Meteo, s
 ### Comandos
 
 ```bash
-docker compose up --build                     # API :8000 (/health) y Postgres :5432
-docker compose --profile web up -d web        # opcional: web :4321 en contenedor
+docker compose up -d --build                  # sitio en http://localhost:8401 (API en /api, /health)
+docker compose down -v                        # borra también la base; el siguiente up la vuelve a llenar
 ```
 
-Variables de entorno desde `.env` (copiar de `.env.example`; nunca commitear `.env`).
+Variables de entorno: todas tienen valor por defecto en el compose; `.env.example` las documenta y Dockyard lo copia como `.env`. Nunca commitear `.env`.
 
 - **Backend fuera de Docker:** `cd backend && pip install -r requirements.txt && uvicorn api.main:app --reload` (entorno Arch — prefiere virtualenv).
 - **Web fuera de Docker:** `cd web && pnpm install && pnpm dev|build|preview` (pnpm vía Corepack, fijado a v9 — **no `npm`**).
-- **Dependencias Python (ADR 0025):** `requirements.txt` = API (lo único que entra en la imagen de Render); `requirements-ingesta.txt` = `backend/ingestion/`; `requirements-dev.txt` = suite. Se compilan desde sus `.in` con `uv pip compile --generate-hashes` en ese orden (comando en `requirements.in`); no edites los `.txt` a mano.
-- **Tests:** pytest **desde `backend/`** (`pip install --require-hashes -r requirements.txt -r requirements-ingesta.txt -r requirements-dev.txt`, luego `python -m pytest ingestion/tests/ api/tests/`). Los tests con BD se **saltan** (no fallan) si no hay Postgres en `localhost:5432`. CI (`.github/workflows/`): `backend-tests.yml` corre esa suite contra Postgres con migraciones + seed, y `seguridad.yml` audita dependencias y secretos. No hay linter de Python; `web/` trae ESLint/Prettier (`pnpm lint`, `pnpm format:check`), que ningún workflow de este repo corre: los corre, con `astro check` y las pruebas unitarias, el CI de aetheris-nitor (`ci.yml`).
-- **Multi-worktree (Orca ADE):** `docker-compose.yml` usa `container_name` y puertos fijos compartidos a nivel del daemon Docker — **solo un worktree corre `docker compose up` a la vez**. No lo "arregles" namespaceando puertos/nombres por worktree sin preguntar.
+- **Dependencias Python (ADR 0025):** `requirements.txt` = API (lo único que entra en `backend/Dockerfile`); `requirements-ingesta.txt` = `backend/ingestion/`; `requirements-dev.txt` = suite. Se compilan desde sus `.in` con `uv pip compile --generate-hashes` en ese orden (comando en `requirements.in`); no edites los `.txt` a mano.
+- **Tests:** pytest **desde `backend/`** (`pip install --require-hashes -r requirements.txt -r requirements-ingesta.txt -r requirements-dev.txt`, luego `python -m pytest ingestion/tests/ api/tests/`). Los tests con BD se **saltan** (no fallan) si no hay Postgres en `localhost:5432`; el compose no publica ese puerto, así que para correrlos en local levanta un Postgres aparte (como hace CI). CI (`.github/workflows/`): `backend-tests.yml` corre esa suite contra Postgres con migraciones + seed, y `seguridad.yml` audita dependencias y secretos. No hay linter de Python; `web/` trae ESLint/Prettier (`pnpm lint`, `pnpm format:check`), que ningún workflow de este repo corre: los corre, con `astro check` y las pruebas unitarias, el CI de aetheris-nitor (`ci.yml`).
 
 ---
 

@@ -1,0 +1,3 @@
+*
+!migrations/*.sql
+!seed/seed_datos_reales.sql

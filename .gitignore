@@ -97,9 +97,5 @@ PLAN_ALERTAS_OPERABLES.md
 # AGENTS.md — se conservan localmente si hacen falta).
 indicaciones-configuracion-codex-documentacion-EPI-Aetheris.md
 
-# design-sync
-ds-bundle/
-.ds-sync/
-.design-sync/.cache/
 /skills-lock.json
 /db/migrations/seed_datos_reales.sql
