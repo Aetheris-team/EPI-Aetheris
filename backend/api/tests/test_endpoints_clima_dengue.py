@@ -18,6 +18,7 @@ BACKEND_DIR = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(BACKEND_DIR))
 
 from api import main  # noqa: E402
+from api.rutas import dengue as rutas_dengue  # noqa: E402
 
 RUTAS = {
     "/api/clima-dengue/por-anio": "CLIMA_DENGUE_POR_ANIO_PATH",
@@ -38,7 +39,7 @@ def client():
 
 @pytest.mark.parametrize("ruta", RUTAS)
 def test_sin_artefacto_responde_disponible_false(client, ruta, tmp_path):
-    with patch.object(main, RUTAS[ruta], tmp_path / "no-existe.json"):
+    with patch.object(rutas_dengue, RUTAS[ruta], tmp_path / "no-existe.json"):
         respuesta = client.get(ruta)
     assert respuesta.status_code == 200
     cuerpo = respuesta.json()
@@ -51,7 +52,7 @@ def test_sin_artefacto_responde_disponible_false(client, ruta, tmp_path):
 def test_con_artefacto_lo_sirve_con_aviso(client, ruta, tmp_path):
     archivo = tmp_path / "artefacto.json"
     archivo.write_text('{"parametros": {"horizonte": 4}}', encoding="utf-8")
-    with patch.object(main, RUTAS[ruta], archivo):
+    with patch.object(rutas_dengue, RUTAS[ruta], archivo):
         respuesta = client.get(ruta)
     assert respuesta.status_code == 200
     cuerpo = respuesta.json()
