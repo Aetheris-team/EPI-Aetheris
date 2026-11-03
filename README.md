@@ -52,7 +52,7 @@ La tabla cubre la base de datos; `.env.example` documenta el resto (CORS, rate l
 ## Estructura
 
 ```
-backend/api/       → FastAPI app (punto de entrada: api/main.py:app)
+backend/api/       → FastAPI app (punto de entrada: api/main.py:app; endpoints en api/rutas/)
 backend/ingestion/ → pipeline de ingesta y experimentos de validación
                      (data/interim/modelo/: artefactos versionados del clasificador retirado, issue #72)
 web/               → frontend Astro
