@@ -56,6 +56,19 @@ SALIDA = RAIZ_INGESTION / "data" / "interim" / "via_menos_uno"
 Clave = tuple[int, int]
 
 
+def suma_ingenua(valores: Iterable[float]) -> float:
+    """Suma de izquierda a derecha, sin compensar el redondeo.
+
+    Desde Python 3.12 sum() compensa el error en floats y cambia los últimos
+    bits del resultado, lo que alteraría las firmas y features congeladas. Lo
+    congelado debe depender de los datos, no de la versión del intérprete.
+    """
+    total: float = 0
+    for valor in valores:
+        total += valor
+    return total
+
+
 class ErrorProtocolo(RuntimeError):
     """La fuente o la ejecucion contradice el manifiesto aprobado."""
 
@@ -210,7 +223,7 @@ def cargar_datos(seed_sql: Path, manifiesto: dict[str, Any]) -> DatosFuente:
             grupos_incompletos.append((anio, semana, variable, len(valores_por_region)))
             continue
         clima[(anio, semana)][variable] = float(
-            sum(valores_por_region.values()) / len(valores_por_region)
+            suma_ingenua(valores_por_region.values()) / len(valores_por_region)
         )
 
     claves_sin_calendario = {
@@ -423,7 +436,7 @@ def construir_dataset(
                 features[f"{variable}_lag{lag}"] = datos.clima[anteriores[lag - 1]][variable]
             for ventana in ventanas:
                 valores = [datos.clima[clave_anterior][variable] for clave_anterior in anteriores[:ventana]]
-                features[f"{variable}_media_movil{ventana}"] = float(sum(valores) / ventana)
+                features[f"{variable}_media_movil{ventana}"] = float(suma_ingenua(valores) / ventana)
 
         filas.append(
             {
@@ -708,13 +721,13 @@ def _resumen_estabilidad(resultados_semilla: dict[str, Any]) -> dict[str, Any]:
         "n_semillas": len(metricas),
         "f1_macro": {
             "min": float(min(f1)),
-            "media": float(sum(f1) / len(f1)),
+            "media": float(suma_ingenua(f1) / len(f1)),
             "max": float(max(f1)),
         },
         "recall_alto": (
             {
                 "min": float(min(recalls)),
-                "media": float(sum(recalls) / len(recalls)),
+                "media": float(suma_ingenua(recalls) / len(recalls)),
                 "max": float(max(recalls)),
             }
             if recalls

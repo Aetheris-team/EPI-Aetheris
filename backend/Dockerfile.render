@@ -3,7 +3,7 @@
 # y db/migrations/ -- el preDeployCommand necesita esos archivos dentro de
 # la imagen, y no viven bajo backend/. docker-compose sigue usando
 # backend/Dockerfile con contexto ./backend; no mezclar los dos.
-FROM python:3.11-slim
+FROM python:3.14-slim
 
 WORKDIR /app
 
