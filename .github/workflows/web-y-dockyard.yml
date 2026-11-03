@@ -70,6 +70,9 @@ jobs:
           for ruta in / /dengue/ /respiratorio/ /alertas/ /biblioteca/ /health; do
             curl -fsS -o /dev/null "http://localhost:8401$ruta" && echo "ok $ruta"
           done
+          # Sin barra final nginx redirige; la redirección debe quedarse en el 8401.
+          final=$(curl -fsSL -o /dev/null -w '%{url_effective}' http://localhost:8401/alertas)
+          [ "$final" = "http://localhost:8401/alertas/" ] || { echo "::error::/alertas redirige a $final"; exit 1; }
           filas=$(curl -fsS http://localhost:8401/api/casos-nacional | jq length)
           echo "casos-nacional: $filas filas"
           [ "$filas" -gt 0 ]
