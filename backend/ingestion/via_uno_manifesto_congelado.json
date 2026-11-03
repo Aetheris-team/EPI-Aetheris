@@ -12,7 +12,7 @@
   "interpretacion": "estimacion_reconstructiva_de_corto_plazo_no_alerta_anticipada",
   "fuente": {
     "seed_relativo": "db/seed/seed_datos_reales.sql",
-    "seed_sha256": "5178916a181851af99e768fc6ac6250fa4c6be081e8271b8daf8a937b86e6540",
+    "seed_sha256": "c5d67d60ac349e7946f16d6ad3c9ebf538a32a003155d3c8955f1979d05195fe",
     "casos": {
       "pais": "SV",
       "nivel": "nacional",
