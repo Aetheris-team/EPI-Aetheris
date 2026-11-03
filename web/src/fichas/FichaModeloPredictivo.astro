@@ -189,7 +189,7 @@ import Icono from '../components/Icono.astro';
         <!-- Fórmulas crudas de entrada -->
         <div class="mt-5 rounded-xl border border-border bg-bg/70 p-4">
           <span
-            class="font-mono text-[11px] font-semibold uppercase tracking-wider text-accent block mb-2"
+            class="font-mono text-micro font-semibold uppercase tracking-wider text-accent block mb-2"
           >
             Fórmula de agregación climática nacional:
           </span>
@@ -242,7 +242,7 @@ import Icono from '../components/Icono.astro';
         <!-- Fórmula cruda z_t -->
         <div class="mt-4 rounded-xl border border-border bg-bg/70 p-4">
           <span
-            class="font-mono text-[11px] font-semibold uppercase tracking-wider text-accent block mb-1.5"
+            class="font-mono text-micro font-semibold uppercase tracking-wider text-accent block mb-1.5"
           >
             Transformación estabilizadora de varianza:
           </span>
@@ -270,7 +270,7 @@ import Icono from '../components/Icono.astro';
         >
           <div>
             <span
-              class="font-mono text-[11px] font-semibold uppercase tracking-wider text-accent block mb-1"
+              class="font-mono text-micro font-semibold uppercase tracking-wider text-accent block mb-1"
             >
               Vector autorregresivo (8 rezagos de memoria):
             </span>
@@ -283,7 +283,7 @@ import Icono from '../components/Icono.astro';
           </div>
           <div>
             <span
-              class="font-mono text-[11px] font-semibold uppercase tracking-wider text-accent block mb-1"
+              class="font-mono text-micro font-semibold uppercase tracking-wider text-accent block mb-1"
             >
               Estacionalidad armónica continua (MMWR):
             </span>
@@ -331,7 +331,7 @@ import Icono from '../components/Icono.astro';
         <!-- Fórmula cruda Pinball Loss -->
         <div class="mt-4 rounded-xl border border-border bg-bg/70 p-4">
           <span
-            class="font-mono text-[11px] font-semibold uppercase tracking-wider text-accent block mb-1.5"
+            class="font-mono text-micro font-semibold uppercase tracking-wider text-accent block mb-1.5"
           >
             Función de pérdida cuantílica (Pinball Loss):
           </span>
@@ -354,7 +354,7 @@ import Icono from '../components/Icono.astro';
         <!-- Calibración Conformal CQR-r -->
         <div class="mt-4 rounded-xl border border-border bg-bg/70 p-4">
           <span
-            class="font-mono text-[11px] font-semibold uppercase tracking-wider text-accent block mb-1.5"
+            class="font-mono text-micro font-semibold uppercase tracking-wider text-accent block mb-1.5"
           >
             Calibración conformal retrospectiva (CQR-r):
           </span>
@@ -409,7 +409,7 @@ import Icono from '../components/Icono.astro';
         >
           <div>
             <span
-              class="font-mono text-[11px] font-semibold uppercase tracking-wider text-accent block mb-1"
+              class="font-mono text-micro font-semibold uppercase tracking-wider text-accent block mb-1"
             >
               1. Inercia amortiguada hacia el horizonte h (freno &phi; = 0.8):
             </span>
@@ -423,7 +423,7 @@ import Icono from '../components/Icono.astro';
           </div>
           <div>
             <span
-              class="font-mono text-[11px] font-semibold uppercase tracking-wider text-accent block mb-1"
+              class="font-mono text-micro font-semibold uppercase tracking-wider text-accent block mb-1"
             >
               2. Fusión en log-espacio del Modelo C:
             </span>
@@ -475,7 +475,7 @@ import Icono from '../components/Icono.astro';
         <!-- Fórmula cruda expm1 -->
         <div class="mt-4 rounded-xl border border-border bg-bg/70 p-4">
           <span
-            class="font-mono text-[11px] font-semibold uppercase tracking-wider text-accent block mb-1.5"
+            class="font-mono text-micro font-semibold uppercase tracking-wider text-accent block mb-1.5"
           >
             Retorno a escala natural de casos:
           </span>
@@ -496,7 +496,7 @@ import Icono from '../components/Icono.astro';
         <!-- Métrica de evaluación WIS -->
         <div class="mt-4 rounded-xl border border-border bg-bg/70 p-4">
           <span
-            class="font-mono text-[11px] font-semibold uppercase tracking-wider text-accent block mb-1.5"
+            class="font-mono text-micro font-semibold uppercase tracking-wider text-accent block mb-1.5"
           >
             Puntuación WIS (Weighted Interval Score):
           </span>
@@ -570,7 +570,7 @@ import Icono from '../components/Icono.astro';
     aria-label="Escenario interactivo de representaciones"
   >
     <div
-      class="card-elevated rounded-2xl border border-border bg-surface p-5 sm:p-6 shadow-md flex flex-col gap-5 min-h-[640px] max-h-[calc(100vh-var(--alto-header)-2rem)] overflow-y-auto"
+      class="card-elevated rounded-2xl border border-border bg-surface p-5 sm:p-6 shadow-md flex flex-col gap-5 min-h-[640px] max-h-[calc(100dvh-var(--alto-header)-2rem)] overflow-y-auto"
     >
       <!-- Cabecera del Escenario + Barra de Progreso Vertical / Stepper -->
       <div class="border-b border-border/80 pb-4">
@@ -640,7 +640,7 @@ import Icono from '../components/Icono.astro';
                   aria-label={`Saltar a etapa ${item.n}: ${item.label}`}
                 >
                   <span
-                    class={`w-5 h-5 rounded-full border flex items-center justify-center text-[10px] transition-colors ${
+                    class={`w-5 h-5 rounded-full border flex items-center justify-center text-micro transition-colors ${
                       idx === 0
                         ? 'border-accent bg-accent text-white font-bold'
                         : 'border-border bg-bg group-hover:border-accent/40'
@@ -649,7 +649,7 @@ import Icono from '../components/Icono.astro';
                   >
                     {item.n}
                   </span>
-                  <span class="text-[11px] hidden sm:inline">{item.label}</span>
+                  <span class="text-micro hidden sm:inline">{item.label}</span>
                 </button>
               ))
             }
@@ -1003,13 +1003,13 @@ import Icono from '../components/Icono.astro';
 
           <div class="grid grid-cols-2 gap-3 text-xs font-sans">
             <div class="p-3 bg-surface rounded-lg border border-border">
-              <span class="text-ink-muted block text-[11px]"
+              <span class="text-ink-muted block text-micro"
                 >Consistencia temporal:</span
               >
               <strong class="text-ink">Semana epidemiológica MMWR</strong>
             </div>
             <div class="p-3 bg-surface rounded-lg border border-border">
-              <span class="text-ink-muted block text-[11px]"
+              <span class="text-ink-muted block text-micro"
                 >Regla anti-fuga:</span
               >
               <strong class="text-accent">Solo t &le; semana actual</strong>
@@ -1834,15 +1834,15 @@ import Icono from '../components/Icono.astro';
 
           <div class="grid grid-cols-3 gap-2 text-center text-xs font-mono">
             <div class="p-2 bg-surface rounded-lg border border-border">
-              <span class="text-ink-muted block text-[10px]">Semana 1</span>
+              <span class="text-ink-muted block text-micro">Semana 1</span>
               <strong class="text-ink">78 [52 - 110]</strong>
             </div>
             <div class="p-2 bg-surface rounded-lg border border-border">
-              <span class="text-ink-muted block text-[10px]">Semana 4</span>
+              <span class="text-ink-muted block text-micro">Semana 4</span>
               <strong class="text-accent">92 [48 - 165]</strong>
             </div>
             <div class="p-2 bg-surface rounded-lg border border-border">
-              <span class="text-ink-muted block text-[10px]">Semana 8</span>
+              <span class="text-ink-muted block text-micro">Semana 8</span>
               <strong class="text-ink">105 [38 - 240]</strong>
             </div>
           </div>
@@ -2008,15 +2008,15 @@ import Icono from '../components/Icono.astro';
           <!-- Métricas de Resultado Dinámicas -->
           <div class="grid grid-cols-3 gap-2 text-center text-xs font-mono">
             <div class="p-2 bg-surface rounded-lg border border-border">
-              <span class="text-ink-muted block text-[10px]">Semana 1</span>
+              <span class="text-ink-muted block text-micro">Semana 1</span>
               <strong class="text-ink" id="sim-res-s1">88 [60-120]</strong>
             </div>
             <div class="p-2 bg-surface rounded-lg border border-border">
-              <span class="text-ink-muted block text-[10px]">Semana 4</span>
+              <span class="text-ink-muted block text-micro">Semana 4</span>
               <strong class="text-accent" id="sim-res-s4">102 [54-180]</strong>
             </div>
             <div class="p-2 bg-surface rounded-lg border border-border">
-              <span class="text-ink-muted block text-[10px]">Semana 8</span>
+              <span class="text-ink-muted block text-micro">Semana 8</span>
               <strong class="text-ink" id="sim-res-s8">118 [42-260]</strong>
             </div>
           </div>
@@ -2034,7 +2034,7 @@ import Icono from '../components/Icono.astro';
         >
           &larr; Etapa anterior
         </button>
-        <span class="text-ink-muted font-mono text-[11px]" data-texto-progreso>
+        <span class="text-ink-muted font-mono text-micro" data-texto-progreso>
           Scroll sincronizado
         </span>
         <button
@@ -2129,14 +2129,14 @@ import Icono from '../components/Icono.astro';
             'flex flex-col items-center gap-1 transition-colors group cursor-pointer text-accent font-bold rounded px-1.5 py-0.5';
           if (circulo) {
             circulo.className =
-              'w-5 h-5 rounded-full border border-accent bg-accent text-white font-bold flex items-center justify-center text-[10px]';
+              'w-5 h-5 rounded-full border border-accent bg-accent text-white font-bold flex items-center justify-center text-micro';
           }
         } else {
           btn.className =
             'flex flex-col items-center gap-1 transition-colors group cursor-pointer text-ink-muted hover:text-ink rounded px-1.5 py-0.5';
           if (circulo) {
             circulo.className =
-              'w-5 h-5 rounded-full border border-border bg-bg group-hover:border-accent/40 flex items-center justify-center text-[10px] text-ink-muted';
+              'w-5 h-5 rounded-full border border-border bg-bg group-hover:border-accent/40 flex items-center justify-center text-micro text-ink-muted';
           }
         }
       });

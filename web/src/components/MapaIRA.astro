@@ -282,7 +282,7 @@ const mapaSvg = proyectarDepartamentos(geo, 700, 14, 0.4);
     const item = (color: string, etiqueta: string) =>
       `<span class="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-2 py-1">` +
       `<span style="background:${color}" class="inline-block h-2.5 w-2.5 rounded-full ring-1 ring-black/5"></span>` +
-      `<span class="font-mono text-[11px] text-ink-muted">${escapeHtml(etiqueta)}</span></span>`;
+      `<span class="font-mono text-micro text-ink-muted">${escapeHtml(etiqueta)}</span></span>`;
     const items = RAMPA.map((color, i) => item(color, rangos[i])).join('');
     contenedor.innerHTML = `
       <div class="flex flex-wrap items-center gap-1.5 font-sans text-xs text-ink-muted">

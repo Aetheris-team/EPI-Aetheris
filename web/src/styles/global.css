@@ -26,13 +26,27 @@
   --font-display: var(--font-display);
 }
 
+/* Tamaño mínimo de texto en pantalla: 11 px (utilidad text-micro). Antes
+   convivían text-[10px] y text-[11px] sueltos; a 10 px las insignias, códigos
+   y avisos costaban de leer en teléfono. Lo que se imprime a 10 px (ficha
+   departamental) lo dice con print:text-[10px]; las etiquetas SVG de los
+   mapas no usan esto, escalan con el viewBox. */
+@theme {
+  --text-micro: 0.6875rem;
+  --text-micro--line-height: 1rem;
+}
+
 /* @layer base: sin esto, estas reglas quedan "sin capa" y ganan por encima
    de CUALQUIER utilidad de Tailwind (incluida .text-accent-ink), sin
    importar especificidad -- las capas de CSS siempre le ganan a lo que no
    tiene capa. Bug real: el texto blanco de los botones de acento se volvía
    invisible porque "a { color }" pisaba "text-accent-ink". */
 @layer base {
+  /* Contenedor de página: 100cqi es el ancho visible SIN la barra de
+     scroll, lo que 100vw no garantiza (PanelAnalisis.astro). Solo contención
+     de ancho: no crea bloque contenedor para position: fixed. */
   body {
+    container: pagina / inline-size;
     background-color: var(--color-bg);
     color: var(--color-ink);
     font-family: var(--font-sans);
@@ -98,6 +112,67 @@
 @media (min-width: 40rem) {
   :root {
     --alto-header: 5.5rem;
+  }
+}
+/* Teléfono en horizontal: con ~360 px de alto, la cabecera pegajosa (88 px)
+   y la barra del análisis se comían casi la mitad de la pantalla. Ahí la
+   cabecera deja de ser pegajosa (Layout.astro) y su altura publicada pasa a
+   0, para que lo que se pega debajo suba hasta el borde. */
+@media (orientation: landscape) and (max-height: 30rem) {
+  :root {
+    --alto-header: 0rem;
+  }
+}
+
+/* Pantallas táctiles (pointer: coarse). Fuera de @layer a propósito: tiene
+   que ganarle a las utilidades text-xs / text-sm de cada control.
+   - iOS Safari amplía la página al enfocar un campo con letra < 16 px y no
+     la devuelve al salir: en /alertas/nueva o en los selectores del análisis
+     cada toque descolocaba la vista. Con 16 px no hay zoom.
+   - Los deslizadores de rango medían 16 px de alto; con 44 px de área el
+     pulgar de un dedo los acierta (WCAG 2.5.5 / 2.5.8). El carril se sigue
+     dibujando centrado, sin cambio visual.
+   - Los <summary> de "Ver los datos en tabla" medían 16 px de alto. */
+@media (pointer: coarse) {
+  input:not(
+    [type='checkbox'],
+    [type='radio'],
+    [type='range'],
+    [type='color'],
+    [type='file']
+  ),
+  select,
+  textarea {
+    font-size: max(1rem, 1em);
+  }
+  input[type='range'] {
+    min-block-size: 2.75rem;
+  }
+  summary {
+    min-block-size: 2.75rem;
+    align-content: center;
+  }
+  /* Casillas de 16 px (h-4 w-4) a 20 px. Casi todas van dentro de un
+     <label> que ya amplía el área, pero la marca en sí era difícil de
+     acertar y de ver. Las .sr-only (/configuracion) no se tocan: son el
+     control real de una tarjeta que sí se ve. */
+  input:is([type='checkbox'], [type='radio']):not(.sr-only) {
+    inline-size: 1.25rem;
+    block-size: 1.25rem;
+  }
+}
+
+/* Enlaces sueltos ("← Volver a…", migas de pan, accesos bajo el titular):
+   en táctil miden 44 px de alto sin cambiar nada con ratón. En capa
+   components para que un `flex`/`inline-flex` propio del enlace siga
+   mandando; al enlace en línea le da inline-flex para que la altura aplique. */
+@layer components {
+  @media (pointer: coarse) {
+    .area-tactil {
+      display: inline-flex;
+      align-items: center;
+      min-block-size: 2.75rem;
+    }
   }
 }
 
@@ -499,6 +574,52 @@ html[data-animar] .workspace-revelacion [data-panel-workspace]:not([hidden]) {
   --scroll-shadow-bg: var(--color-bg);
 }
 
+/* Tablas alternativas de los gráficos (lib/tabla-alternativa.ts). Se
+   consultan por el ancho de su propio contenedor, no de la pantalla: la misma
+   tabla vive a lo ancho en teléfono y en una columna de 1/2 en escritorio.
+   Por debajo de 30rem, con tres columnas o más, cada fila pasa a ser una
+   tarjeta: el encabezado de fila arriba (pegajoso dentro del scroll) y cada
+   celda con su etiqueta de columna, sacada de data-etiqueta. Así no hace
+   falta desplazar en horizontal para leer una fila completa. */
+.tabla-alternativa {
+  container-type: inline-size;
+}
+@container (width < 30rem) {
+  .tabla-apilable .tabla-alternativa-region {
+    max-block-size: min(28rem, 70dvh);
+  }
+  .tabla-apilable :is(table, tbody, tr, th, td) {
+    display: block;
+  }
+  /* El encabezado de columnas sobra: cada celda lleva el suyo. */
+  .tabla-apilable thead {
+    display: none;
+  }
+  .tabla-apilable tbody th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background-color: var(--color-surface);
+    text-align: start;
+  }
+  .tabla-apilable tbody tr {
+    padding-block-end: 0.25rem;
+  }
+  .tabla-apilable tbody td {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-block: 0.125rem;
+    text-align: end;
+  }
+  .tabla-apilable tbody td::before {
+    content: attr(data-etiqueta);
+    font-family: var(--font-sans);
+    color: var(--color-ink-muted);
+    text-align: start;
+  }
+}
+
 /* Placeholder de carga (skeleton) compartido por los componentes que hacen
    fetch -- construido solo con tokens existentes (border/bg), sin colores
    nuevos, para que siga a la paleta cuando el coordinador la reemplace. */
@@ -775,12 +896,22 @@ html[data-animar] .workspace-revelacion [data-panel-workspace]:not([hidden]) {
   }
 }
 
+/* El bloque de título tiene base mínima y la cabecera se parte: en teléfono,
+   un control ancho a la derecha (Exportar) dejaba la descripción en una
+   columna de ~90 px con una o dos palabras por línea. Ahora el control baja
+   a su propia fila cuando no caben los dos; un botón pequeño (el menú de
+   PanelAnalisis) sigue cabiendo junto a un título corto. */
 .panel-cabecera {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.75rem 1rem;
   margin-bottom: 1rem;
+}
+.panel-cabecera > :first-child {
+  flex: 1 1 11rem;
+  min-width: 0;
 }
 
 .panel-titulo {

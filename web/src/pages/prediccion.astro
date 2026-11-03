@@ -67,13 +67,13 @@ import { RUTA_SENSIBILIDAD } from '../lib/enlaces';
         <div class="mt-4 flex flex-wrap items-center gap-4 font-sans text-sm">
           <a
             href="/dengue"
-            class="inline-flex items-center gap-1.5 font-medium text-accent underline underline-offset-4 transition-colors hover:text-accent/80"
+            class="area-tactil inline-flex items-center gap-1.5 font-medium text-accent underline underline-offset-4 transition-colors hover:text-accent/80"
           >
             <span>← Volver al análisis departamental</span>
           </a>
           <a
             href="/alertas?tipo=dengue"
-            class="inline-flex items-center gap-1.5 font-medium text-ink-muted underline underline-offset-4 transition-colors hover:text-ink"
+            class="area-tactil inline-flex items-center gap-1.5 font-medium text-ink-muted underline underline-offset-4 transition-colors hover:text-ink"
           >
             <span>Consultar alertas de dengue activas</span>
           </a>
@@ -92,7 +92,7 @@ import { RUTA_SENSIBILIDAD } from '../lib/enlaces';
             Especificación del modelo
           </span>
           <span
-            class="inline-flex items-center gap-1 font-mono text-[11px] text-accent"
+            class="inline-flex items-center gap-1 font-mono text-micro text-accent"
           >
             <span
               class="h-1.5 w-1.5 animate-pulse rounded-full bg-accent"
@@ -102,25 +102,25 @@ import { RUTA_SENSIBILIDAD } from '../lib/enlaces';
         </div>
         <dl class="grid grid-cols-2 gap-2 font-sans text-xs">
           <div class="rounded-lg border border-border/40 bg-bg/80 p-2">
-            <dt class="text-[11px] text-ink-muted">Horizonte</dt>
+            <dt class="text-micro text-ink-muted">Horizonte</dt>
             <dd class="mt-0.5 font-mono text-sm font-semibold text-ink">
               1 a 8 semanas
             </dd>
           </div>
           <div class="rounded-lg border border-border/40 bg-bg/80 p-2">
-            <dt class="text-[11px] text-ink-muted">Incertidumbre</dt>
+            <dt class="text-micro text-ink-muted">Incertidumbre</dt>
             <dd class="mt-0.5 font-mono text-sm font-semibold text-ink">
               50 % y 95 %
             </dd>
           </div>
           <div class="rounded-lg border border-border/40 bg-bg/80 p-2">
-            <dt class="text-[11px] text-ink-muted">Método central</dt>
+            <dt class="text-micro text-ink-muted">Método central</dt>
             <dd class="mt-0.5 font-mono text-sm font-semibold text-ink">
               CQR-r + mezcla
             </dd>
           </div>
           <div class="rounded-lg border border-border/40 bg-bg/80 p-2">
-            <dt class="text-[11px] text-ink-muted">Referencia</dt>
+            <dt class="text-micro text-ink-muted">Referencia</dt>
             <dd class="mt-0.5 font-mono text-sm font-semibold text-ink">
               Persistencia
             </dd>
@@ -165,15 +165,18 @@ import { RUTA_SENSIBILIDAD } from '../lib/enlaces';
 
 <style is:global>
   /* Modo presentación: solo el panel de predicción, centrado. Sin la clase en
-     <html> la página queda idéntica. */
+     <html> la página queda idéntica.
+     Margen lateral fluido (16 px en teléfono, 48 px en pantalla grande) y
+     90svh en vez de 90vh: en móvil vh cuenta la barra de direcciones oculta
+     y el panel quedaba descentrado por debajo del borde. */
   html.demo-presentacion body > header,
   html.demo-presentacion body > footer {
     display: none !important;
   }
   html.demo-presentacion body > main {
     max-width: none !important;
-    padding: 1.5rem 3rem 2rem !important;
-    min-height: 90vh;
+    padding: 1.5rem clamp(1rem, 4vw, 3rem) 2rem !important;
+    min-height: 90svh;
     display: flex;
     flex-direction: column;
     justify-content: center;

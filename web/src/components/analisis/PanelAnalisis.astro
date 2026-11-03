@@ -110,9 +110,14 @@ const aniosHistorico = `${Math.min(...ANIOS_ANALISIS_DENGUE)} a ${Math.max(...AN
 </section>
 
 <style>
+  /* El workspace se sale del ancho de lectura de la página hasta 1840 px.
+     Se mide con 100cqi del contenedor `pagina` (el <body>, global.css) y no
+     con 100vw: 100vw incluye la barra de scroll clásica de escritorio, y con
+     ella los márgenes quedaban 5 px más estrechos que los del resto de la
+     página. */
   .workspace-analitico {
-    width: min(calc(100vw - 2rem), 1840px);
-    margin-inline-start: calc((100% - min(calc(100vw - 2rem), 1840px)) / 2);
+    width: min(calc(100cqi - 2rem), 1840px);
+    margin-inline-start: calc((100% - min(calc(100cqi - 2rem), 1840px)) / 2);
   }
 
   /* Impresión de /dengue: sin cromo de navegación, paneles a ancho completo
@@ -155,8 +160,8 @@ const aniosHistorico = `${Math.min(...ANIOS_ANALISIS_DENGUE)} a ${Math.max(...AN
 
   @media (min-width: 640px) {
     .workspace-analitico {
-      width: min(calc(100vw - 3rem), 1840px);
-      margin-inline-start: calc((100% - min(calc(100vw - 3rem), 1840px)) / 2);
+      width: min(calc(100cqi - 3rem), 1840px);
+      margin-inline-start: calc((100% - min(calc(100cqi - 3rem), 1840px)) / 2);
     }
   }
 </style>

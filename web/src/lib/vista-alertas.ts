@@ -321,7 +321,7 @@ function pintarTarjeta(
       </span>
       ${
         esNueva
-          ? `<span data-alerta-nueva class="inline-flex items-center gap-1.5 rounded-full bg-accent px-2.5 py-1 font-sans text-[11px] font-semibold text-accent-ink shadow-2xs">
+          ? `<span data-alerta-nueva class="inline-flex items-center gap-1.5 rounded-full bg-accent px-2.5 py-1 font-sans text-micro font-semibold text-accent-ink shadow-2xs">
               <span class="relative flex h-2 w-2">
                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
                 <span class="relative inline-flex rounded-full h-2 w-2 bg-white"></span>

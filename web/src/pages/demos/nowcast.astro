@@ -70,7 +70,10 @@ import PanelNowcastDengue from '../../components/nowcast/PanelNowcastDengue.astr
 
 <style is:global>
   /* ?limpio: deja la página con el panel y nada más, para grabar. Sin la
-     clase en <html> la página queda idéntica. */
+     clase en <html> la página queda idéntica.
+     Margen lateral fluido (16 px en teléfono, 48 px en pantalla grande) y
+     90svh en vez de 90vh: en móvil vh cuenta la barra de direcciones oculta
+     y el panel quedaba descentrado por debajo del borde. */
   html.demo-limpio body > header,
   html.demo-limpio body > footer,
   html.demo-limpio [data-encabezado-demo] {
@@ -78,11 +81,11 @@ import PanelNowcastDengue from '../../components/nowcast/PanelNowcastDengue.astr
   }
   html.demo-limpio body > main {
     max-width: none !important;
-    padding: 1.5rem 3rem 2rem !important;
+    padding: 1.5rem clamp(1rem, 4vw, 3rem) 2rem !important;
   }
   html.demo-limpio body > main > div:last-child {
     margin-top: 0 !important;
-    min-height: 90vh;
+    min-height: 90svh;
     display: flex;
     flex-direction: column;
     justify-content: center;

@@ -233,11 +233,8 @@ const mapa = proyectarDepartamentos(geo, ancho, 14, 0.4);
         class="pointer-events-none absolute z-20 hidden -translate-x-1/2 -translate-y-full rounded-lg border border-border bg-surface px-3 py-2 text-xs font-sans shadow-md backdrop-blur-xs transition-opacity duration-150"
       >
         <p data-tooltip-titulo class="font-semibold text-ink text-xs"></p>
-        <p data-tooltip-valor class="text-ink-muted text-[11px] mt-0.5"></p>
-        <p
-          data-tooltip-extra
-          class="text-accent text-[10px] mt-0.5 font-medium"
-        >
+        <p data-tooltip-valor class="text-ink-muted text-micro mt-0.5"></p>
+        <p data-tooltip-extra class="text-accent text-micro mt-0.5 font-medium">
         </p>
       </div>
     </div>
@@ -268,7 +265,7 @@ const mapa = proyectarDepartamentos(geo, ancho, 14, 0.4);
           </h3>
           <span
             data-detalle-codigo
-            class="font-mono text-[10px] text-ink-muted border border-border rounded px-1.5 py-0.5 bg-surface"
+            class="font-mono text-micro text-ink-muted border border-border rounded px-1.5 py-0.5 bg-surface"
           ></span>
         </div>
         <p data-detalle-resumen class="mt-1 text-xs text-ink-muted font-sans">
@@ -684,19 +681,19 @@ const mapa = proyectarDepartamentos(geo, ancho, 14, 0.4);
 
       detalleSnapshot.innerHTML = `
         <div class="rounded-lg border border-border bg-surface p-2.5">
-          <span class="block text-[11px] font-medium text-ink-muted">Casos MINSAL</span>
+          <span class="block text-micro font-medium text-ink-muted">Casos MINSAL</span>
           <span class="mt-0.5 block text-base font-semibold text-ink">${d.minsal} casos</span>
         </div>
         <div class="rounded-lg border border-border bg-surface p-2.5">
-          <span class="block text-[11px] font-medium text-ink-muted">Idoneidad (Iv)</span>
+          <span class="block text-micro font-medium text-ink-muted">Idoneidad (Iv)</span>
           <span class="mt-0.5 block text-base font-semibold text-ink">${d.iv.toFixed(2)}</span>
         </div>
         <div class="rounded-lg border border-border bg-surface p-2.5">
-          <span class="block text-[11px] font-medium text-ink-muted">Anomalía (σ)</span>
+          <span class="block text-micro font-medium text-ink-muted">Anomalía (σ)</span>
           <span class="mt-0.5 block text-base font-semibold text-ink">${d.anomalia > 0 ? '+' : ''}${d.anomalia.toFixed(2)}σ</span>
         </div>
         <div class="rounded-lg border border-border bg-surface p-2.5">
-          <span class="block text-[11px] font-medium text-ink-muted">Presión</span>
+          <span class="block text-micro font-medium text-ink-muted">Presión</span>
           <span class="mt-0.5 block text-base font-semibold text-ink capitalize">${d.presion}</span>
         </div>
       `;

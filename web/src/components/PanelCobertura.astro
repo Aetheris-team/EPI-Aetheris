@@ -70,7 +70,7 @@ import PanelWorkspace from './analisis/PanelWorkspace.astro';
       li.className =
         'flex flex-col items-center rounded border border-border/60 bg-bg py-1 text-center';
       const n = porAnio[a] ?? 0;
-      li.innerHTML = `<span class="text-[10px] text-ink-muted">${a}</span><span class="font-semibold text-ink">${n}/52</span>`;
+      li.innerHTML = `<span class="text-micro text-ink-muted">${a}</span><span class="font-semibold text-ink">${n}/52</span>`;
       ul.appendChild(li);
     }
     wrap.appendChild(ul);
