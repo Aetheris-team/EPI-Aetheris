@@ -11,13 +11,16 @@
 #
 # Todas las variables tienen valor por defecto; .env.example las documenta y
 # Dockyard lo copia como .env si no existe.
+#
+# Sin política restart a propósito: como el resto de proyectos de Dockyard,
+# queda apagado tras reiniciar la PC hasta que el docente lo enciende, y si un
+# servicio se cae Dockyard lo muestra como caído en vez de reiniciándose.
 
 services:
   db:
     # Imagen propia con las migraciones y el volcado de datos reales dentro
     # (db/Dockerfile): la base se crea y se llena sola en el primer arranque.
     build: ./db
-    restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-aetheris_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aetheris_secure_password}
@@ -36,7 +39,6 @@ services:
 
   backend:
     build: ./backend
-    restart: unless-stopped
     environment:
       POSTGRES_HOST: db
       POSTGRES_PORT: 5432
@@ -70,7 +72,6 @@ services:
     build:
       context: .
       dockerfile: web/Dockerfile
-    restart: unless-stopped
     ports:
       - "8401:80"
     depends_on:
