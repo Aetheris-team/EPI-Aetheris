@@ -459,9 +459,24 @@ def test_runner_con_cada_rol(con_privilegios):
         propietario.close()
 
 
+def _servidor_exige_clave(base: str) -> bool:
+    """False si Postgres acepta una clave equivocada (auth `trust` en
+    pg_hba.conf, habitual en un Postgres local): ahí no se puede comprobar
+    que la clave vieja deje de servir tras rotarla."""
+    try:
+        _conectar(base, clave=secrets.token_hex(16)).close()
+    except psycopg2.OperationalError:
+        return True
+    return False
+
+
 def test_script_que_crea_y_rota_el_rol(con_privilegios):
     """db/crear_rol_aplicacion.py crea el rol con los privilegios mínimos y rota su clave."""
     base = con_privilegios["base"]
+    if not _servidor_exige_clave(base):
+        if os.getenv("CI"):
+            pytest.fail("El Postgres de CI debe autenticar con clave")
+        pytest.skip("El Postgres local no exige clave (pg_hba en trust): la rotación no es comprobable")
     rol = f"{con_privilegios['rol']}_s"
     clave1, clave2 = secrets.token_hex(16), secrets.token_hex(16)
 

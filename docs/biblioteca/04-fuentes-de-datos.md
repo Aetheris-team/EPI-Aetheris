@@ -1,6 +1,6 @@
 ---
 titulo: "De dónde salen los datos"
-descripcion: "MINSAL, OpenDengue, Open-Meteo y NOAA ONI: ventanas, licencias, procedencia y cómo se citan en el esquema."
+descripcion: "MINSAL (boletines y tablero), OpenDengue, Open-Meteo y NOAA ONI: ventanas, licencias, procedencia y cómo se citan en el esquema."
 orden: 4
 categoria: "Datos y método"
 ---
@@ -33,6 +33,14 @@ Desde 2025, IRA y neumonías tienen además una serie nacional tomada del tabler
 
 **Licencia / uso.** Publicación oficial del Ministerio de Salud de El Salvador. El proyecto los usa como dato agregado de vigilancia, sin republicar los PDF (los crudos no se versionan).
 
+## MINSAL — tablero de vigilancia
+
+**Qué es.** Desde 2024 MINSAL publica sus cifras en un tablero web (`boletin.salud.gob.sv`) en lugar de los boletines en PDF. Las cifras salen de capturas HAR que una persona guarda desde el navegador; ningún script hace peticiones al sitio (ADR 0021), así que actualizar la serie exige una captura nueva.
+
+**Qué carga el sistema.** Series **nacionales** de 2025 y de 2026 hasta la última semana capturada: sospechosos y confirmados de dengue, y notificados de IRA y neumonías. No hay datos por departamento ni de 2024. Los sospechosos se guardan con `clasificacion = 'sospechoso'` (el nombre de la fuente) y `fuente_id = minsal_tablero`; tienen la misma definición y escala que el total de OpenDengue (5.833 casos en 2025).
+
+**Trampas.** La serie tiene forma de promedio de varias semanas: cambia despacio y una subida tarda en verse completa. La semana 53 de 2025 no aparece publicada y queda sin dato.
+
 ## OpenDengue
 
 **Qué es.** `opendengue.org`, extracto `Spatial_extract_V1_3.csv` (~2,8 millones de filas), distribución en Figshare con DOI y licencia, versión 1.3. Para El Salvador, Admin0 (nacional) es semanal desde 2013/2014; Admin1 (departamento) es **mensual y solo 2000–2009** — no se usa para series semanales.
@@ -62,7 +70,7 @@ Agregación diaria → semanal: media para las variables de estado, suma para la
 
 **Uso no comercial.** Los términos de Open-Meteo listan de forma explícita investigación pública en instituciones públicas y contenido educativo. El perfil del proyecto (institución educativa pública, feria técnica, sin publicidad ni suscripciones) entra en ese uso.
 
-**Volumen cargado.** 35.868 filas: 7 variables × 14 departamentos × 2018–2024, **incluyendo 2020**. Rate-limit por minuto (`429`) con backoff en el loader.
+**Volumen cargado.** 64.876 filas en el volcado actual: 7 variables × 14 departamentos, de 2014 a la semana 35 de 2026, **incluyendo 2020** (la extensión más allá de 2023 es del ADR 0018). Rate-limit por minuto (`429`) con backoff en el loader.
 
 ## NOAA ONI
 
@@ -74,6 +82,6 @@ Se evaluó como predictor del clasificador retirado y **no se adoptó** en ese c
 
 ## Cómo se cita en el esquema
 
-`fuentes_datos.codigo` usa exactamente estas cadenas: `opendengue_v1_3`, `minsal_pdf`, `open_meteo_era5_land`, `open_meteo_era5`, `noaa_oni`. `variables_ambientales.variable` es texto libre sin `CHECK`: un typo crea una segunda serie en silencio. Las cadenas vigentes son `temp_max`, `temp_min`, `temp_media`, `precipitation_sum`, `precipitation_hours`, `humedad_relativa_media`, `punto_rocio`, `oni_anom`.
+`fuentes_datos.codigo` usa exactamente estas cadenas: `opendengue_v1_3`, `minsal_pdf`, `minsal_tablero`, `open_meteo_era5_land`, `open_meteo_era5`, `noaa_oni`. `variables_ambientales.variable` es texto libre sin `CHECK`: un typo crea una segunda serie en silencio. Las cadenas vigentes son `temp_max`, `temp_min`, `temp_media`, `precipitation_sum`, `precipitation_hours`, `humedad_relativa_media`, `punto_rocio`, `oni_anom`.
 
-Geometría del mapa: geoBoundaries gbOpen SLV ADM1 (OSM vía osm-boundaries.com). El `boundaryLicense` de esta boundary reporta CC BY-SA 2.0; el texto de atribución en la interfaz sigue pendiente de una decisión de redacción, no de la procedencia del archivo.
+Geometría del mapa: geoBoundaries gbOpen SLV ADM1 (OSM vía osm-boundaries.com). El `boundaryLicense` de esta boundary reporta CC BY-SA 2.0. La atribución está en los [términos de uso](/legal/terminos).

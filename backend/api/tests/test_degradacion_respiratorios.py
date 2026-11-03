@@ -74,7 +74,7 @@ def test_virus_sin_filas_responde_200_disponible_false(client):
     mock_cx.return_value.__enter__.return_value = MagicMock()
     mock_cx.return_value.__exit__.return_value = False
     with patch("api.main._conexion", mock_cx), patch(
-        "api.main.listar_virus", return_value=[]
+        "api.rutas.respiratorio.listar_virus", return_value=[]
     ):
         respuesta = client.get("/api/respiratorios/virus")
     assert respuesta.status_code == 200
@@ -90,7 +90,7 @@ def test_serie_nacional_sin_capturas_responde_disponible_false(client, ruta):
     mock_cx.return_value.__enter__.return_value = MagicMock()
     mock_cx.return_value.__exit__.return_value = False
     with patch("api.main._conexion", mock_cx), patch(
-        "api.main.cargar_serie_tablero_nacional", return_value=[]
+        "api.rutas.respiratorio.cargar_serie_tablero_nacional", return_value=[]
     ):
         respuesta = client.get(ruta)
     assert respuesta.status_code == 200

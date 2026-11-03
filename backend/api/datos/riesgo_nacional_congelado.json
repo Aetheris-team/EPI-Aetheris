@@ -1,0 +1,3028 @@
+{
+ "procedencia": {
+  "script": "backend/ingestion/congelar_clasificador.py",
+  "modelo": "backend/ingestion/data/interim/modelo/clasificador_riesgo_nacional_v1.joblib",
+  "modelo_sha256": "82f9ed1f04e92654c781b092c58753fc0e0f0582aa2ab32a17ec26d6a9939202",
+  "dataset": "backend/ingestion/data/interim/dataset_modelado/dataset_modelado.csv",
+  "dataset_sha256": "77cc34a17a661b2a0ab44ee768905bcf0257b58e66d6ba531aa307d79a6cad2c"
+ },
+ "metricas_modelo": {
+  "anio_prueba": 2023,
+  "anios_entrenamiento": [
+   2018,
+   2019,
+   2021,
+   2022
+  ],
+  "corte_percentil": "P75/P90",
+  "f1_macro_modelo": 0.26506024096385544,
+  "recall_alto_modelo": null,
+  "n_alto_real_prueba": 0,
+  "f1_macro_baseline_climatologica": 0.3333333333333333,
+  "recall_alto_baseline_climatologica": null,
+  "supera_baseline_climatologica": false,
+  "nota": "Recall de 'alto' no evaluable -- el año de prueba no tuvo semanas reales 'alto' con este corte, no es un fallo del modelo. Ver docs/clasificador-retirado/entrenamientos/entrenamiento-clasificador-riesgo-nacional.md."
+ },
+ "semanas": [
+  {
+   "anio": 2018,
+   "semana_epi": 2,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8567,
+    "medio": 0.06,
+    "alto": 0.0833
+   },
+   "casos_observados": 0.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 3,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.9167,
+    "medio": 0.0433,
+    "alto": 0.04
+   },
+   "casos_observados": 58.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 4,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.9367,
+    "medio": 0.03,
+    "alto": 0.0333
+   },
+   "casos_observados": 70.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 5,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.87,
+    "medio": 0.0633,
+    "alto": 0.0667
+   },
+   "casos_observados": 78.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 6,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8067,
+    "medio": 0.0767,
+    "alto": 0.1167
+   },
+   "casos_observados": 81.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 7,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.83,
+    "medio": 0.1,
+    "alto": 0.07
+   },
+   "casos_observados": 85.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 8,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8967,
+    "medio": 0.0233,
+    "alto": 0.08
+   },
+   "casos_observados": 87.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 9,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.9033,
+    "medio": 0.0333,
+    "alto": 0.0633
+   },
+   "casos_observados": 96.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 10,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8433,
+    "medio": 0.05,
+    "alto": 0.1067
+   },
+   "casos_observados": 49.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 11,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.7967,
+    "medio": 0.0733,
+    "alto": 0.13
+   },
+   "casos_observados": 78.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 12,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8867,
+    "medio": 0.0533,
+    "alto": 0.06
+   },
+   "casos_observados": 68.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 13,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.9,
+    "medio": 0.0733,
+    "alto": 0.0267
+   },
+   "casos_observados": 68.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 14,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.96,
+    "medio": 0.0333,
+    "alto": 0.0067
+   },
+   "casos_observados": 81.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 15,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.9067,
+    "medio": 0.0267,
+    "alto": 0.0667
+   },
+   "casos_observados": 81.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 16,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.87,
+    "medio": 0.0167,
+    "alto": 0.1133
+   },
+   "casos_observados": 92.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 17,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.83,
+    "medio": 0.0233,
+    "alto": 0.1467
+   },
+   "casos_observados": 75.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 18,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8533,
+    "medio": 0.0133,
+    "alto": 0.1333
+   },
+   "casos_observados": 88.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 19,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8467,
+    "medio": 0.0067,
+    "alto": 0.1467
+   },
+   "casos_observados": 109.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 20,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.84,
+    "medio": 0.0,
+    "alto": 0.16
+   },
+   "casos_observados": 100.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 21,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8733,
+    "medio": 0.0133,
+    "alto": 0.1133
+   },
+   "casos_observados": 126.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 22,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.9367,
+    "medio": 0.0067,
+    "alto": 0.0567
+   },
+   "casos_observados": 128.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 23,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.9533,
+    "medio": 0.0233,
+    "alto": 0.0233
+   },
+   "casos_observados": 149.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 24,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8967,
+    "medio": 0.07,
+    "alto": 0.0333
+   },
+   "casos_observados": 158.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 25,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.9033,
+    "medio": 0.03,
+    "alto": 0.0667
+   },
+   "casos_observados": 161.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 26,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.9533,
+    "medio": 0.0133,
+    "alto": 0.0333
+   },
+   "casos_observados": 152.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 27,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.91,
+    "medio": 0.0733,
+    "alto": 0.0167
+   },
+   "casos_observados": 157.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 28,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.78,
+    "medio": 0.1167,
+    "alto": 0.1033
+   },
+   "casos_observados": 163.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 29,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8167,
+    "medio": 0.02,
+    "alto": 0.1633
+   },
+   "casos_observados": 222.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 30,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.9067,
+    "medio": 0.01,
+    "alto": 0.0833
+   },
+   "casos_observados": 255.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 31,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8833,
+    "medio": 0.01,
+    "alto": 0.1067
+   },
+   "casos_observados": 200.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 32,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8333,
+    "medio": 0.01,
+    "alto": 0.1567
+   },
+   "casos_observados": 270.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 33,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8233,
+    "medio": 0.0033,
+    "alto": 0.1733
+   },
+   "casos_observados": 243.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 34,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.83,
+    "medio": 0.0,
+    "alto": 0.17
+   },
+   "casos_observados": 297.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 35,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.7967,
+    "medio": 0.0033,
+    "alto": 0.2
+   },
+   "casos_observados": 303.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 36,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.83,
+    "medio": 0.0333,
+    "alto": 0.1367
+   },
+   "casos_observados": 329.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 37,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.87,
+    "medio": 0.0433,
+    "alto": 0.0867
+   },
+   "casos_observados": 390.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 38,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.9167,
+    "medio": 0.0333,
+    "alto": 0.05
+   },
+   "casos_observados": 319.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 39,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.9133,
+    "medio": 0.0467,
+    "alto": 0.04
+   },
+   "casos_observados": 333.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 40,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.9267,
+    "medio": 0.0467,
+    "alto": 0.0267
+   },
+   "casos_observados": 302.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 41,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.95,
+    "medio": 0.0267,
+    "alto": 0.0233
+   },
+   "casos_observados": 232.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 42,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8533,
+    "medio": 0.0667,
+    "alto": 0.08
+   },
+   "casos_observados": 197.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 43,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8167,
+    "medio": 0.07,
+    "alto": 0.1133
+   },
+   "casos_observados": 265.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 44,
+   "etiqueta_predicha": "medio",
+   "etiqueta_real": "medio",
+   "probabilidades": {
+    "bajo": 0.21,
+    "medio": 0.73,
+    "alto": 0.06
+   },
+   "casos_observados": 252.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 45,
+   "etiqueta_predicha": "medio",
+   "etiqueta_real": "medio",
+   "probabilidades": {
+    "bajo": 0.2467,
+    "medio": 0.7067,
+    "alto": 0.0467
+   },
+   "casos_observados": 256.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 46,
+   "etiqueta_predicha": "medio",
+   "etiqueta_real": "medio",
+   "probabilidades": {
+    "bajo": 0.2567,
+    "medio": 0.7067,
+    "alto": 0.0367
+   },
+   "casos_observados": 240.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 47,
+   "etiqueta_predicha": "medio",
+   "etiqueta_real": "medio",
+   "probabilidades": {
+    "bajo": 0.25,
+    "medio": 0.66,
+    "alto": 0.09
+   },
+   "casos_observados": 192.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 48,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8167,
+    "medio": 0.0367,
+    "alto": 0.1467
+   },
+   "casos_observados": 144.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 49,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8267,
+    "medio": 0.0167,
+    "alto": 0.1567
+   },
+   "casos_observados": 164.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 50,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8,
+    "medio": 0.0133,
+    "alto": 0.1867
+   },
+   "casos_observados": 109.0
+  },
+  {
+   "anio": 2018,
+   "semana_epi": 51,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8467,
+    "medio": 0.0333,
+    "alto": 0.12
+   },
+   "casos_observados": 85.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 2,
+   "etiqueta_predicha": "medio",
+   "etiqueta_real": "medio",
+   "probabilidades": {
+    "bajo": 0.28,
+    "medio": 0.6567,
+    "alto": 0.0633
+   },
+   "casos_observados": 131.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 3,
+   "etiqueta_predicha": "medio",
+   "etiqueta_real": "medio",
+   "probabilidades": {
+    "bajo": 0.1467,
+    "medio": 0.7467,
+    "alto": 0.1067
+   },
+   "casos_observados": 138.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 4,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.1367,
+    "medio": 0.0767,
+    "alto": 0.7867
+   },
+   "casos_observados": 151.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 5,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.21,
+    "medio": 0.1167,
+    "alto": 0.6733
+   },
+   "casos_observados": 165.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 6,
+   "etiqueta_predicha": "medio",
+   "etiqueta_real": "medio",
+   "probabilidades": {
+    "bajo": 0.1367,
+    "medio": 0.7233,
+    "alto": 0.14
+   },
+   "casos_observados": 161.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 7,
+   "etiqueta_predicha": "medio",
+   "etiqueta_real": "medio",
+   "probabilidades": {
+    "bajo": 0.21,
+    "medio": 0.7,
+    "alto": 0.09
+   },
+   "casos_observados": 150.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 8,
+   "etiqueta_predicha": "medio",
+   "etiqueta_real": "medio",
+   "probabilidades": {
+    "bajo": 0.15,
+    "medio": 0.79,
+    "alto": 0.06
+   },
+   "casos_observados": 160.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 9,
+   "etiqueta_predicha": "medio",
+   "etiqueta_real": "medio",
+   "probabilidades": {
+    "bajo": 0.1033,
+    "medio": 0.7467,
+    "alto": 0.15
+   },
+   "casos_observados": 152.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 10,
+   "etiqueta_predicha": "medio",
+   "etiqueta_real": "medio",
+   "probabilidades": {
+    "bajo": 0.2,
+    "medio": 0.7,
+    "alto": 0.1
+   },
+   "casos_observados": 169.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 11,
+   "etiqueta_predicha": "medio",
+   "etiqueta_real": "medio",
+   "probabilidades": {
+    "bajo": 0.28,
+    "medio": 0.68,
+    "alto": 0.04
+   },
+   "casos_observados": 189.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 12,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.91,
+    "medio": 0.0467,
+    "alto": 0.0433
+   },
+   "casos_observados": 159.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 13,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.97,
+    "medio": 0.0067,
+    "alto": 0.0233
+   },
+   "casos_observados": 168.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 14,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.9633,
+    "medio": 0.0133,
+    "alto": 0.0233
+   },
+   "casos_observados": 166.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 15,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.9267,
+    "medio": 0.03,
+    "alto": 0.0433
+   },
+   "casos_observados": 150.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 16,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.9067,
+    "medio": 0.0333,
+    "alto": 0.06
+   },
+   "casos_observados": 128.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 17,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.9,
+    "medio": 0.0133,
+    "alto": 0.0867
+   },
+   "casos_observados": 169.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 18,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.86,
+    "medio": 0.0367,
+    "alto": 0.1033
+   },
+   "casos_observados": 198.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 19,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.88,
+    "medio": 0.0567,
+    "alto": 0.0633
+   },
+   "casos_observados": 198.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 20,
+   "etiqueta_predicha": "medio",
+   "etiqueta_real": "medio",
+   "probabilidades": {
+    "bajo": 0.2833,
+    "medio": 0.6733,
+    "alto": 0.0433
+   },
+   "casos_observados": 249.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 21,
+   "etiqueta_predicha": "medio",
+   "etiqueta_real": "medio",
+   "probabilidades": {
+    "bajo": 0.22,
+    "medio": 0.6133,
+    "alto": 0.1667
+   },
+   "casos_observados": 281.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 22,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8233,
+    "medio": 0.03,
+    "alto": 0.1467
+   },
+   "casos_observados": 264.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 23,
+   "etiqueta_predicha": "medio",
+   "etiqueta_real": "medio",
+   "probabilidades": {
+    "bajo": 0.2133,
+    "medio": 0.6533,
+    "alto": 0.1333
+   },
+   "casos_observados": 347.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 24,
+   "etiqueta_predicha": "medio",
+   "etiqueta_real": "medio",
+   "probabilidades": {
+    "bajo": 0.1867,
+    "medio": 0.7133,
+    "alto": 0.1
+   },
+   "casos_observados": 383.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 25,
+   "etiqueta_predicha": "medio",
+   "etiqueta_real": "medio",
+   "probabilidades": {
+    "bajo": 0.23,
+    "medio": 0.7267,
+    "alto": 0.0433
+   },
+   "casos_observados": 449.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 26,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.1767,
+    "medio": 0.12,
+    "alto": 0.7033
+   },
+   "casos_observados": 717.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 27,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.16,
+    "medio": 0.0333,
+    "alto": 0.8067
+   },
+   "casos_observados": 921.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 28,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.18,
+    "medio": 0.0,
+    "alto": 0.82
+   },
+   "casos_observados": 1033.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 29,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.22,
+    "medio": 0.0033,
+    "alto": 0.7767
+   },
+   "casos_observados": 1201.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 30,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.21,
+    "medio": 0.0,
+    "alto": 0.79
+   },
+   "casos_observados": 1473.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 31,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.2,
+    "medio": 0.0,
+    "alto": 0.8
+   },
+   "casos_observados": 484.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 32,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.2133,
+    "medio": 0.0,
+    "alto": 0.7867
+   },
+   "casos_observados": 2178.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 33,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.1833,
+    "medio": 0.0333,
+    "alto": 0.7833
+   },
+   "casos_observados": 1128.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 34,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.11,
+    "medio": 0.03,
+    "alto": 0.86
+   },
+   "casos_observados": 1172.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 35,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.2333,
+    "medio": 0.0167,
+    "alto": 0.75
+   },
+   "casos_observados": 1295.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 36,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.2433,
+    "medio": 0.0067,
+    "alto": 0.75
+   },
+   "casos_observados": 1296.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 37,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.1567,
+    "medio": 0.0067,
+    "alto": 0.8367
+   },
+   "casos_observados": 1233.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 38,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.1133,
+    "medio": 0.01,
+    "alto": 0.8767
+   },
+   "casos_observados": 1163.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 39,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.2733,
+    "medio": 0.0067,
+    "alto": 0.72
+   },
+   "casos_observados": 1112.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 40,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.2267,
+    "medio": 0.05,
+    "alto": 0.7233
+   },
+   "casos_observados": 1013.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 41,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.3033,
+    "medio": 0.0267,
+    "alto": 0.67
+   },
+   "casos_observados": 954.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 42,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.28,
+    "medio": 0.0433,
+    "alto": 0.6767
+   },
+   "casos_observados": 701.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 43,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.2767,
+    "medio": 0.0067,
+    "alto": 0.7167
+   },
+   "casos_observados": 623.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 44,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.2933,
+    "medio": 0.01,
+    "alto": 0.6967
+   },
+   "casos_observados": 574.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 45,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.3233,
+    "medio": 0.0367,
+    "alto": 0.64
+   },
+   "casos_observados": 444.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 46,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.2367,
+    "medio": 0.1133,
+    "alto": 0.65
+   },
+   "casos_observados": 446.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 47,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.2433,
+    "medio": 0.0267,
+    "alto": 0.73
+   },
+   "casos_observados": 302.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 48,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.2567,
+    "medio": 0.0533,
+    "alto": 0.69
+   },
+   "casos_observados": 241.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 49,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.2233,
+    "medio": 0.0067,
+    "alto": 0.77
+   },
+   "casos_observados": 224.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 50,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.2867,
+    "medio": 0.02,
+    "alto": 0.6933
+   },
+   "casos_observados": 237.0
+  },
+  {
+   "anio": 2019,
+   "semana_epi": 51,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.2033,
+    "medio": 0.1067,
+    "alto": 0.69
+   },
+   "casos_observados": 206.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 2,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.93,
+    "medio": 0.0233,
+    "alto": 0.0467
+   },
+   "casos_observados": 39.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 3,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.89,
+    "medio": 0.0367,
+    "alto": 0.0733
+   },
+   "casos_observados": 46.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 4,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8267,
+    "medio": 0.04,
+    "alto": 0.1333
+   },
+   "casos_observados": 61.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 5,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.7967,
+    "medio": 0.1233,
+    "alto": 0.08
+   },
+   "casos_observados": 65.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 6,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8233,
+    "medio": 0.0967,
+    "alto": 0.08
+   },
+   "casos_observados": 44.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 7,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8167,
+    "medio": 0.12,
+    "alto": 0.0633
+   },
+   "casos_observados": 57.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 8,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.7733,
+    "medio": 0.1233,
+    "alto": 0.1033
+   },
+   "casos_observados": 57.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 9,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8567,
+    "medio": 0.0667,
+    "alto": 0.0767
+   },
+   "casos_observados": 73.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 10,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8533,
+    "medio": 0.0867,
+    "alto": 0.06
+   },
+   "casos_observados": 91.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 11,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.9067,
+    "medio": 0.06,
+    "alto": 0.0333
+   },
+   "casos_observados": 74.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 12,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.9,
+    "medio": 0.0567,
+    "alto": 0.0433
+   },
+   "casos_observados": 65.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 13,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.77,
+    "medio": 0.12,
+    "alto": 0.11
+   },
+   "casos_observados": 74.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 14,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8967,
+    "medio": 0.07,
+    "alto": 0.0333
+   },
+   "casos_observados": 63.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 15,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.86,
+    "medio": 0.0533,
+    "alto": 0.0867
+   },
+   "casos_observados": 79.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 16,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8733,
+    "medio": 0.02,
+    "alto": 0.1067
+   },
+   "casos_observados": 81.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 17,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8167,
+    "medio": 0.01,
+    "alto": 0.1733
+   },
+   "casos_observados": 82.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 18,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.7667,
+    "medio": 0.0033,
+    "alto": 0.23
+   },
+   "casos_observados": 91.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 19,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8467,
+    "medio": 0.0133,
+    "alto": 0.14
+   },
+   "casos_observados": 100.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 20,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.83,
+    "medio": 0.01,
+    "alto": 0.16
+   },
+   "casos_observados": 137.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 21,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8167,
+    "medio": 0.0033,
+    "alto": 0.18
+   },
+   "casos_observados": 122.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 22,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8233,
+    "medio": 0.0,
+    "alto": 0.1767
+   },
+   "casos_observados": 145.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 23,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8167,
+    "medio": 0.07,
+    "alto": 0.1133
+   },
+   "casos_observados": 190.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 24,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8467,
+    "medio": 0.02,
+    "alto": 0.1333
+   },
+   "casos_observados": 134.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 25,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.79,
+    "medio": 0.01,
+    "alto": 0.2
+   },
+   "casos_observados": 157.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 26,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8367,
+    "medio": 0.0467,
+    "alto": 0.1167
+   },
+   "casos_observados": 148.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 27,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.9533,
+    "medio": 0.02,
+    "alto": 0.0267
+   },
+   "casos_observados": 138.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 28,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.96,
+    "medio": 0.03,
+    "alto": 0.01
+   },
+   "casos_observados": 150.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 29,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.91,
+    "medio": 0.0733,
+    "alto": 0.0167
+   },
+   "casos_observados": 134.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 30,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8233,
+    "medio": 0.0367,
+    "alto": 0.14
+   },
+   "casos_observados": 115.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 31,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8033,
+    "medio": 0.0167,
+    "alto": 0.18
+   },
+   "casos_observados": 119.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 32,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8667,
+    "medio": 0.0133,
+    "alto": 0.12
+   },
+   "casos_observados": 133.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 33,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.84,
+    "medio": 0.0367,
+    "alto": 0.1233
+   },
+   "casos_observados": 128.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 34,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.92,
+    "medio": 0.0467,
+    "alto": 0.0333
+   },
+   "casos_observados": 145.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 35,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.9233,
+    "medio": 0.03,
+    "alto": 0.0467
+   },
+   "casos_observados": 134.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 36,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8933,
+    "medio": 0.0233,
+    "alto": 0.0833
+   },
+   "casos_observados": 166.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 37,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.79,
+    "medio": 0.06,
+    "alto": 0.15
+   },
+   "casos_observados": 131.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 38,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8467,
+    "medio": 0.04,
+    "alto": 0.1133
+   },
+   "casos_observados": 111.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 39,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8867,
+    "medio": 0.0733,
+    "alto": 0.04
+   },
+   "casos_observados": 145.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 40,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8833,
+    "medio": 0.0933,
+    "alto": 0.0233
+   },
+   "casos_observados": 128.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 41,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8567,
+    "medio": 0.1267,
+    "alto": 0.0167
+   },
+   "casos_observados": 108.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 42,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.85,
+    "medio": 0.1167,
+    "alto": 0.0333
+   },
+   "casos_observados": 117.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 43,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.94,
+    "medio": 0.02,
+    "alto": 0.04
+   },
+   "casos_observados": 121.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 44,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.94,
+    "medio": 0.02,
+    "alto": 0.04
+   },
+   "casos_observados": 114.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 45,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.85,
+    "medio": 0.0833,
+    "alto": 0.0667
+   },
+   "casos_observados": 140.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 46,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.9233,
+    "medio": 0.0467,
+    "alto": 0.03
+   },
+   "casos_observados": 141.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 47,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.9533,
+    "medio": 0.0067,
+    "alto": 0.04
+   },
+   "casos_observados": 112.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 48,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8533,
+    "medio": 0.06,
+    "alto": 0.0867
+   },
+   "casos_observados": 125.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 49,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8933,
+    "medio": 0.0467,
+    "alto": 0.06
+   },
+   "casos_observados": 160.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 50,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8233,
+    "medio": 0.0567,
+    "alto": 0.12
+   },
+   "casos_observados": 154.0
+  },
+  {
+   "anio": 2021,
+   "semana_epi": 51,
+   "etiqueta_predicha": "medio",
+   "etiqueta_real": "medio",
+   "probabilidades": {
+    "bajo": 0.1467,
+    "medio": 0.6867,
+    "alto": 0.1667
+   },
+   "casos_observados": 132.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 2,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.1967,
+    "medio": 0.0333,
+    "alto": 0.77
+   },
+   "casos_observados": 159.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 3,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.2067,
+    "medio": 0.06,
+    "alto": 0.7333
+   },
+   "casos_observados": 175.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 4,
+   "etiqueta_predicha": "medio",
+   "etiqueta_real": "medio",
+   "probabilidades": {
+    "bajo": 0.1433,
+    "medio": 0.6533,
+    "alto": 0.2033
+   },
+   "casos_observados": 146.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 5,
+   "etiqueta_predicha": "medio",
+   "etiqueta_real": "medio",
+   "probabilidades": {
+    "bajo": 0.14,
+    "medio": 0.6933,
+    "alto": 0.1667
+   },
+   "casos_observados": 150.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 6,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.14,
+    "medio": 0.1233,
+    "alto": 0.7367
+   },
+   "casos_observados": 173.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 7,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.1233,
+    "medio": 0.09,
+    "alto": 0.7867
+   },
+   "casos_observados": 171.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 8,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.0733,
+    "medio": 0.0533,
+    "alto": 0.8733
+   },
+   "casos_observados": 218.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 9,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.1867,
+    "medio": 0.0567,
+    "alto": 0.7567
+   },
+   "casos_observados": 207.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 10,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.3067,
+    "medio": 0.0167,
+    "alto": 0.6767
+   },
+   "casos_observados": 273.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 11,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.2867,
+    "medio": 0.04,
+    "alto": 0.6733
+   },
+   "casos_observados": 357.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 12,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.2167,
+    "medio": 0.05,
+    "alto": 0.7333
+   },
+   "casos_observados": 371.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 13,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.1867,
+    "medio": 0.0333,
+    "alto": 0.78
+   },
+   "casos_observados": 402.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 14,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.2,
+    "medio": 0.02,
+    "alto": 0.78
+   },
+   "casos_observados": 392.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 15,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.2033,
+    "medio": 0.01,
+    "alto": 0.7867
+   },
+   "casos_observados": 432.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 16,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.2933,
+    "medio": 0.0167,
+    "alto": 0.69
+   },
+   "casos_observados": 515.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 17,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.2467,
+    "medio": 0.0233,
+    "alto": 0.73
+   },
+   "casos_observados": 547.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 18,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.2633,
+    "medio": 0.02,
+    "alto": 0.7167
+   },
+   "casos_observados": 604.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 19,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.2367,
+    "medio": 0.0167,
+    "alto": 0.7467
+   },
+   "casos_observados": 495.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 20,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.2233,
+    "medio": 0.0467,
+    "alto": 0.73
+   },
+   "casos_observados": 386.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 21,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.25,
+    "medio": 0.03,
+    "alto": 0.72
+   },
+   "casos_observados": 587.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 22,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.34,
+    "medio": 0.0433,
+    "alto": 0.6167
+   },
+   "casos_observados": 619.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 23,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.26,
+    "medio": 0.0133,
+    "alto": 0.7267
+   },
+   "casos_observados": 710.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 24,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.3167,
+    "medio": 0.01,
+    "alto": 0.6733
+   },
+   "casos_observados": 508.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 25,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "alto",
+   "probabilidades": {
+    "bajo": 0.2033,
+    "medio": 0.1167,
+    "alto": 0.68
+   },
+   "casos_observados": 537.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 26,
+   "etiqueta_predicha": "medio",
+   "etiqueta_real": "medio",
+   "probabilidades": {
+    "bajo": 0.2333,
+    "medio": 0.67,
+    "alto": 0.0967
+   },
+   "casos_observados": 575.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 27,
+   "etiqueta_predicha": "medio",
+   "etiqueta_real": "medio",
+   "probabilidades": {
+    "bajo": 0.2,
+    "medio": 0.7733,
+    "alto": 0.0267
+   },
+   "casos_observados": 521.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 28,
+   "etiqueta_predicha": "medio",
+   "etiqueta_real": "medio",
+   "probabilidades": {
+    "bajo": 0.1733,
+    "medio": 0.8033,
+    "alto": 0.0233
+   },
+   "casos_observados": 536.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 29,
+   "etiqueta_predicha": "medio",
+   "etiqueta_real": "medio",
+   "probabilidades": {
+    "bajo": 0.24,
+    "medio": 0.7367,
+    "alto": 0.0233
+   },
+   "casos_observados": 520.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 30,
+   "etiqueta_predicha": "medio",
+   "etiqueta_real": "medio",
+   "probabilidades": {
+    "bajo": 0.2633,
+    "medio": 0.6967,
+    "alto": 0.04
+   },
+   "casos_observados": 513.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 31,
+   "etiqueta_predicha": "medio",
+   "etiqueta_real": "medio",
+   "probabilidades": {
+    "bajo": 0.24,
+    "medio": 0.7233,
+    "alto": 0.0367
+   },
+   "casos_observados": 477.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 32,
+   "etiqueta_predicha": "medio",
+   "etiqueta_real": "medio",
+   "probabilidades": {
+    "bajo": 0.22,
+    "medio": 0.7133,
+    "alto": 0.0667
+   },
+   "casos_observados": 428.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 33,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.9067,
+    "medio": 0.0433,
+    "alto": 0.05
+   },
+   "casos_observados": 447.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 34,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.9567,
+    "medio": 0.0267,
+    "alto": 0.0167
+   },
+   "casos_observados": 353.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 35,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.9667,
+    "medio": 0.0133,
+    "alto": 0.02
+   },
+   "casos_observados": 333.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 36,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.84,
+    "medio": 0.0067,
+    "alto": 0.1533
+   },
+   "casos_observados": 337.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 37,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8733,
+    "medio": 0.01,
+    "alto": 0.1167
+   },
+   "casos_observados": 267.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 38,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8633,
+    "medio": 0.01,
+    "alto": 0.1267
+   },
+   "casos_observados": 224.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 39,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.81,
+    "medio": 0.02,
+    "alto": 0.17
+   },
+   "casos_observados": 186.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 40,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.83,
+    "medio": 0.0633,
+    "alto": 0.1067
+   },
+   "casos_observados": 242.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 41,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.7867,
+    "medio": 0.1733,
+    "alto": 0.04
+   },
+   "casos_observados": 175.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 42,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8533,
+    "medio": 0.0833,
+    "alto": 0.0633
+   },
+   "casos_observados": 193.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 43,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.7933,
+    "medio": 0.13,
+    "alto": 0.0767
+   },
+   "casos_observados": 184.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 44,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8867,
+    "medio": 0.05,
+    "alto": 0.0633
+   },
+   "casos_observados": 157.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 45,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8967,
+    "medio": 0.0767,
+    "alto": 0.0267
+   },
+   "casos_observados": 146.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 46,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.93,
+    "medio": 0.0367,
+    "alto": 0.0333
+   },
+   "casos_observados": 94.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 47,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.88,
+    "medio": 0.0433,
+    "alto": 0.0767
+   },
+   "casos_observados": 66.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 48,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8433,
+    "medio": 0.0167,
+    "alto": 0.14
+   },
+   "casos_observados": 66.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 49,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8967,
+    "medio": 0.04,
+    "alto": 0.0633
+   },
+   "casos_observados": 76.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 50,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.9333,
+    "medio": 0.04,
+    "alto": 0.0267
+   },
+   "casos_observados": 50.0
+  },
+  {
+   "anio": 2022,
+   "semana_epi": 51,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.9167,
+    "medio": 0.0233,
+    "alto": 0.06
+   },
+   "casos_observados": 0.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 2,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.65,
+    "medio": 0.0967,
+    "alto": 0.2533
+   },
+   "casos_observados": 69.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 3,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.3233,
+    "medio": 0.14,
+    "alto": 0.5367
+   },
+   "casos_observados": 79.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 4,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.4967,
+    "medio": 0.2667,
+    "alto": 0.2367
+   },
+   "casos_observados": 83.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 5,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.57,
+    "medio": 0.1967,
+    "alto": 0.2333
+   },
+   "casos_observados": 89.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 6,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.4333,
+    "medio": 0.1567,
+    "alto": 0.41
+   },
+   "casos_observados": 87.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 7,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.62,
+    "medio": 0.0933,
+    "alto": 0.2867
+   },
+   "casos_observados": 98.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 8,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.72,
+    "medio": 0.08,
+    "alto": 0.2
+   },
+   "casos_observados": 94.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 9,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.7267,
+    "medio": 0.0933,
+    "alto": 0.18
+   },
+   "casos_observados": 70.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 10,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.5833,
+    "medio": 0.15,
+    "alto": 0.2667
+   },
+   "casos_observados": 112.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 11,
+   "etiqueta_predicha": "medio",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.22,
+    "medio": 0.41,
+    "alto": 0.37
+   },
+   "casos_observados": 107.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 12,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.4433,
+    "medio": 0.1667,
+    "alto": 0.39
+   },
+   "casos_observados": 90.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 13,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.5633,
+    "medio": 0.0833,
+    "alto": 0.3533
+   },
+   "casos_observados": 199.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 14,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.56,
+    "medio": 0.11,
+    "alto": 0.33
+   },
+   "casos_observados": 101.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 15,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.7333,
+    "medio": 0.15,
+    "alto": 0.1167
+   },
+   "casos_observados": 34.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 16,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.87,
+    "medio": 0.0633,
+    "alto": 0.0667
+   },
+   "casos_observados": 118.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 17,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.8367,
+    "medio": 0.0567,
+    "alto": 0.1067
+   },
+   "casos_observados": 104.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 18,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.7,
+    "medio": 0.0667,
+    "alto": 0.2333
+   },
+   "casos_observados": 137.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 19,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.7767,
+    "medio": 0.06,
+    "alto": 0.1633
+   },
+   "casos_observados": 99.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 20,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.6567,
+    "medio": 0.22,
+    "alto": 0.1233
+   },
+   "casos_observados": 142.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 21,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.6833,
+    "medio": 0.24,
+    "alto": 0.0767
+   },
+   "casos_observados": 138.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 22,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.68,
+    "medio": 0.2767,
+    "alto": 0.0433
+   },
+   "casos_observados": 124.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 23,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.4633,
+    "medio": 0.28,
+    "alto": 0.2567
+   },
+   "casos_observados": 144.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 24,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.3133,
+    "medio": 0.26,
+    "alto": 0.4267
+   },
+   "casos_observados": 142.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 25,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.2567,
+    "medio": 0.1867,
+    "alto": 0.5567
+   },
+   "casos_observados": 178.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 26,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.3733,
+    "medio": 0.1067,
+    "alto": 0.52
+   },
+   "casos_observados": 139.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 27,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.2833,
+    "medio": 0.08,
+    "alto": 0.6367
+   },
+   "casos_observados": 147.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 28,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.3833,
+    "medio": 0.1967,
+    "alto": 0.42
+   },
+   "casos_observados": 158.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 29,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.3967,
+    "medio": 0.0433,
+    "alto": 0.56
+   },
+   "casos_observados": 172.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 30,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.4967,
+    "medio": 0.0133,
+    "alto": 0.49
+   },
+   "casos_observados": 0.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 31,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.5533,
+    "medio": 0.03,
+    "alto": 0.4167
+   },
+   "casos_observados": 281.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 32,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.36,
+    "medio": 0.17,
+    "alto": 0.47
+   },
+   "casos_observados": 152.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 33,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.3933,
+    "medio": 0.23,
+    "alto": 0.3767
+   },
+   "casos_observados": 95.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 34,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.4333,
+    "medio": 0.12,
+    "alto": 0.4467
+   },
+   "casos_observados": 110.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 35,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.4333,
+    "medio": 0.0767,
+    "alto": 0.49
+   },
+   "casos_observados": 115.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 36,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.3467,
+    "medio": 0.2667,
+    "alto": 0.3867
+   },
+   "casos_observados": 95.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 37,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.2967,
+    "medio": 0.1567,
+    "alto": 0.5467
+   },
+   "casos_observados": 98.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 38,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.2567,
+    "medio": 0.1167,
+    "alto": 0.6267
+   },
+   "casos_observados": 108.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 39,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.22,
+    "medio": 0.0467,
+    "alto": 0.7333
+   },
+   "casos_observados": 102.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 40,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.1633,
+    "medio": 0.16,
+    "alto": 0.6767
+   },
+   "casos_observados": 119.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 41,
+   "etiqueta_predicha": "alto",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.3233,
+    "medio": 0.1967,
+    "alto": 0.48
+   },
+   "casos_observados": 132.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 42,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.4233,
+    "medio": 0.2133,
+    "alto": 0.3633
+   },
+   "casos_observados": 152.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 43,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.5533,
+    "medio": 0.24,
+    "alto": 0.2067
+   },
+   "casos_observados": 126.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 44,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.7433,
+    "medio": 0.1433,
+    "alto": 0.1133
+   },
+   "casos_observados": 88.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 45,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.71,
+    "medio": 0.07,
+    "alto": 0.22
+   },
+   "casos_observados": 107.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 46,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.6067,
+    "medio": 0.25,
+    "alto": 0.1433
+   },
+   "casos_observados": 123.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 47,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.7233,
+    "medio": 0.1933,
+    "alto": 0.0833
+   },
+   "casos_observados": 114.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 48,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.4933,
+    "medio": 0.3733,
+    "alto": 0.1333
+   },
+   "casos_observados": 128.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 49,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.5933,
+    "medio": 0.0733,
+    "alto": 0.3333
+   },
+   "casos_observados": 97.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 50,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.51,
+    "medio": 0.0733,
+    "alto": 0.4167
+   },
+   "casos_observados": 131.0
+  },
+  {
+   "anio": 2023,
+   "semana_epi": 51,
+   "etiqueta_predicha": "bajo",
+   "etiqueta_real": "bajo",
+   "probabilidades": {
+    "bajo": 0.4733,
+    "medio": 0.1433,
+    "alto": 0.3833
+   },
+   "casos_observados": 0.0
+  }
+ ]
+}

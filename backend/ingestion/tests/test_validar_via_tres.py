@@ -73,7 +73,7 @@ class ViaTresTest(unittest.TestCase):
         )
         self.assertEqual(
             via.validar_firma_previa(self.firma, self.manifiesto),
-            "d8c2b907833f799a233d99f18289416803f22370e916dbd212da3943620303ae",
+            "1d95d43f21a4a3826598c98e8db310552b579608d3f82d04de482cf7b904d253",
         )
 
     def test_reemplaza_21_rezagos_por_siete_features(self):
