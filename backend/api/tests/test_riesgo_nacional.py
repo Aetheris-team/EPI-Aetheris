@@ -18,17 +18,18 @@ sys.path.insert(0, str(BACKEND_DIR))
 from fastapi.testclient import TestClient  # noqa: E402
 
 import api.main  # noqa: E402
+import api.rutas.dengue  # noqa: E402
 
 
 @pytest.fixture
 def client():
-    api.main._riesgo_nacional_cache = None
+    api.rutas.dengue._riesgo_nacional_cache = None
     yield TestClient(api.main.app)
-    api.main._riesgo_nacional_cache = None
+    api.rutas.dengue._riesgo_nacional_cache = None
 
 
 def test_sin_artefacto_responde_200_disponible_false(client, monkeypatch, tmp_path):
-    monkeypatch.setattr(api.main, "RIESGO_NACIONAL_PATH", tmp_path / "no_existe.json")
+    monkeypatch.setattr(api.rutas.dengue, "RIESGO_NACIONAL_PATH", tmp_path / "no_existe.json")
     respuesta = client.get("/api/riesgo-nacional")
     assert respuesta.status_code == 200
     cuerpo = respuesta.json()
@@ -40,7 +41,7 @@ def test_sin_artefacto_responde_200_disponible_false(client, monkeypatch, tmp_pa
 def test_sin_parametros_devuelve_la_ultima_semana(client):
     cuerpo = client.get("/api/riesgo-nacional").json()
     assert cuerpo["disponible"] is True
-    semanas = json.loads(api.main.RIESGO_NACIONAL_PATH.read_text(encoding="utf-8"))["semanas"]
+    semanas = json.loads(api.rutas.dengue.RIESGO_NACIONAL_PATH.read_text(encoding="utf-8"))["semanas"]
     ultima = max(semanas, key=lambda f: (f["anio"], f["semana_epi"]))
     assert (cuerpo["anio"], cuerpo["semana_epi"]) == (ultima["anio"], ultima["semana_epi"])
     assert set(cuerpo) == {
@@ -64,6 +65,9 @@ def test_semana_sin_datos_responde_404(client):
 
 
 def test_la_api_no_importa_scikit_learn_ni_joblib():
-    fuente = (BACKEND_DIR / "api" / "main.py").read_text(encoding="utf-8")
-    assert "import joblib" not in fuente
-    assert "sklearn" not in fuente
+    modulos = [m for m in (BACKEND_DIR / "api").rglob("*.py") if "tests" not in m.parts]
+    assert modulos
+    for modulo in modulos:
+        fuente = modulo.read_text(encoding="utf-8")
+        assert "import joblib" not in fuente, modulo
+        assert "sklearn" not in fuente, modulo

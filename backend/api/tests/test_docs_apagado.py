@@ -68,10 +68,20 @@ def test_docs_activos_por_defecto(monkeypatch):
         _restaurar(monkeypatch)
 
 
+def _rutas(lista):
+    """Aplana el árbol de rutas: desde FastAPI 0.137 cada include_router queda
+    en `app.routes` como un nodo con `original_router` (api/rutas/)."""
+    for ruta in lista:
+        if hasattr(ruta, "original_router"):
+            yield from _rutas(ruta.original_router.routes)
+        else:
+            yield ruta
+
+
 def test_el_resto_de_la_api_sigue_con_los_docs_apagados(monkeypatch):
     modulo = _recargar(monkeypatch, "false")
     try:
-        rutas = {ruta.path for ruta in modulo.app.routes}
+        rutas = {ruta.path for ruta in _rutas(modulo.app.routes)}
         assert "/health" in rutas
         assert "/api/alertas" in rutas
     finally:
