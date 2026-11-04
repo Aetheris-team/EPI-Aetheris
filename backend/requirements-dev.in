@@ -3,7 +3,7 @@
 # las instrucciones en requirements.in.
 -c requirements.txt
 
-pytest==9.1.1
+pytest==9.2.0
 shapely==2.2.0
 
 # TestClient de Starlette 1.x usa httpx2 (con httpx avisa de que está en
