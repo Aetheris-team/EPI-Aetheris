@@ -28,4 +28,4 @@ cryptography==50.0.2
 segno==1.6.6
 email-validator==2.3.0
 # Transitiva de email-validator; fijada por CVE-2026-114605 (pip-audit).
-dnspython==2.9.0
+dnspython==2.9.1
