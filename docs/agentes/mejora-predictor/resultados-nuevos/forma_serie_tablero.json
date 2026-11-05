@@ -1,0 +1,1354 @@
+{
+ "A_B_factibilidad": {
+  "promedio_movil": [
+   {
+    "k": 2,
+    "razon_referencia": 1.318,
+    "variantes": {
+     "W1_2025": {
+      "factible": true,
+      "max_x": 190.5,
+      "razon_max_x_sobre_max_y": 0.997,
+      "plausible": true
+     },
+     "W1_2026": {
+      "factible": false,
+      "max_x": null,
+      "plausible": false
+     },
+     "W2_2025": {
+      "factible": true,
+      "max_x": 190.5,
+      "razon_max_x_sobre_max_y": 0.997,
+      "plausible": true
+     },
+     "W2_2026": {
+      "factible": true,
+      "max_x": 328.5,
+      "razon_max_x_sobre_max_y": 0.998,
+      "plausible": true
+     },
+     "W3_conjunta": {
+      "factible": true,
+      "max_x": 328.5,
+      "razon_max_x_sobre_max_y": 0.998,
+      "plausible": true
+     }
+    }
+   },
+   {
+    "k": 3,
+    "razon_referencia": 1.597,
+    "variantes": {
+     "W1_2025": {
+      "factible": true,
+      "max_x": 190.5,
+      "razon_max_x_sobre_max_y": 0.997,
+      "plausible": true
+     },
+     "W1_2026": {
+      "factible": false,
+      "max_x": null,
+      "plausible": false
+     },
+     "W2_2025": {
+      "factible": true,
+      "max_x": 190.5,
+      "razon_max_x_sobre_max_y": 0.997,
+      "plausible": true
+     },
+     "W2_2026": {
+      "factible": true,
+      "max_x": 328.5,
+      "razon_max_x_sobre_max_y": 0.998,
+      "plausible": true
+     },
+     "W3_conjunta": {
+      "factible": true,
+      "max_x": 328.5,
+      "razon_max_x_sobre_max_y": 0.998,
+      "plausible": true
+     }
+    }
+   },
+   {
+    "k": 4,
+    "razon_referencia": 1.762,
+    "variantes": {
+     "W1_2025": {
+      "factible": true,
+      "max_x": 196.0,
+      "razon_max_x_sobre_max_y": 1.026,
+      "plausible": true
+     },
+     "W1_2026": {
+      "factible": false,
+      "max_x": null,
+      "plausible": false
+     },
+     "W2_2025": {
+      "factible": true,
+      "max_x": 196.0,
+      "razon_max_x_sobre_max_y": 1.026,
+      "plausible": true
+     },
+     "W2_2026": {
+      "factible": true,
+      "max_x": 368.0,
+      "razon_max_x_sobre_max_y": 1.119,
+      "plausible": true
+     },
+     "W3_conjunta": {
+      "factible": false,
+      "max_x": null,
+      "plausible": false
+     }
+    }
+   },
+   {
+    "k": 5,
+    "razon_referencia": 1.77,
+    "variantes": {
+     "W1_2025": {
+      "factible": false,
+      "max_x": null,
+      "plausible": false
+     },
+     "W1_2026": {
+      "factible": false,
+      "max_x": null,
+      "plausible": false
+     },
+     "W2_2025": {
+      "factible": true,
+      "max_x": 235.0,
+      "razon_max_x_sobre_max_y": 1.23,
+      "plausible": true
+     },
+     "W2_2026": {
+      "factible": true,
+      "max_x": 357.5,
+      "razon_max_x_sobre_max_y": 1.087,
+      "plausible": true
+     },
+     "W3_conjunta": {
+      "factible": false,
+      "max_x": null,
+      "plausible": false
+     }
+    }
+   },
+   {
+    "k": 6,
+    "razon_referencia": 1.801,
+    "variantes": {
+     "W1_2025": {
+      "factible": true,
+      "max_x": 238.0,
+      "razon_max_x_sobre_max_y": 1.246,
+      "plausible": true
+     },
+     "W1_2026": {
+      "factible": false,
+      "max_x": null,
+      "plausible": false
+     },
+     "W2_2025": {
+      "factible": true,
+      "max_x": 190.5,
+      "razon_max_x_sobre_max_y": 0.997,
+      "plausible": true
+     },
+     "W2_2026": {
+      "factible": true,
+      "max_x": 372.0,
+      "razon_max_x_sobre_max_y": 1.131,
+      "plausible": true
+     },
+     "W3_conjunta": {
+      "factible": false,
+      "max_x": null,
+      "plausible": false
+     }
+    }
+   },
+   {
+    "k": 7,
+    "razon_referencia": 1.821,
+    "variantes": {
+     "W1_2025": {
+      "factible": false,
+      "max_x": null,
+      "plausible": false
+     },
+     "W1_2026": {
+      "factible": false,
+      "max_x": null,
+      "plausible": false
+     },
+     "W2_2025": {
+      "factible": true,
+      "max_x": 217.0,
+      "razon_max_x_sobre_max_y": 1.136,
+      "plausible": true
+     },
+     "W2_2026": {
+      "factible": true,
+      "max_x": 413.0,
+      "razon_max_x_sobre_max_y": 1.255,
+      "plausible": true
+     },
+     "W3_conjunta": {
+      "factible": false,
+      "max_x": null,
+      "plausible": false
+     }
+    }
+   },
+   {
+    "k": 8,
+    "razon_referencia": 1.832,
+    "variantes": {
+     "W1_2025": {
+      "factible": false,
+      "max_x": null,
+      "plausible": false
+     },
+     "W1_2026": {
+      "factible": false,
+      "max_x": null,
+      "plausible": false
+     },
+     "W2_2025": {
+      "factible": true,
+      "max_x": 352.0,
+      "razon_max_x_sobre_max_y": 1.843,
+      "plausible": false
+     },
+     "W2_2026": {
+      "factible": true,
+      "max_x": 688.0,
+      "razon_max_x_sobre_max_y": 2.091,
+      "plausible": false
+     },
+     "W3_conjunta": {
+      "factible": false,
+      "max_x": null,
+      "plausible": false
+     }
+    }
+   },
+   {
+    "k": 9,
+    "razon_referencia": 1.847,
+    "variantes": {
+     "W1_2025": {
+      "factible": false,
+      "max_x": null,
+      "plausible": false
+     },
+     "W1_2026": {
+      "factible": false,
+      "max_x": null,
+      "plausible": false
+     },
+     "W2_2025": {
+      "factible": true,
+      "max_x": 423.0,
+      "razon_max_x_sobre_max_y": 2.215,
+      "plausible": false
+     },
+     "W2_2026": {
+      "factible": true,
+      "max_x": 612.0,
+      "razon_max_x_sobre_max_y": 1.86,
+      "plausible": false
+     },
+     "W3_conjunta": {
+      "factible": false,
+      "max_x": null,
+      "plausible": false
+     }
+    }
+   },
+   {
+    "k": 10,
+    "razon_referencia": 1.857,
+    "variantes": {
+     "W1_2025": {
+      "factible": false,
+      "max_x": null,
+      "plausible": false
+     },
+     "W1_2026": {
+      "factible": false,
+      "max_x": null,
+      "plausible": false
+     },
+     "W2_2025": {
+      "factible": false,
+      "max_x": null,
+      "plausible": false
+     },
+     "W2_2026": {
+      "factible": true,
+      "max_x": 700.0,
+      "razon_max_x_sobre_max_y": 2.128,
+      "plausible": false
+     },
+     "W3_conjunta": {
+      "factible": false,
+      "max_x": null,
+      "plausible": false
+     }
+    }
+   },
+   {
+    "k": 11,
+    "razon_referencia": 1.888,
+    "variantes": {
+     "W1_2025": {
+      "factible": false,
+      "max_x": null,
+      "plausible": false
+     },
+     "W1_2026": {
+      "factible": false,
+      "max_x": null,
+      "plausible": false
+     },
+     "W2_2025": {
+      "factible": false,
+      "max_x": null,
+      "plausible": false
+     },
+     "W2_2026": {
+      "factible": true,
+      "max_x": 561.0,
+      "razon_max_x_sobre_max_y": 1.705,
+      "plausible": true
+     },
+     "W3_conjunta": {
+      "factible": false,
+      "max_x": null,
+      "plausible": false
+     }
+    }
+   },
+   {
+    "k": 12,
+    "razon_referencia": 1.9,
+    "variantes": {
+     "W1_2025": {
+      "factible": false,
+      "max_x": null,
+      "plausible": false
+     },
+     "W1_2026": {
+      "factible": false,
+      "max_x": null,
+      "plausible": false
+     },
+     "W2_2025": {
+      "factible": true,
+      "max_x": 276.0,
+      "razon_max_x_sobre_max_y": 1.445,
+      "plausible": true
+     },
+     "W2_2026": {
+      "factible": true,
+      "max_x": 636.0,
+      "razon_max_x_sobre_max_y": 1.933,
+      "plausible": false
+     },
+     "W3_conjunta": {
+      "factible": false,
+      "max_x": null,
+      "plausible": false
+     }
+    }
+   }
+  ],
+  "exponencial": [
+   {
+    "alfa": 0.05,
+    "razon_referencia": 2.945,
+    "variantes": {
+     "2025": {
+      "factible": false,
+      "max_x": null,
+      "plausible": false
+     },
+     "2026": {
+      "factible": false,
+      "max_x": null,
+      "plausible": false
+     }
+    }
+   },
+   {
+    "alfa": 0.1,
+    "razon_referencia": 2.211,
+    "variantes": {
+     "2025": {
+      "factible": false,
+      "max_x": null,
+      "plausible": false
+     },
+     "2026": {
+      "factible": false,
+      "max_x": null,
+      "plausible": false
+     }
+    }
+   },
+   {
+    "alfa": 0.15,
+    "razon_referencia": 1.962,
+    "variantes": {
+     "2025": {
+      "factible": false,
+      "max_x": null,
+      "plausible": false
+     },
+     "2026": {
+      "factible": false,
+      "max_x": null,
+      "plausible": false
+     }
+    }
+   },
+   {
+    "alfa": 0.2,
+    "razon_referencia": 1.852,
+    "variantes": {
+     "2025": {
+      "factible": true,
+      "max_x": 274.5,
+      "razon_max_x_sobre_max_y": 1.437,
+      "plausible": true
+     },
+     "2026": {
+      "factible": false,
+      "max_x": null,
+      "plausible": false
+     }
+    }
+   },
+   {
+    "alfa": 0.25,
+    "razon_referencia": 1.797,
+    "variantes": {
+     "2025": {
+      "factible": true,
+      "max_x": 252.5,
+      "razon_max_x_sobre_max_y": 1.322,
+      "plausible": true
+     },
+     "2026": {
+      "factible": false,
+      "max_x": null,
+      "plausible": false
+     }
+    }
+   },
+   {
+    "alfa": 0.3,
+    "razon_referencia": 1.748,
+    "variantes": {
+     "2025": {
+      "factible": true,
+      "max_x": 237.8,
+      "razon_max_x_sobre_max_y": 1.245,
+      "plausible": true
+     },
+     "2026": {
+      "factible": false,
+      "max_x": null,
+      "plausible": false
+     }
+    }
+   },
+   {
+    "alfa": 0.35,
+    "razon_referencia": 1.702,
+    "variantes": {
+     "2025": {
+      "factible": true,
+      "max_x": 227.4,
+      "razon_max_x_sobre_max_y": 1.19,
+      "plausible": true
+     },
+     "2026": {
+      "factible": false,
+      "max_x": null,
+      "plausible": false
+     }
+    }
+   },
+   {
+    "alfa": 0.4,
+    "razon_referencia": 1.654,
+    "variantes": {
+     "2025": {
+      "factible": true,
+      "max_x": 219.5,
+      "razon_max_x_sobre_max_y": 1.149,
+      "plausible": true
+     },
+     "2026": {
+      "factible": false,
+      "max_x": null,
+      "plausible": false
+     }
+    }
+   },
+   {
+    "alfa": 0.45,
+    "razon_referencia": 1.604,
+    "variantes": {
+     "2025": {
+      "factible": true,
+      "max_x": 213.4,
+      "razon_max_x_sobre_max_y": 1.117,
+      "plausible": true
+     },
+     "2026": {
+      "factible": true,
+      "max_x": 352.9,
+      "razon_max_x_sobre_max_y": 1.073,
+      "plausible": true
+     }
+    }
+   },
+   {
+    "alfa": 0.5,
+    "razon_referencia": 1.551,
+    "variantes": {
+     "2025": {
+      "factible": true,
+      "max_x": 208.5,
+      "razon_max_x_sobre_max_y": 1.092,
+      "plausible": true
+     },
+     "2026": {
+      "factible": true,
+      "max_x": 348.5,
+      "razon_max_x_sobre_max_y": 1.059,
+      "plausible": true
+     }
+    }
+   },
+   {
+    "alfa": 0.55,
+    "razon_referencia": 1.497,
+    "variantes": {
+     "2025": {
+      "factible": true,
+      "max_x": 204.5,
+      "razon_max_x_sobre_max_y": 1.071,
+      "plausible": true
+     },
+     "2026": {
+      "factible": true,
+      "max_x": 344.9,
+      "razon_max_x_sobre_max_y": 1.048,
+      "plausible": true
+     }
+    }
+   },
+   {
+    "alfa": 0.6,
+    "razon_referencia": 1.441,
+    "variantes": {
+     "2025": {
+      "factible": true,
+      "max_x": 201.2,
+      "razon_max_x_sobre_max_y": 1.053,
+      "plausible": true
+     },
+     "2026": {
+      "factible": true,
+      "max_x": 341.8,
+      "razon_max_x_sobre_max_y": 1.039,
+      "plausible": true
+     }
+    }
+   },
+   {
+    "alfa": 0.65,
+    "razon_referencia": 1.385,
+    "variantes": {
+     "2025": {
+      "factible": true,
+      "max_x": 198.3,
+      "razon_max_x_sobre_max_y": 1.038,
+      "plausible": true
+     },
+     "2026": {
+      "factible": true,
+      "max_x": 339.3,
+      "razon_max_x_sobre_max_y": 1.031,
+      "plausible": true
+     }
+    }
+   },
+   {
+    "alfa": 0.7,
+    "razon_referencia": 1.327,
+    "variantes": {
+     "2025": {
+      "factible": true,
+      "max_x": 195.9,
+      "razon_max_x_sobre_max_y": 1.026,
+      "plausible": true
+     },
+     "2026": {
+      "factible": true,
+      "max_x": 337.1,
+      "razon_max_x_sobre_max_y": 1.025,
+      "plausible": true
+     }
+    }
+   },
+   {
+    "alfa": 0.75,
+    "razon_referencia": 1.27,
+    "variantes": {
+     "2025": {
+      "factible": true,
+      "max_x": 193.8,
+      "razon_max_x_sobre_max_y": 1.015,
+      "plausible": true
+     },
+     "2026": {
+      "factible": true,
+      "max_x": 335.2,
+      "razon_max_x_sobre_max_y": 1.019,
+      "plausible": true
+     }
+    }
+   },
+   {
+    "alfa": 0.8,
+    "razon_referencia": 1.214,
+    "variantes": {
+     "2025": {
+      "factible": true,
+      "max_x": 192.0,
+      "razon_max_x_sobre_max_y": 1.005,
+      "plausible": true
+     },
+     "2026": {
+      "factible": true,
+      "max_x": 333.5,
+      "razon_max_x_sobre_max_y": 1.014,
+      "plausible": true
+     }
+    }
+   },
+   {
+    "alfa": 0.85,
+    "razon_referencia": 1.158,
+    "variantes": {
+     "2025": {
+      "factible": true,
+      "max_x": 191.1,
+      "razon_max_x_sobre_max_y": 1.001,
+      "plausible": true
+     },
+     "2026": {
+      "factible": true,
+      "max_x": 332.0,
+      "razon_max_x_sobre_max_y": 1.009,
+      "plausible": true
+     }
+    }
+   },
+   {
+    "alfa": 0.9,
+    "razon_referencia": 1.105,
+    "variantes": {
+     "2025": {
+      "factible": true,
+      "max_x": 190.8,
+      "razon_max_x_sobre_max_y": 0.999,
+      "plausible": true
+     },
+     "2026": {
+      "factible": true,
+      "max_x": 330.7,
+      "razon_max_x_sobre_max_y": 1.005,
+      "plausible": true
+     }
+    }
+   },
+   {
+    "alfa": 0.95,
+    "razon_referencia": 1.051,
+    "variantes": {
+     "2025": {
+      "factible": true,
+      "max_x": 190.7,
+      "razon_max_x_sobre_max_y": 0.998,
+      "plausible": true
+     },
+     "2026": {
+      "factible": true,
+      "max_x": 329.6,
+      "razon_max_x_sobre_max_y": 1.002,
+      "plausible": true
+     }
+    }
+   }
+  ]
+ },
+ "C_perfil_de_saltos": {
+  "tablero_2025": {
+   "semanas": 51,
+   "prop_sobre_0_15": 0.078,
+   "prop_sobre_0_30": 0.0,
+   "semanas_sobre_0_30": 0,
+   "maximo": 0.234
+  },
+  "tablero_2026": {
+   "semanas": 36,
+   "prop_sobre_0_15": 0.25,
+   "prop_sobre_0_30": 0.083,
+   "semanas_sobre_0_30": 3,
+   "maximo": 0.56
+  },
+  "tablero_2026_sin_S1_S4": {
+   "semanas": 32,
+   "prop_sobre_0_15": 0.188,
+   "prop_sobre_0_30": 0.062,
+   "semanas_sobre_0_30": 2,
+   "maximo": 0.56
+  },
+  "opendengue_2024": {
+   "semanas": 51,
+   "prop_sobre_0_15": 0.02,
+   "prop_sobre_0_30": 0.0,
+   "semanas_sobre_0_30": 0,
+   "maximo": 0.172
+  },
+  "opendengue_2014_2023": {
+   "crudo": {
+    "por_anio": {
+     "2014": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.361,
+      "prop_sobre_0_30": 0.167,
+      "semanas_sobre_0_30": 6,
+      "maximo": 1.512
+     },
+     "2015": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.583,
+      "prop_sobre_0_30": 0.278,
+      "semanas_sobre_0_30": 10,
+      "maximo": 1.552
+     },
+     "2016": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.556,
+      "prop_sobre_0_30": 0.278,
+      "semanas_sobre_0_30": 10,
+      "maximo": 6.08
+     },
+     "2017": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.694,
+      "prop_sobre_0_30": 0.361,
+      "semanas_sobre_0_30": 13,
+      "maximo": 0.796
+     },
+     "2018": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.444,
+      "prop_sobre_0_30": 0.167,
+      "semanas_sobre_0_30": 6,
+      "maximo": 4.654
+     },
+     "2019": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.417,
+      "prop_sobre_0_30": 0.139,
+      "semanas_sobre_0_30": 5,
+      "maximo": 1.504
+     },
+     "2020": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.556,
+      "prop_sobre_0_30": 0.306,
+      "semanas_sobre_0_30": 11,
+      "maximo": 0.713
+     },
+     "2021": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.472,
+      "prop_sobre_0_30": 0.083,
+      "semanas_sobre_0_30": 3,
+      "maximo": 0.39
+     },
+     "2022": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.306,
+      "prop_sobre_0_30": 0.056,
+      "semanas_sobre_0_30": 2,
+      "maximo": 0.419
+     },
+     "2023": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.472,
+      "prop_sobre_0_30": 0.306,
+      "semanas_sobre_0_30": 11,
+      "maximo": 5.638
+     }
+    },
+    "semanas_sobre_0_30_max": 13,
+    "semanas_sobre_0_30_mediana": 8.0
+   },
+   "causal_k3": {
+    "por_anio": {
+     "2014": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.25,
+      "prop_sobre_0_30": 0.0,
+      "semanas_sobre_0_30": 0,
+      "maximo": 0.283
+     },
+     "2015": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.417,
+      "prop_sobre_0_30": 0.167,
+      "semanas_sobre_0_30": 6,
+      "maximo": 1.359
+     },
+     "2016": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.306,
+      "prop_sobre_0_30": 0.139,
+      "semanas_sobre_0_30": 5,
+      "maximo": 0.456
+     },
+     "2017": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.222,
+      "prop_sobre_0_30": 0.056,
+      "semanas_sobre_0_30": 2,
+      "maximo": 0.431
+     },
+     "2018": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.111,
+      "prop_sobre_0_30": 0.028,
+      "semanas_sobre_0_30": 1,
+      "maximo": 0.476
+     },
+     "2019": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.278,
+      "prop_sobre_0_30": 0.0,
+      "semanas_sobre_0_30": 0,
+      "maximo": 0.298
+     },
+     "2020": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.306,
+      "prop_sobre_0_30": 0.0,
+      "semanas_sobre_0_30": 0,
+      "maximo": 0.235
+     },
+     "2021": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.167,
+      "prop_sobre_0_30": 0.028,
+      "semanas_sobre_0_30": 1,
+      "maximo": 0.478
+     },
+     "2022": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.111,
+      "prop_sobre_0_30": 0.0,
+      "semanas_sobre_0_30": 0,
+      "maximo": 0.185
+     },
+     "2023": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.25,
+      "prop_sobre_0_30": 0.139,
+      "semanas_sobre_0_30": 5,
+      "maximo": 0.391
+     }
+    },
+    "semanas_sobre_0_30_max": 6,
+    "semanas_sobre_0_30_mediana": 1.0
+   },
+   "causal_k4": {
+    "por_anio": {
+     "2014": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.222,
+      "prop_sobre_0_30": 0.0,
+      "semanas_sobre_0_30": 0,
+      "maximo": 0.23
+     },
+     "2015": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.278,
+      "prop_sobre_0_30": 0.111,
+      "semanas_sobre_0_30": 4,
+      "maximo": 1.185
+     },
+     "2016": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.222,
+      "prop_sobre_0_30": 0.056,
+      "semanas_sobre_0_30": 2,
+      "maximo": 0.416
+     },
+     "2017": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.222,
+      "prop_sobre_0_30": 0.028,
+      "semanas_sobre_0_30": 1,
+      "maximo": 0.312
+     },
+     "2018": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.056,
+      "prop_sobre_0_30": 0.028,
+      "semanas_sobre_0_30": 1,
+      "maximo": 0.332
+     },
+     "2019": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.25,
+      "prop_sobre_0_30": 0.0,
+      "semanas_sobre_0_30": 0,
+      "maximo": 0.273
+     },
+     "2020": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.194,
+      "prop_sobre_0_30": 0.0,
+      "semanas_sobre_0_30": 0,
+      "maximo": 0.254
+     },
+     "2021": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.083,
+      "prop_sobre_0_30": 0.028,
+      "semanas_sobre_0_30": 1,
+      "maximo": 0.408
+     },
+     "2022": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.028,
+      "prop_sobre_0_30": 0.0,
+      "semanas_sobre_0_30": 0,
+      "maximo": 0.194
+     },
+     "2023": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.25,
+      "prop_sobre_0_30": 0.056,
+      "semanas_sobre_0_30": 2,
+      "maximo": 0.306
+     }
+    },
+    "semanas_sobre_0_30_max": 4,
+    "semanas_sobre_0_30_mediana": 1.0
+   },
+   "causal_k5": {
+    "por_anio": {
+     "2014": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.111,
+      "prop_sobre_0_30": 0.0,
+      "semanas_sobre_0_30": 0,
+      "maximo": 0.188
+     },
+     "2015": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.306,
+      "prop_sobre_0_30": 0.056,
+      "semanas_sobre_0_30": 2,
+      "maximo": 0.744
+     },
+     "2016": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.194,
+      "prop_sobre_0_30": 0.028,
+      "semanas_sobre_0_30": 1,
+      "maximo": 0.334
+     },
+     "2017": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.194,
+      "prop_sobre_0_30": 0.0,
+      "semanas_sobre_0_30": 0,
+      "maximo": 0.293
+     },
+     "2018": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.056,
+      "prop_sobre_0_30": 0.0,
+      "semanas_sobre_0_30": 0,
+      "maximo": 0.259
+     },
+     "2019": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.194,
+      "prop_sobre_0_30": 0.0,
+      "semanas_sobre_0_30": 0,
+      "maximo": 0.266
+     },
+     "2020": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.139,
+      "prop_sobre_0_30": 0.0,
+      "semanas_sobre_0_30": 0,
+      "maximo": 0.161
+     },
+     "2021": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.083,
+      "prop_sobre_0_30": 0.028,
+      "semanas_sobre_0_30": 1,
+      "maximo": 0.305
+     },
+     "2022": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.056,
+      "prop_sobre_0_30": 0.0,
+      "semanas_sobre_0_30": 0,
+      "maximo": 0.163
+     },
+     "2023": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.194,
+      "prop_sobre_0_30": 0.0,
+      "semanas_sobre_0_30": 0,
+      "maximo": 0.284
+     }
+    },
+    "semanas_sobre_0_30_max": 2,
+    "semanas_sobre_0_30_mediana": 0.0
+   },
+   "causal_k6": {
+    "por_anio": {
+     "2014": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.028,
+      "prop_sobre_0_30": 0.0,
+      "semanas_sobre_0_30": 0,
+      "maximo": 0.188
+     },
+     "2015": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.194,
+      "prop_sobre_0_30": 0.056,
+      "semanas_sobre_0_30": 2,
+      "maximo": 0.526
+     },
+     "2016": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.139,
+      "prop_sobre_0_30": 0.0,
+      "semanas_sobre_0_30": 0,
+      "maximo": 0.253
+     },
+     "2017": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.083,
+      "prop_sobre_0_30": 0.0,
+      "semanas_sobre_0_30": 0,
+      "maximo": 0.236
+     },
+     "2018": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.056,
+      "prop_sobre_0_30": 0.0,
+      "semanas_sobre_0_30": 0,
+      "maximo": 0.21
+     },
+     "2019": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.167,
+      "prop_sobre_0_30": 0.0,
+      "semanas_sobre_0_30": 0,
+      "maximo": 0.233
+     },
+     "2020": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.056,
+      "prop_sobre_0_30": 0.0,
+      "semanas_sobre_0_30": 0,
+      "maximo": 0.205
+     },
+     "2021": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.028,
+      "prop_sobre_0_30": 0.0,
+      "semanas_sobre_0_30": 0,
+      "maximo": 0.164
+     },
+     "2022": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.028,
+      "prop_sobre_0_30": 0.0,
+      "semanas_sobre_0_30": 0,
+      "maximo": 0.16
+     },
+     "2023": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.167,
+      "prop_sobre_0_30": 0.0,
+      "semanas_sobre_0_30": 0,
+      "maximo": 0.243
+     }
+    },
+    "semanas_sobre_0_30_max": 2,
+    "semanas_sobre_0_30_mediana": 0.0
+   },
+   "causal_k7": {
+    "por_anio": {
+     "2014": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.028,
+      "prop_sobre_0_30": 0.0,
+      "semanas_sobre_0_30": 0,
+      "maximo": 0.188
+     },
+     "2015": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.139,
+      "prop_sobre_0_30": 0.028,
+      "semanas_sobre_0_30": 1,
+      "maximo": 0.417
+     },
+     "2016": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.139,
+      "prop_sobre_0_30": 0.0,
+      "semanas_sobre_0_30": 0,
+      "maximo": 0.211
+     },
+     "2017": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.056,
+      "prop_sobre_0_30": 0.0,
+      "semanas_sobre_0_30": 0,
+      "maximo": 0.23
+     },
+     "2018": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.056,
+      "prop_sobre_0_30": 0.0,
+      "semanas_sobre_0_30": 0,
+      "maximo": 0.19
+     },
+     "2019": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.167,
+      "prop_sobre_0_30": 0.0,
+      "semanas_sobre_0_30": 0,
+      "maximo": 0.243
+     },
+     "2020": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.0,
+      "prop_sobre_0_30": 0.0,
+      "semanas_sobre_0_30": 0,
+      "maximo": 0.128
+     },
+     "2021": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.028,
+      "prop_sobre_0_30": 0.0,
+      "semanas_sobre_0_30": 0,
+      "maximo": 0.179
+     },
+     "2022": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.0,
+      "prop_sobre_0_30": 0.0,
+      "semanas_sobre_0_30": 0,
+      "maximo": 0.146
+     },
+     "2023": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.056,
+      "prop_sobre_0_30": 0.0,
+      "semanas_sobre_0_30": 0,
+      "maximo": 0.169
+     }
+    },
+    "semanas_sobre_0_30_max": 1,
+    "semanas_sobre_0_30_mediana": 0.0
+   },
+   "causal_k8": {
+    "por_anio": {
+     "2014": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.028,
+      "prop_sobre_0_30": 0.0,
+      "semanas_sobre_0_30": 0,
+      "maximo": 0.188
+     },
+     "2015": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.222,
+      "prop_sobre_0_30": 0.028,
+      "semanas_sobre_0_30": 1,
+      "maximo": 0.387
+     },
+     "2016": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.111,
+      "prop_sobre_0_30": 0.0,
+      "semanas_sobre_0_30": 0,
+      "maximo": 0.207
+     },
+     "2017": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.0,
+      "prop_sobre_0_30": 0.0,
+      "semanas_sobre_0_30": 0,
+      "maximo": 0.142
+     },
+     "2018": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.028,
+      "prop_sobre_0_30": 0.0,
+      "semanas_sobre_0_30": 0,
+      "maximo": 0.163
+     },
+     "2019": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.167,
+      "prop_sobre_0_30": 0.0,
+      "semanas_sobre_0_30": 0,
+      "maximo": 0.239
+     },
+     "2020": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.056,
+      "prop_sobre_0_30": 0.0,
+      "semanas_sobre_0_30": 0,
+      "maximo": 0.162
+     },
+     "2021": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.028,
+      "prop_sobre_0_30": 0.0,
+      "semanas_sobre_0_30": 0,
+      "maximo": 0.152
+     },
+     "2022": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.0,
+      "prop_sobre_0_30": 0.0,
+      "semanas_sobre_0_30": 0,
+      "maximo": 0.125
+     },
+     "2023": {
+      "semanas": 36,
+      "prop_sobre_0_15": 0.028,
+      "prop_sobre_0_30": 0.0,
+      "semanas_sobre_0_30": 0,
+      "maximo": 0.162
+     }
+    },
+    "semanas_sobre_0_30_max": 1,
+    "semanas_sobre_0_30_mediana": 0.0
+   }
+  }
+ },
+ "D_umbrales_corredor": {
+  "2025": {
+   "combinaciones": 893,
+   "mejores": [
+    {
+     "error_log_medio": 0.1389,
+     "transformacion": "centrado",
+     "k": 2,
+     "anios": "2014-2022",
+     "excluye_2020": true
+    },
+    {
+     "error_log_medio": 0.1389,
+     "transformacion": "centrado",
+     "k": 3,
+     "anios": "2014-2022",
+     "excluye_2020": true
+    },
+    {
+     "error_log_medio": 0.1418,
+     "transformacion": "causal",
+     "k": 2,
+     "anios": "2014-2022",
+     "excluye_2020": true
+    },
+    {
+     "error_log_medio": 0.1418,
+     "transformacion": "centrado",
+     "k": 4,
+     "anios": "2014-2022",
+     "excluye_2020": true
+    },
+    {
+     "error_log_medio": 0.1418,
+     "transformacion": "centrado",
+     "k": 5,
+     "anios": "2014-2022",
+     "excluye_2020": true
+    }
+   ],
+   "reproduce": false
+  },
+  "2026": {
+   "combinaciones": 646,
+   "mejores": [
+    {
+     "error_log_medio": 0.5681,
+     "transformacion": "centrado",
+     "k": 10,
+     "anios": "2014-2023",
+     "excluye_2020": true
+    },
+    {
+     "error_log_medio": 0.5794,
+     "transformacion": "centrado",
+     "k": 8,
+     "anios": "2014-2023",
+     "excluye_2020": true
+    },
+    {
+     "error_log_medio": 0.5794,
+     "transformacion": "centrado",
+     "k": 9,
+     "anios": "2014-2023",
+     "excluye_2020": true
+    },
+    {
+     "error_log_medio": 0.5895,
+     "transformacion": "centrado",
+     "k": 6,
+     "anios": "2014-2023",
+     "excluye_2020": true
+    },
+    {
+     "error_log_medio": 0.5895,
+     "transformacion": "centrado",
+     "k": 7,
+     "anios": "2014-2023",
+     "excluye_2020": true
+    }
+   ],
+   "reproduce": false
+  }
+ }
+}
