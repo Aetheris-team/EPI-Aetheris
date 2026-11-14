@@ -17,7 +17,7 @@
   "dependencies": {
     "@astrojs/sitemap": "^3.7.4",
     "@tailwindcss/vite": "^4.3.3",
-    "astro": "^7.3.8",
+    "astro": "^7.4.7",
     "chroma-js": "^3.2.0",
     "echarts": "^6.1.0",
     "tailwindcss": "^4.3.3"
