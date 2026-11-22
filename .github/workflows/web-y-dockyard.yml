@@ -62,9 +62,7 @@ jobs:
         working-directory: web
         run: |
           pnpm exec playwright install --with-deps chromium
-          pnpm test:e2e estatico.spec.ts estado.spec.ts cuenta-deshabilitada.spec.ts \
-            alertas.spec.ts alertas-territorio.spec.ts enfoque-dual.spec.ts \
-            analisis.spec.ts clima-dengue.spec.ts departamento.spec.ts respiratorio.spec.ts
+          pnpm test:e2e '/(estatico|estado|cuenta-deshabilitada|alertas|alertas-territorio|enfoque-dual|analisis|clima-dengue|departamento|respiratorio)\.spec\.ts$'
 
       - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
