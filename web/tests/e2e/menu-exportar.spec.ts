@@ -11,7 +11,9 @@ const casos = Array.from({ length: 30 }, (_, i) => ({
 }));
 
 async function abrirCurva(page: import('@playwright/test').Page) {
-  await page.route('**/datos/casos-nacional*', (r) => r.fulfill({ json: casos }));
+  await page.route('**/datos/casos-nacional*', (r) =>
+    r.fulfill({ json: casos }),
+  );
   await page.goto('/dengue');
   const curva = page.locator('section:has(#curva-epidemica)');
   await expect(curva.locator('#curva-epidemica svg').first()).toBeVisible();

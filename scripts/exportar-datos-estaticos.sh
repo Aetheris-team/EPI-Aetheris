@@ -4,8 +4,10 @@ set -euo pipefail
 raiz="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 temporal="$(mktemp -d "$raiz/web/.exportacion.XXXXXXXX")"
 proyecto="aetheris-exportacion-${temporal##*.}"
-export COMPOSE_FILE="${COMPOSE_FILE:-$raiz/compose.exportacion.yml}"
-compose=(docker compose -p "${proyecto,,}")
+compose=(docker compose -p "${proyecto,,}" -f "$raiz/compose.exportacion.yml")
+if [[ -n "${AETHERIS_EXPORTACION_OVERRIDE:-}" ]]; then
+  compose+=(-f "$AETHERIS_EXPORTACION_OVERRIDE")
+fi
 destino="$raiz/web/public/datos"
 
 limpiar() {

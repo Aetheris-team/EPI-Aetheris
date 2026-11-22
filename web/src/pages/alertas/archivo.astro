@@ -175,10 +175,10 @@ const fechaCorte = import.meta.env.PUBLIC_FECHA_CORTE;
             </button>
             <button
               type="button"
-              data-rango-preset="2026"
+              data-rango-preset="anio-corte"
               class="rounded-full border border-border/80 bg-bg px-2.5 py-1 text-ink-muted hover:border-accent hover:text-ink transition-colors"
             >
-              Año 2026
+              Año {fechaCorte.slice(0, 4)}
             </button>
             <button
               type="button"
@@ -323,9 +323,9 @@ const fechaCorte = import.meta.env.PUBLIC_FECHA_CORTE;
           const antes = new Date(hoy.getTime() - 90 * 24 * 60 * 60 * 1000);
           inputDesde.value = antes.toISOString().slice(0, 10);
           inputHasta.value = hoyIso;
-        } else if (preset === '2026') {
-          inputDesde.value = '2026-01-01';
-          inputHasta.value = '2026-12-31';
+        } else if (preset === 'anio-corte') {
+          inputDesde.value = `${hoyIso.slice(0, 4)}-01-01`;
+          inputHasta.value = hoyIso;
         } else if (preset === 'limpiar') {
           inputDesde.value = '';
           inputHasta.value = '';

@@ -412,7 +412,7 @@ test.describe('Ficha departamental imprimible', () => {
     expect(errores).toEqual([]);
   });
 
-  test('sin alertas vigentes muestra un contenedor neutro sin texto de salud', async ({
+  test('sin alertas en el corte muestra un contenedor neutro sin texto de salud', async ({
     page,
   }) => {
     const responder =
@@ -449,7 +449,7 @@ test.describe('Ficha departamental imprimible', () => {
     );
 
     const cuerpo = page.locator('#seccion-prevencion-cuerpo');
-    await expect(cuerpo).toContainText('Sin alertas de campo vigentes');
+    await expect(cuerpo).toContainText('Sin alertas en el corte');
     await expect(cuerpo).not.toContainText('lineamientos generales');
     await expect(cuerpo).not.toContainText('OPS/OMS');
   });

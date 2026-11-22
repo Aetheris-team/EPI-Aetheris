@@ -55,7 +55,9 @@ test.describe('última semana de dengue', () => {
   });
 
   test('avisa cuando el tablero no trae semanas', async ({ page }) => {
-    await page.route('**/datos/casos-nacional.json', (r) => r.fulfill({ json: [] }));
+    await page.route('**/datos/casos-nacional.json', (r) =>
+      r.fulfill({ json: [] }),
+    );
     await page.goto('/incrustar/ultima-semana');
     await expect(page.locator('#ultima-semana')).toContainText(
       'todavía no tiene semanas',
@@ -115,7 +117,7 @@ async function conInstantanea(page: import('@playwright/test').Page) {
   });
 }
 
-test('la franja se pinta con la copia del build mientras llega la API', async ({
+test('la franja se pinta con la copia del build mientras llega el archivo', async ({
   page,
 }) => {
   await conInstantanea(page);
@@ -129,13 +131,13 @@ test('la franja se pinta con la copia del build mientras llega la API', async ({
   await page.goto('/incrustar/ultima-semana');
   const franja = page.locator('#ultima-semana');
   await expect(franja).toContainText('SE29/2026');
-  await expect(franja).toContainText('Cifras guardadas al publicar el sitio');
-  // Cuando llega la API la copia se reemplaza por la serie vigente.
+  await expect(franja).toContainText('Corte de datos del');
+  // La respuesta del archivo sustituye la copia incluida en el HTML.
   await expect(franja).toContainText('SE30/2026');
-  await expect(franja).not.toContainText('Cifras guardadas');
+  await expect(franja).not.toContainText('Corte de datos del');
 });
 
-test('si la API falla se conserva la copia del build con su aviso', async ({
+test('si el archivo no carga se conserva la copia del build con su aviso', async ({
   page,
 }) => {
   await conInstantanea(page);
@@ -147,6 +149,8 @@ test('si la API falla se conserva la copia del build con su aviso', async ({
   );
   await page.goto('/incrustar/ultima-semana');
   const franja = page.locator('#ultima-semana');
-  await expect(franja).toContainText('No se pudo actualizar');
+  await expect(franja).toContainText(
+    'Se muestra la copia incluida en la página',
+  );
   await expect(franja).toContainText('SE29/2026');
 });
