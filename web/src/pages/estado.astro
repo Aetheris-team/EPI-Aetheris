@@ -1,316 +1,105 @@
 ---
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import Layout from '../layouts/Layout.astro';
 import { rutaFicha } from '../fichas/registro';
+import {
+  nombreSerie,
+  textoRezago,
+  textoUltimaSemana,
+  type AntiguedadEntrada,
+} from '../lib/frescura';
+import { formatearFechaIso } from '../lib/vista-alertas';
 
-const apiBase = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8000';
+interface Corte {
+  fecha: string;
+  version: string;
+  series: Record<string, AntiguedadEntrada>;
+}
+
+const corte = JSON.parse(
+  readFileSync(resolve('public/datos/corte.json'), 'utf8'),
+) as Corte;
 ---
 
 <Layout
   title="EPI-Aetheris — Estado del servicio"
-  descripcion="Comprobación de conectividad de la API y del portal de EPI-Aetheris."
+  descripcion="Fecha del corte publicado y última semana con datos de cada serie."
 >
   <main
     id="contenido-principal"
     class="mx-auto max-w-3xl px-4 py-8 sm:px-8 sm:py-10 lg:px-12"
   >
     <header class="mb-8">
-      <p
-        class="font-mono text-xs font-semibold uppercase tracking-wider text-accent"
-      >
-        Disponibilidad de la plataforma
-      </p>
-      <h1
-        class="mt-1 font-display text-2xl font-semibold tracking-tight text-ink sm:text-[1.75rem]"
-      >
+      <h1 class="font-display text-2xl font-semibold tracking-tight text-ink">
         Estado del servicio
       </h1>
       <p class="mt-3 font-sans text-sm leading-relaxed text-ink-muted">
-        Comprobación directa de la conectividad de los componentes de
-        EPI-Aetheris. El portal web se aloja en una CDN estática independiente y
-        permanece disponible aun si el backend de cómputo se encuentra
-        temporalmente inactivo.
+        Esta edición estática se puede consultar desde una copia del sitio. Los
+        datos se actualizan con la publicación de una nueva edición.
       </p>
+      <dl class="mt-4 grid grid-cols-2 gap-4 font-sans text-sm">
+        <div>
+          <dt class="font-semibold text-ink">Fecha de corte</dt>
+          <dd data-fecha-corte class="text-ink-muted">
+            <time datetime={corte.fecha}>{formatearFechaIso(corte.fecha)}</time>
+          </dd>
+        </div>
+        <div>
+          <dt class="font-semibold text-ink">Versión de los datos</dt>
+          <dd class="font-mono text-xs text-ink-muted">{corte.version}</dd>
+        </div>
+      </dl>
     </header>
-
-    <div class="space-y-4">
-      <!-- Componente 1: Frontend Web -->
-      <div
-        class="card-elevated flex items-center justify-between rounded-2xl border border-border bg-surface p-5"
-      >
-        <div class="flex items-center gap-3.5">
-          <span class="flex h-3 w-3 relative">
-            <span
-              class="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"
-            ></span>
-            <span class="relative inline-flex rounded-full h-3 w-3 bg-accent"
-            ></span>
-          </span>
-          <div>
-            <h2 class="font-sans text-sm font-semibold text-ink">
-              Frontend web y documentación (CDN)
-            </h2>
-            <p class="font-sans text-xs text-ink-muted">
-              Páginas estáticas distribuidas globalmente mediante Render Static
-              Site.
-            </p>
-          </div>
-        </div>
-        <span
-          class="rounded-full bg-secondary px-3 py-1 font-mono text-xs font-medium text-secondary-ink"
-        >
-          Operativo
-        </span>
-      </div>
-
-      <!-- Componente 2: Backend API -->
-      <div
-        class="card-elevated rounded-2xl border border-border bg-surface p-5"
-      >
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-3.5">
-            <span id="api-dot" class="flex h-3 w-3 rounded-full bg-amber-400"
-            ></span>
-            <div>
-              <h2 class="font-sans text-sm font-semibold text-ink">
-                API pública de cómputo y datos
-              </h2>
-              <p class="font-sans text-xs text-ink-muted">
-                Servicio FastAPI en Oregon (<code class="font-mono text-micro"
-                  >{apiBase}</code
-                >).
-              </p>
-            </div>
-          </div>
-          <div id="api-badge">
-            <span
-              class="rounded-full bg-secondary px-3 py-1 font-mono text-xs font-medium text-ink-muted"
-            >
-              Consultando…
-            </span>
-          </div>
-        </div>
-
-        <div
-          id="api-contenedor-estado"
-          class="mt-4 border-t border-border pt-3"
-          role="status"
-        >
-          <p class="font-sans text-xs text-ink-muted">
-            Verificando respuesta del endpoint de salud (<code class="font-mono"
-              >/health</code
-            >)…
-          </p>
-        </div>
-      </div>
-    </div>
 
     <section
       data-frescura
       aria-labelledby="frescura-titulo"
-      class="mt-10 rounded-2xl border border-border bg-surface p-6"
+      class="rounded-2xl border border-border bg-surface p-4 sm:p-6"
     >
-      <h2
-        id="frescura-titulo"
-        class="font-sans text-xs font-semibold uppercase tracking-wider text-ink"
-      >
+      <h2 id="frescura-titulo" class="font-sans text-sm font-semibold text-ink">
         Última semana con dato
       </h2>
       <p class="mt-2 font-sans text-xs leading-relaxed text-ink-muted">
-        Hasta qué semana epidemiológica llega cada serie que usa el sitio. Una
-        serie con rezago no está rota: la fuente publica con retraso. Esta
-        antigüedad es una de las tres métricas de la <a
+        El rezago se mide entre la última semana observada y la fecha de corte.
+        Consulta cómo se calcula en la ficha de <a
           href={rutaFicha('m4-integridad-vigilancia')}
           class="font-semibold text-accent underline underline-offset-2"
           >integridad de la vigilancia</a
         >.
       </p>
-      <div
-        data-frescura-contenido
-        role="status"
-        aria-busy="true"
-        class="mt-4 font-sans text-xs text-ink-muted"
-      >
-        Consultando las series…
+      <div class="mt-4 overflow-x-auto font-sans text-sm">
+        <table class="w-full text-left" aria-labelledby="frescura-titulo">
+          <thead>
+            <tr class="border-b border-border">
+              <th scope="col" class="py-2 pr-4">Serie</th>
+              <th scope="col" class="py-2 pr-4">Semana</th>
+              <th scope="col" class="py-2">Rezago al corte</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              Object.entries(corte.series).map(([clave, serie]) => (
+                <tr class="border-b border-border last:border-b-0">
+                  <th scope="row" class="py-2 pr-4 font-medium">
+                    {nombreSerie(clave)}
+                  </th>
+                  <td class="py-2 pr-4">
+                    {textoUltimaSemana(serie) ?? 'Sin datos'}
+                  </td>
+                  <td class="py-2">{textoRezago(serie) ?? '—'}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
       </div>
-    </section>
-
-    <!-- Explicación de arquitectura y arranque en frío -->
-    <section
-      class="mt-10 rounded-2xl border border-border bg-surface-raised p-6"
-    >
-      <h2
-        class="font-sans text-xs font-semibold uppercase tracking-wider text-ink"
+      <a
+        href="/datos/corte.json"
+        class="mt-4 inline-block font-sans text-xs font-semibold text-accent underline underline-offset-2"
       >
-        Nota técnica sobre tiempos de respuesta
-      </h2>
-      <p class="mt-2 font-sans text-xs leading-relaxed text-ink-muted">
-        El backend opera en el nivel Starter de Render. Tras periodos
-        prolongados de inactividad, el proceso puede requerir entre 30 y 50
-        segundos para completar un arranque en frío (spin-up). Si la API reporta
-        lentitud inicial o reintento, una vez despierto el contenedor las
-        peticiones subsiguientes se responden en milisegundos.
-      </p>
+        Consultar metadatos del corte (JSON)
+      </a>
     </section>
   </main>
 </Layout>
-
-<script>
-  const apiBase = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8000';
-  const dot = document.getElementById('api-dot');
-  const badge = document.getElementById('api-badge');
-  const contenedor = document.getElementById('api-contenedor-estado');
-
-  async function verificarSalud() {
-    if (!contenedor || !badge || !dot) return;
-
-    // Advertencia de configuración en build
-    const urlEsLocalhost =
-      apiBase.includes('localhost') || apiBase.includes('127.0.0.1');
-    const origenEsRemoto =
-      window.location.hostname !== 'localhost' &&
-      window.location.hostname !== '127.0.0.1';
-
-    if (urlEsLocalhost && origenEsRemoto) {
-      dot.className = 'flex h-3 w-3 rounded-full bg-amber-400';
-      badge.innerHTML =
-        '<span class="rounded-full bg-secondary px-3 py-1 font-mono text-xs font-medium text-amber-600">Configuración</span>';
-      contenedor.innerHTML =
-        '<p class="font-sans text-xs leading-relaxed text-ink-muted">Este despliegue fue compilado apuntando a <code>localhost</code> en vez de la URL pública de la API en Render. Esto es una discrepancia de configuración en build-time, no una caída del servicio.</p>';
-      return;
-    }
-
-    dot.className = 'flex h-3 w-3 rounded-full bg-amber-400 animate-pulse';
-    badge.innerHTML =
-      '<span class="rounded-full bg-secondary px-3 py-1 font-mono text-xs font-medium text-amber-600">Comprobando…</span>';
-    contenedor.innerHTML =
-      '<p class="font-sans text-xs text-ink-muted">Enviando petición de diagnóstico a <code>/health</code>…</p>';
-
-    const inicio = performance.now();
-    try {
-      const res = await fetch(`${apiBase}/health`, {
-        method: 'GET',
-        headers: { Accept: 'application/json' },
-      });
-      const latencia = Math.round(performance.now() - inicio);
-
-      if (res.ok) {
-        dot.className = 'flex h-3 w-3 rounded-full bg-accent';
-        badge.innerHTML =
-          '<span class="rounded-full bg-secondary px-3 py-1 font-mono text-xs font-medium text-secondary-ink">Disponible</span>';
-        contenedor.innerHTML = `<p class="font-sans text-xs text-ink-muted">La API respondió correctamente con código <code>${res.status}</code> en <strong>${latencia} ms</strong>.</p>`;
-      } else {
-        dot.className = 'flex h-3 w-3 rounded-full bg-rose-500';
-        badge.innerHTML = `<span class="rounded-full bg-rose-500/10 px-3 py-1 font-mono text-xs font-medium text-[light-dark(oklch(51.4%_0.222_16.935),oklch(81%_0.117_11.638))]">Error ${res.status}</span>`;
-        mostrarReintento(
-          'El servidor respondió con un error. Vuelve a comprobarlo en unos segundos.',
-          `Código HTTP ${res.status}`,
-        );
-      }
-    } catch (err) {
-      dot.className = 'flex h-3 w-3 rounded-full bg-rose-500';
-      badge.innerHTML =
-        '<span class="rounded-full bg-rose-500/10 px-3 py-1 font-mono text-xs font-medium text-[light-dark(oklch(51.4%_0.222_16.935),oklch(81%_0.117_11.638))]">Sin conexión</span>';
-      mostrarReintento(
-        'No hay respuesta del servidor. Si lleva un rato inactivo, tarda hasta un minuto en arrancar. Vuelve a comprobarlo en unos segundos.',
-        err instanceof Error ? err.message : '',
-      );
-    }
-  }
-
-  // El detalle técnico se muestra aparte, en pequeño, para quien diagnostica.
-  function mostrarReintento(mensaje: string, detalle: string) {
-    if (!contenedor) return;
-    contenedor.innerHTML = '';
-    const caja = document.createElement('div');
-    caja.className = 'rounded-lg border border-secondary bg-secondary/25 p-3';
-
-    const p = document.createElement('p');
-    p.className = 'font-sans text-xs leading-relaxed text-ink';
-    p.textContent = mensaje;
-    caja.appendChild(p);
-
-    if (detalle) {
-      const pDetalle = document.createElement('p');
-      pDetalle.className = 'mt-1 font-mono text-micro text-ink-muted';
-      pDetalle.textContent = `Detalle técnico: ${detalle}`;
-      caja.appendChild(pDetalle);
-    }
-
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className =
-      'mt-2 rounded-lg border border-border bg-surface px-3 py-1.5 font-sans text-xs font-semibold text-ink transition-colors hover:border-accent/50 hover:text-accent';
-    btn.textContent = 'Reintentar verificación';
-    btn.addEventListener('click', () => verificarSalud());
-
-    caja.appendChild(btn);
-    contenedor.appendChild(caja);
-  }
-
-  verificarSalud();
-</script>
-
-<script>
-  import { obtenerIntegridadVigilancia } from '../lib/analisis-api';
-  import { nombreSerie, textoRezago, textoUltimaSemana } from '../lib/frescura';
-
-  const contenido = document.querySelector<HTMLElement>(
-    '[data-frescura-contenido]',
-  );
-
-  async function cargar(): Promise<void> {
-    if (!contenido) return;
-    try {
-      const integridad = await obtenerIntegridadVigilancia();
-      contenido.setAttribute('aria-busy', 'false');
-      const filas = Object.entries(integridad.antiguedad ?? {});
-      if (filas.length === 0) {
-        contenido.textContent =
-          'La API no informa la antigüedad de las series.';
-        return;
-      }
-      const tabla = document.createElement('table');
-      tabla.className = 'w-full border-collapse text-left';
-      const titulo = document.createElement('caption');
-      titulo.className = 'sr-only';
-      titulo.textContent = 'Última semana con dato de cada serie';
-      const cabecera = tabla.createTHead().insertRow();
-      for (const texto of ['Serie', 'Última semana', 'Rezago']) {
-        const th = document.createElement('th');
-        th.scope = 'col';
-        th.className = 'py-2 pr-3 font-semibold text-ink';
-        th.textContent = texto;
-        cabecera.appendChild(th);
-      }
-      const cuerpo = tabla.createTBody();
-      for (const [clave, antiguedad] of filas) {
-        const fila = cuerpo.insertRow();
-        fila.className = 'border-t border-border/60';
-        const valores = [
-          nombreSerie(clave),
-          textoUltimaSemana(antiguedad) ?? 'sin datos',
-          textoRezago(antiguedad) ?? '—',
-        ];
-        valores.forEach((valor, i) => {
-          const celda =
-            i === 0 ? document.createElement('th') : fila.insertCell();
-          if (celda instanceof HTMLTableCellElement && i === 0) {
-            celda.scope = 'row';
-            fila.appendChild(celda);
-          }
-          celda.className =
-            'py-2 pr-3 ' + (i === 0 ? 'font-medium text-ink' : 'tabular-nums');
-          celda.textContent = valor;
-        });
-      }
-      tabla.prepend(titulo);
-      contenido.replaceChildren(tabla);
-    } catch {
-      contenido.setAttribute('aria-busy', 'false');
-      contenido.textContent =
-        'No se pudo consultar la antigüedad de las series. Vuelve a intentarlo en unos segundos.';
-    }
-  }
-
-  void cargar();
-</script>

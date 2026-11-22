@@ -15,8 +15,8 @@ import DocumentoTexto from '../components/DocumentoTexto.astro';
   <p>
     EPI-Aetheris alinea casos históricos de dengue y de eventos respiratorios
     con variables climáticas, por semana epidemiológica y por departamento de El
-    Salvador, y los expone en una API pública, un mapa y un conjunto de vistas
-    de análisis. Todo sale de fuentes públicas: MINSAL, OpenDengue y Open-Meteo.
+    Salvador, y los muestra en un mapa y en vistas de análisis de un corte de
+    datos. Todo sale de fuentes públicas: MINSAL, OpenDengue y Open-Meteo.
   </p>
   <p>
     Compara cada departamento con sus propios años anteriores para ayudar a
@@ -30,9 +30,8 @@ import DocumentoTexto from '../components/DocumentoTexto.astro';
   <h2>Para quién</h2>
   <ul>
     <li>
-      <strong>Personal de salud en terreno</strong>, que necesita ver qué está
-      pasando en su departamento y leer las alertas de campo, incluso sin
-      conexión.
+      <strong>Personal de salud en terreno</strong>, que consulta series
+      departamentales y alertas históricas, incluso desde una copia guardada.
     </li>
     <li>
       <strong>Quien estudia, investiga o evalúa</strong> el comportamiento de estas
@@ -64,11 +63,9 @@ import DocumentoTexto from '../components/DocumentoTexto.astro';
 
   <h2>Con qué recursos</h2>
   <p>
-    El sitio es estático, la API y la base de datos corren en planes pequeños de
-    Render por un costo del orden de unas pocas decenas de dólares al mes, y no
-    depende de ninguna API de datos de pago. El código está bajo licencia
-    GPL-3.0 y el sistema se levanta en una máquina nueva con el repositorio y
-    Docker; el procedimiento está en{' '}
+    El sitio se publica como archivos estáticos. El código está bajo licencia
+    GPL-3.0 y los datos se exportan con Docker a partir del repositorio. El
+    procedimiento está en{' '}
     <a href="/biblioteca/06-arquitectura-y-reproducibilidad"
       >arquitectura y reproducibilidad</a
     >.
@@ -83,6 +80,6 @@ import DocumentoTexto from '../components/DocumentoTexto.astro';
       <a href="/biblioteca/03-funciones">Qué hace hoy</a>, función por función.
     </li>
     <li><a href="/analisis">Las herramientas de análisis</a>.</li>
-    <li><a href="/alertas">Las alertas de campo vigentes</a>.</li>
+    <li><a href="/alertas">El archivo de alertas de campo</a>.</li>
   </ul>
 </DocumentoTexto>

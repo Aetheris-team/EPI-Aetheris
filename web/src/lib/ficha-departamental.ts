@@ -80,7 +80,7 @@ export interface PayloadAlertasRespuesta {
 // ira.py, neumonias.py, alertas.py); no se redactan ni se resumen aquí. Si el
 // endpoint responde, la ficha usa el campo `aviso` de esa respuesta.
 export const AVISO_DEFECTO_IDONEIDAD =
-  'Índice de idoneidad biofísica (Iv) para Aedes aegypti, a partir de clima ERA5-Land (temperatura, precipitación a 2 semanas, humedad). Describe condición ambiental, no incidencia ni riesgo: los casos MINSAL y la presión epidemiológica se detienen en 2023, y el reanálisis ERA5 llega hasta unos 5 días antes de hoy. Una validación retrospectiva mostró que no anticipa de forma consistente el ascenso de casos; el componente de humedad es una estimación propia del equipo.';
+  'Índice de idoneidad biofísica (Iv) para Aedes aegypti, a partir de clima ERA5-Land (temperatura, precipitación a 2 semanas, humedad). Describe condición ambiental, no incidencia ni riesgo: los casos MINSAL y la presión epidemiológica se detienen en 2023. La cobertura climática depende de la última ingesta. Una validación retrospectiva mostró que no anticipa de forma consistente el ascenso de casos; el componente de humedad es una estimación propia del equipo.';
 
 export const AVISO_DEFECTO_PRESION =
   "Percentil del conteo observado (MINSAL, desacumulado) dentro de la historia del propio departamento (años base 2018, 2019, 2021-2023; ventana ±1 semana, leave-one-out). Los cortes P50/P75 son deliberadamente sensibles: 'alta' puede aparecer en años de baja transmisión. 'probable' y 'confirmado' son series separadas.";

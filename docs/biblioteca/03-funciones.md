@@ -5,7 +5,7 @@ orden: 3
 categoria: "Cómo funciona"
 ---
 
-Cada función del sistema tiene un contrato visible: qué mide, qué la alimenta y qué deja fuera. Los módulos M1–M4 se calculan al consultar la API, sin tabla propia y sin cambio de esquema.
+Cada función del sistema tiene un contrato visible: qué mide, qué la alimenta y qué deja fuera. Los módulos M1–M4 se calculan durante la exportación. Las rutas de FastAPI indicadas en este documento corresponden al cálculo previo a la compilación. El sitio consulta sus resultados como archivos JSON.
 
 ## M1 — Idoneidad biofísica (`Iv`)
 
@@ -30,7 +30,7 @@ Para seguir el cálculo con ejemplos y un laboratorio, ver la [ficha enriquecida
 
 Responde qué tan inusual es el `Iv` de un departamento-semana respecto de su propia historia climática.
 
-**Método.** Z-score leave-one-out de `Iv` por (departamento, semana del año). Línea base: corpus desde 2014 hasta el año en curso (ADR 0018; los años nuevos entran al pool y mueven los σ históricos), excluyendo el año descrito (anti-fuga). Misma semana exacta, **sin** ventana de semanas vecinas. El reanálisis ERA5 tiene un rezago de unos 5 días.
+**Método.** Z-score leave-one-out de `Iv` por (departamento, semana del año). Línea base: corpus desde 2014 hasta el último año del corte (ADR 0018; los años nuevos entran al pool y mueven los σ históricos), excluyendo el año descrito (anti-fuga). Misma semana exacta, **sin** ventana de semanas vecinas. El reanálisis ERA5 tiene un rezago de unos 5 días.
 
 **Presentación.** Serie continua (`anomaly_sigma`). El umbral Z ≥ 1,5 durante dos semanas consecutivas se usó en el experimento de lead time y se retiró: ese umbral se cruza en el 100 % de los años evaluados y no discrimina.
 
@@ -91,9 +91,7 @@ Misma familia de boletines MINSAL, otras tablas, otra semántica. Vive en `/resp
 
 ## Alertas de campo
 
-Decisiones **humanas** persistidas (ADR 0013, operable en ADR 0015): tipo (`dengue` | `respiratorio`), nivel (`informativo` | `atencion` | `intensificacion`), título, contexto, indicaciones, fuente, autor, vigencia, `activa`, y etiqueta opcional (`test` | `simulacro` | `historica`). La vista pública `/alertas` lista solo `activa = true` sin etiqueta. `GET /api/alertas` conserva ese contrato por defecto.
-
-La escritura va por `POST /api/alertas` y `PATCH /api/alertas/{id}` con un secreto de entorno (`ALERTAS_TOKEN`, Bearer). No hay tabla de usuarios ni `DELETE`: una alerta emitida se desactiva, no se borra. El archivo vive en `/alertas/archivo`; el formulario mínimo en `/alertas/nueva` no está en la navegación.
+El [archivo histórico](/alertas/archivo) conserva los avisos redactados por el equipo y su período original. La vista general muestra los registros marcados como activos en la edición. El feed Atom incluye las alertas públicas del archivo.
 
 Los cinco campos clínicos (ADR 0014) se llenaron por tipo con transcripción citada de VIGEPES/OPS (migración `0011`). Lo que no tiene fuente queda `null` — por ejemplo signos de alarma y criterios de referencia en respiratorio. El sistema no inventa teléfono ni correo.
 
@@ -101,9 +99,7 @@ Los cinco campos clínicos (ADR 0014) se llenaron por tipo con transcripción ci
 
 ## PWA / offline
 
-Service worker escrito a mano (`web/public/sw.js`), sin dependencias. El shell usa stale-while-revalidate. **`GET /api/alertas` es network-first**: una alerta ya apagada tiene consecuencia clínica, así que la red gana y el cache es último recurso. Lo servido desde cache lleva `_desde_cache: true` en el cuerpo JSON (no en una cabecera: la API es de otro origen y CORS filtra cabeceras propias) y la vista muestra el sello de frescura.
-
-**Qué no hace.** No sirve una alerta apagada como si siguiera vigente cuando hay red.
+El service worker conserva una copia de las páginas y los datos ya consultados. Usa la versión del corte para identificar su caché y prioriza la edición publicada al recuperar las páginas y los datos. La vista de alertas indica el corte y marca cuando se sirve una copia sin conexión.
 
 ## Pipeline de datos
 

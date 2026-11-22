@@ -1,12 +1,5 @@
 ---
-// Curva epidémica nacional. Fetch del lado del cliente (el navegador siempre
-// resuelve la API en localhost:8000, tanto corriendo con docker-compose como
-// con `pnpm dev` local -- evita depender de resolución de hostname interna
-// de la red de Docker) contra GET /api/casos-nacional: total nacional de
-// OpenDengue y, desde 2025, sospechosos del tablero de MINSAL (cada fila trae
-// su `fuente`). No es clasificación de riesgo: el
-// corte de percentil sigue abierto (docs/contexto/02-decisiones-abiertas.md,
-// punto A).
+// Curva del total nacional por semana, con cifras del archivo del corte.
 import CargadorCurva from './CargadorCurva.astro';
 import MenuExportar from './MenuExportar.astro';
 ---

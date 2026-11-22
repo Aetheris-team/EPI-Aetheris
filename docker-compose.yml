@@ -1,82 +1,9 @@
-# EPI-Aetheris para Dockyard (Equipo 4).
-#
-# Un solo comando lo deja funcionando desde cero:
-#   docker compose up -d --build
-# y el sitio abre en http://localhost:8401.
-#
-# Solo se publica el puerto de la interfaz web (8401, rango del Equipo 4:
-# 8401-8409). La base y la API quedan en la red interna del compose: nginx
-# (servicio web) sirve el sitio compilado y reenvía /api al backend, así que el
-# navegador nunca habla con otro puerto.
-#
-# Todas las variables tienen valor por defecto; .env.example las documenta y
-# Dockyard lo copia como .env si no existe.
-#
-# Sin política restart a propósito: como el resto de proyectos de Dockyard,
-# queda apagado tras reiniciar la PC hasta que el docente lo enciende, y si un
-# servicio se cae Dockyard lo muestra como caído en vez de reiniciándose.
-
+# Servidor de archivos de EPI-Aetheris (Equipo 4, puerto 8401).
+# Generar el corte primero con ./scripts/exportar-datos-estaticos.sh.
 services:
-  db:
-    # Imagen propia con las migraciones y el volcado de datos reales dentro
-    # (db/Dockerfile): la base se crea y se llena sola en el primer arranque.
-    build: ./db
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-aetheris_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aetheris_secure_password}
-      POSTGRES_DB: ${POSTGRES_DB:-epi_aetheris}
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      # Por TCP a propósito: mientras corren las migraciones y el volcado,
-      # Postgres solo escucha por el socket local, así que la base cuenta
-      # como lista cuando ya terminó de llenarse.
-      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
-      interval: 5s
-      timeout: 5s
-      retries: 30
-      start_period: 60s
-
-  backend:
-    build: ./backend
-    environment:
-      POSTGRES_HOST: db
-      POSTGRES_PORT: 5432
-      POSTGRES_USER: ${POSTGRES_USER:-aetheris_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aetheris_secure_password}
-      POSTGRES_DB: ${POSTGRES_DB:-epi_aetheris}
-      # El navegador llama a /api en el mismo origen (8401), así que CORS no
-      # interviene; se deja el origen local por si alguien abre la API aparte.
-      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:8401}
-      API_DOCS_ENABLED: ${API_DOCS_ENABLED:-true}
-      RATE_LIMIT_ENABLED: ${RATE_LIMIT_ENABLED:-true}
-      RATE_LIMIT_DEFAULT: ${RATE_LIMIT_DEFAULT:-120/minute}
-      RATE_LIMIT_HEAVY: ${RATE_LIMIT_HEAVY:-30/minute}
-      RATE_LIMIT_WRITE: ${RATE_LIMIT_WRITE:-10/minute}
-      RATE_LIMIT_AUTH: ${RATE_LIMIT_AUTH:-10/minute}
-      # Cuentas de usuario (ADR 0024): apagadas en esta versión.
-      CUENTAS_HABILITADAS: "false"
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=4)"]
-      interval: 10s
-      timeout: 5s
-      retries: 12
-      start_period: 20s
-    depends_on:
-      db:
-        condition: service_healthy
-
   web:
-    # El contexto es la raíz del repo: la Biblioteca (web/src/content.config.ts)
-    # lee docs/biblioteca/ al compilar, y docs/ está fuera de web/.
     build:
       context: .
       dockerfile: web/Dockerfile
     ports:
       - "8401:80"
-    depends_on:
-      backend:
-        condition: service_healthy
-
-volumes:
-  pgdata:

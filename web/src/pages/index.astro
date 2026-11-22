@@ -194,7 +194,7 @@ const STACK = [
     tecnologia: 'Python · FastAPI',
     logos: ['python', 'fastapi'],
     texto:
-      'Cada capa del mapa se calcula al momento de pedirla. La misma interfaz pública alimenta este sitio y está documentada.',
+      'Las capas se calculan durante la exportación y se guardan como archivos del corte.',
   },
   {
     capa: 'Sitio',
@@ -208,7 +208,7 @@ const STACK = [
     tecnologia: 'Docker Compose',
     logos: ['docker'],
     texto:
-      'Tres servicios que se levantan juntos, con los datos ya cargados. Ninguna capa usa servicios de pago.',
+      'El servidor web entrega las páginas y los datos del corte. Docker también reproduce la exportación.',
   },
 ];
 ---
@@ -535,9 +535,8 @@ const STACK = [
             </h2>
             <p class="mt-4 font-sans text-base leading-relaxed text-ink-muted">
               El código, los datos y el método están publicados. Cualquier
-              persona puede revisarlos, levantar el sistema completo en su
-              propia computadora con un solo paso, o consultar la misma interfaz
-              de datos que alimenta este sitio.
+              persona puede revisarlos, generar el corte en su computadora y
+              servir los mismos archivos que usa este sitio.
             </p>
             <p class="mt-4 font-sans text-base leading-relaxed text-ink-muted">
               Cada capa se contrastó con los años de brote documentados del país

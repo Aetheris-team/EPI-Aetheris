@@ -251,7 +251,10 @@ llega hasta 2023, la nacional del tablero de MINSAL solo hasta la última captur
 manual (ADR 0021), y `regiones.nivel_admin = 2` (municipio) sigue reservado sin
 filas.
 
-**Service worker (`web/public/sw.js`).** Escrito a mano, sin dependencias.
+**Service worker (`web/public/sw.js`).** La edición del ADR 0028 identifica la caché
+por la versión del corte y prioriza la red para páginas y datos. El archivo de
+alertas identifica las respuestas recuperadas sin conexión. El comportamiento
+anterior de la API de alertas se documenta a continuación como antecedente.
 `GET /api/alertas` va **network-first** —una alerta ya apagada tiene
 consecuencia clínica— y lo servido desde cache se marca con `_desde_cache: true`
 en el cuerpo JSON para que `/alertas` muestre el sello de frescura. La marca va
@@ -464,6 +467,15 @@ No crees carpetas de documentación nuevas fuera de `docs/adr/`, `docs/bibliotec
 
 Referencia rápida de lo vigente. Ante una contradicción, aplica la precedencia de la sección 4.
 
+### Edición estática (ADR 0028)
+
+Esta edición de solo lectura usa `web/dist/` como artefacto de publicación.
+Ejecuta `./scripts/exportar-datos-estaticos.sh` antes de compilar. PostgreSQL y
+FastAPI corren de forma temporal para exportar el volcado versionado. En el
+Compose del sitio se sirve únicamente nginx. La fecha de corte, su versión y
+la cobertura se leen en `/estado` y `/datos/corte.json`. Las referencias de
+abajo a las rutas de FastAPI describen los contratos de la etapa de exportación.
+
 ### Qué es y qué no es
 
 EPI-Aetheris es un sistema de vigilancia epidemiológica **descriptiva** (piloto: dengue e IRA en El Salvador). Ingesta casos históricos y predictores ambientales, los alinea por semana epidemiológica y los expone vía FastAPI + un mapa departamental.
@@ -540,7 +552,7 @@ Variables de entorno: todas tienen valor por defecto en el compose; `.env.exampl
 - **Web fuera de Docker:** `cd web && pnpm install && pnpm dev|build|preview` (pnpm vía Corepack, fijado a v9 — **no `npm`**).
 - **Dependencias Python (ADR 0025):** `requirements.txt` = API (lo único que entra en `backend/Dockerfile`); `requirements-dev.txt` = suite. Se compilan desde sus `.in` con `uv pip compile --generate-hashes` en ese orden (comando en `requirements.in`); no edites los `.txt` a mano.
 - **Tests:** pytest **desde `backend/`** (`pip install --require-hashes -r requirements.txt -r requirements-dev.txt`, luego `python -m pytest api/tests/`). Los tests con BD se **saltan** (no fallan) si no hay Postgres en `localhost:5432`; el compose no publica ese puerto, así que para correrlos en local levanta un Postgres aparte (como hace CI). CI (`.github/workflows/`): `backend-tests.yml` corre esa suite contra Postgres con migraciones + seed; `web-y-dockyard.yml` corre `pnpm lint`, `pnpm format:check`, `pnpm check` (astro check) y `pnpm test:unit` en `web/`, revisa que el compose cumpla las reglas de Dockyard (sin `container_name`, perfiles, `privileged` ni `external`; solo el 8401 publicado) y lo levanta desde cero; `seguridad.yml` audita dependencias, secretos y workflows. No hay linter de Python.
-- **E2E (Playwright, `web/tests/e2e/`):** contra el sitio compilado, `docker compose up -d --build` con `RATE_LIMIT_HEAVY`, `RATE_LIMIT_DEFAULT` y `RATE_LIMIT_WRITE` altos (p. ej. `5000/minute`; la suite hace muchas llamadas seguidas) y luego `cd web && PLAYWRIGHT_BASE_URL=http://localhost:8401 pnpm test:e2e`. Sin la variable apuntan a `pnpm dev` en el 4321. Estado al 2026-11-03 contra el sitio compilado: 270 pasan, 49 se omiten y 7 fallan. `alertas-territorio.spec.ts:68` falla solo contra el sitio compilado: simula `/api/alertas` con `page.route`, pero en producción esa petición la hace el service worker (que `pnpm dev` no registra) y `page.route` no la ve; con `serviceWorkers: 'block'` pasa. Las otras seis son del frontend y fallan igual sin service worker: el ancla del glosario `m1-idoneidad-biofísica-iv` (el título genera `m1--…`), el número de enlaces en "Otras fichas" de M4, dos de `respiratorio-estado.spec.ts` (el mapa de calor no marca la fila seleccionada) y contraste de color (axe) en el calendario epidemiológico y en `/biblioteca` en tema oscuro.
+- **E2E (Playwright, `web/tests/e2e/`):** genera el corte, ejecuta `docker compose up -d --build` y luego `cd web && PLAYWRIGHT_BASE_URL=http://localhost:8401 pnpm test:e2e`. El registro siguiente describe la línea base anterior al ADR 0028. Sin la variable apuntan a `pnpm dev` en el 4321. Estado al 2026-11-03 contra el sitio compilado: 270 pasan, 49 se omiten y 7 fallan. `alertas-territorio.spec.ts:68` falla solo contra el sitio compilado: simula `/api/alertas` con `page.route`, pero en producción esa petición la hace el service worker (que `pnpm dev` no registra) y `page.route` no la ve; con `serviceWorkers: 'block'` pasa. Las otras seis son del frontend y fallan igual sin service worker: el ancla del glosario `m1-idoneidad-biofísica-iv` (el título genera `m1--…`), el número de enlaces en "Otras fichas" de M4, dos de `respiratorio-estado.spec.ts` (el mapa de calor no marca la fila seleccionada) y contraste de color (axe) en el calendario epidemiológico y en `/biblioteca` en tema oscuro.
 
 ---
 

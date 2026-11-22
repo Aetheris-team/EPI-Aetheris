@@ -1,11 +1,8 @@
-name: Web y Dockyard
+name: Sitio estático
 
-# El frontend se mantiene en este repo (ya no se sincroniza con aetheris-nitor),
-# así que sus comprobaciones corren aquí. El segundo job levanta el proyecto
-# como lo hace Dockyard y revisa las reglas de su guía para estudiantes.
 on:
   push:
-    branches: [main, dev]
+    branches: [main, dev, migration/static-site]
   pull_request:
     branches: [main, dev]
 
@@ -14,75 +11,72 @@ permissions:
 
 jobs:
   web:
-    name: Frontend (lint, tipos y pruebas unitarias)
+    name: Exportación, compilación y pruebas del sitio
     runs-on: ubuntu-latest
-    container:
-      image: node:24-alpine@sha256:8a32c8cf649a49915a66e81e7a609223c708d0adabf288ee3f4077d765542f85
-    defaults:
-      run:
-        working-directory: web
+    env:
+      ASTRO_TELEMETRY_DISABLED: "1"
+      PLAYWRIGHT_BASE_URL: http://localhost:8401
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - name: Instalar dependencias
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: "24"
+
+      - name: Exportar el corte
+        run: ./scripts/exportar-datos-estaticos.sh
+
+      - name: Comprobar y compilar
+        working-directory: web
         run: |
           corepack enable
           pnpm install --frozen-lockfile
+          pnpm lint
+          pnpm format:check
+          pnpm test:unit
+          pnpm build
 
-      - run: pnpm lint
-      - run: pnpm format:check
-      - run: pnpm check
-      - run: pnpm test:unit
-
-  dockyard:
-    name: Arranque como en Dockyard
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Reglas de la guía de Dockyard
+      - name: Comprobar el arranque estático en el puerto de Dockyard
         run: |
           set -euo pipefail
-          docker compose --profile '*' config --format json > compose.json
-          falla() { echo "::error::$1"; exit 1; }
-          [ "$(jq '[.services[] | select(.container_name)] | length' compose.json)" = 0 ] \
-            || falla "Ningún servicio puede llevar container_name"
-          [ "$(jq '[.services[] | select(.profiles)] | length' compose.json)" = 0 ] \
-            || falla "Dockyard no levanta servicios con perfiles"
-          [ "$(jq '[.services[] | select(.privileged or .network_mode == "host")] | length' compose.json)" = 0 ] \
-            || falla "Sin privileged ni network_mode: host"
-          [ "$(jq '[(.volumes // {})[], (.networks // {})[] | select(.external)] | length' compose.json)" = 0 ] \
-            || falla "Sin volúmenes ni redes external"
-          publicados=$(jq -r '[.services[].ports[]?.published] | map(tostring) | sort | join(",")' compose.json)
-          [ "$publicados" = "8401" ] \
-            || falla "Solo se publica el 8401 (Equipo 4); publicados: $publicados"
-
-      - name: Levantar desde cero
-        run: docker compose up -d --build --wait --wait-timeout 600
-
-      - name: El sitio y la API responden en el 8401
-        run: |
-          set -euo pipefail
-          for ruta in / /dengue/ /respiratorio/ /alertas/ /biblioteca/ /health; do
-            curl -fsS -o /dev/null "http://localhost:8401$ruta" && echo "ok $ruta"
+          docker compose config --format json | jq -e '
+            (.services | keys) == ["web"]
+            and (.services.web.ports | map(.published | tostring)) == ["8401"]
+            and (.services.web | has("container_name") or has("profiles") or .privileged == true or .network_mode == "host" | not)
+          '
+          docker compose up -d --build --wait --wait-timeout 600
+          for ruta in / /dengue /respiratorio /alertas /biblioteca /estado /datos/alertas/feed.xml; do
+            codigo=$(curl -sS -o /dev/null -w '%{http_code}' "http://localhost:8401$ruta")
+            [ "$codigo" = 200 ] || { echo "::error::$ruta devuelve $codigo"; exit 1; }
           done
-          # El sitio enlaza sin barra final (/alertas). nginx debe servirlo
-          # directo: una redirección rompe las navegaciones que pasan por el
-          # service worker.
-          codigo=$(curl -sS -o /dev/null -w '%{http_code}' http://localhost:8401/alertas)
-          [ "$codigo" = 200 ] || { echo "::error::/alertas responde $codigo en lugar de 200"; exit 1; }
-          filas=$(curl -fsS http://localhost:8401/api/casos-nacional | jq length)
-          echo "casos-nacional: $filas filas"
-          [ "$filas" -gt 0 ]
+          curl -fsS http://localhost:8401/datos/casos-nacional.json | jq -e 'length > 0'
+          curl -fsS http://localhost:8401/datos/corte.json | jq -e '.version and .fecha'
+          for ruta in /api/casos-nacional /health /cuenta /admin/usuarios /alertas/nueva; do
+            codigo=$(curl -sS -o /dev/null -w '%{http_code}' "http://localhost:8401$ruta")
+            [ "$codigo" = 404 ] || { echo "::error::$ruta devuelve $codigo"; exit 1; }
+          done
 
-      - name: Registro de los servicios si algo falló
+      - name: Probar la edición estática y la navegación
+        working-directory: web
+        run: |
+          pnpm exec playwright install --with-deps chromium
+          pnpm test:e2e estatico.spec.ts estado.spec.ts cuenta-deshabilitada.spec.ts \
+            alertas.spec.ts alertas-territorio.spec.ts enfoque-dual.spec.ts \
+            analisis.spec.ts clima-dengue.spec.ts departamento.spec.ts respiratorio.spec.ts
+
+      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: sitio-estatico
+          path: web/dist/
+          if-no-files-found: error
+          include-hidden-files: true
+
+      - name: Registro si algo falló
         if: failure()
         run: docker compose logs --tail 100
 
-      - name: Apagar y borrar
+      - name: Apagar el sitio
         if: always()
-        run: docker compose down -v
+        run: docker compose down --volumes
