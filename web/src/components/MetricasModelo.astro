@@ -59,6 +59,7 @@ import { RUTA_SENSIBILIDAD } from '../lib/enlaces';
 </style>
 
 <script>
+  import { urlDato } from '../lib/datos-estaticos';
   import { escapeHtml } from '../utils/security';
   import { renderErrorFuente, renderSinDato } from './estado-async';
 
@@ -83,8 +84,6 @@ import { RUTA_SENSIBILIDAD } from '../lib/enlaces';
     } | null;
     aviso: string;
   }
-
-  const API_BASE = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8000';
 
   const COLOR_CLASE: Record<string, string> = {
     bajo: '#2e7d32',
@@ -186,7 +185,7 @@ import { RUTA_SENSIBILIDAD } from '../lib/enlaces';
 
     try {
       contenedor.setAttribute('aria-busy', 'true');
-      const resp = await fetch(`${API_BASE}/api/riesgo-nacional`);
+      const resp = await fetch(urlDato('riesgo-nacional'));
       if (!resp.ok) throw new Error('respuesta no OK');
       const datos: RiesgoNacional | { disponible: false; motivo?: string } =
         await resp.json();

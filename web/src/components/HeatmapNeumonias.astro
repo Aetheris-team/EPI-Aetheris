@@ -132,6 +132,7 @@ import { ANIOS_RESPIRATORIO } from '../lib/respiratorio-state';
 </PanelWorkspace>
 
 <script>
+  import { urlDato } from '../lib/datos-estaticos';
   import {
     ANIOS_RESPIRATORIO,
     actualizarFiltrosRespiratorio,
@@ -152,8 +153,6 @@ import { ANIOS_RESPIRATORIO } from '../lib/respiratorio-state';
   import type { ConfigMatriz } from '../lib/echarts-matriz';
   import type { GraficoMontado } from '../lib/echarts-montaje';
   import { TablaAlternativa } from '../lib/tabla-alternativa';
-
-  const API_BASE = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8000';
 
   interface DeptoHeat {
     nombre: string;
@@ -267,7 +266,7 @@ import { ANIOS_RESPIRATORIO } from '../lib/respiratorio-state';
     contenedor.setAttribute('aria-busy', 'true');
     renderEsqueletoMatriz(contenedor, 7);
     try {
-      const resp = await fetch(`${API_BASE}/api/neumonias/heatmap/${anio}`);
+      const resp = await fetch(urlDato(`neumonias/heatmap/${anio}`));
       if (!resp.ok) throw new Error('no ok');
       const datos = await resp.json();
       if (idRevision !== revision) return;

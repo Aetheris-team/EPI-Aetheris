@@ -33,10 +33,10 @@ test.describe('última semana de dengue', () => {
   test('muestra la última semana y la comparación con el año anterior', async ({
     page,
   }) => {
-    await page.route('**/api/casos-nacional', (r) =>
+    await page.route('**/datos/casos-nacional.json', (r) =>
       r.fulfill({ json: CASOS }),
     );
-    await page.route('**/api/v1/vigilancia/integridad', (r) =>
+    await page.route('**/datos/v1/vigilancia/integridad.json', (r) =>
       r.fulfill({ json: INTEGRIDAD }),
     );
     await page.goto('/incrustar/ultima-semana');
@@ -55,7 +55,7 @@ test.describe('última semana de dengue', () => {
   });
 
   test('avisa cuando el tablero no trae semanas', async ({ page }) => {
-    await page.route('**/api/casos-nacional', (r) => r.fulfill({ json: [] }));
+    await page.route('**/datos/casos-nacional.json', (r) => r.fulfill({ json: [] }));
     await page.goto('/incrustar/ultima-semana');
     await expect(page.locator('#ultima-semana')).toContainText(
       'todavía no tiene semanas',
@@ -64,7 +64,7 @@ test.describe('última semana de dengue', () => {
   });
 
   test('ofrece reintentar si la fuente falla', async ({ page }) => {
-    await page.route('**/api/casos-nacional', (r) =>
+    await page.route('**/datos/casos-nacional.json', (r) =>
       r.fulfill({ status: 500 }),
     );
     await page.goto('/incrustar/ultima-semana');
@@ -119,11 +119,11 @@ test('la franja se pinta con la copia del build mientras llega la API', async ({
   page,
 }) => {
   await conInstantanea(page);
-  await page.route('**/api/casos-nacional', async (ruta) => {
+  await page.route('**/datos/casos-nacional.json', async (ruta) => {
     await new Promise((r) => setTimeout(r, 1500));
     await ruta.fulfill({ json: CASOS });
   });
-  await page.route('**/api/v1/vigilancia/integridad', (r) =>
+  await page.route('**/datos/v1/vigilancia/integridad.json', (r) =>
     r.fulfill({ json: INTEGRIDAD }),
   );
   await page.goto('/incrustar/ultima-semana');
@@ -139,10 +139,10 @@ test('si la API falla se conserva la copia del build con su aviso', async ({
   page,
 }) => {
   await conInstantanea(page);
-  await page.route('**/api/casos-nacional', (r) =>
+  await page.route('**/datos/casos-nacional.json', (r) =>
     r.fulfill({ status: 500, body: 'error' }),
   );
-  await page.route('**/api/v1/vigilancia/integridad', (r) =>
+  await page.route('**/datos/v1/vigilancia/integridad.json', (r) =>
     r.fulfill({ json: INTEGRIDAD }),
   );
   await page.goto('/incrustar/ultima-semana');

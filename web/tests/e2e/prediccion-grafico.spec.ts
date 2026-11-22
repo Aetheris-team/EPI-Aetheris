@@ -80,7 +80,7 @@ test('el panel pasa axe en claro y en oscuro', async ({ page }) => {
 test('sin predicción generada se muestra un mensaje neutro, sin reintento', async ({
   page,
 }) => {
-  await page.route('**/api/nowcast-dengue**', (ruta) =>
+  await page.route('**/datos/nowcast-dengue**', (ruta) =>
     ruta.fulfill({
       json: { disponible: false, motivo: 'Aún no se generó la predicción.' },
     }),
@@ -99,10 +99,10 @@ test('si la fuente falla se ofrece reintentar y al reintentar se dibuja', async 
 }) => {
   let fallar = true;
   const { principal, retro } = (await import('./nowcast-mock')).respuestas();
-  await page.route('**/api/nowcast-dengue/retrospectivo', (ruta) =>
+  await page.route('**/datos/nowcast-dengue/retrospectivo.json', (ruta) =>
     ruta.fulfill({ json: retro }),
   );
-  await page.route('**/api/nowcast-dengue', (ruta) =>
+  await page.route('**/datos/nowcast-dengue.json', (ruta) =>
     fallar
       ? ruta.fulfill({ status: 503, body: 'caído' })
       : ruta.fulfill({ json: principal }),

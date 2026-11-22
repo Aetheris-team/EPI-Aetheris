@@ -130,7 +130,7 @@ test.describe('observatorio respiratorio', () => {
   test('si la API de cobertura falla, el panel no inventa cifras', async ({
     page,
   }) => {
-    await page.route('**/api/respiratorios/cobertura', (route) =>
+    await page.route('**/datos/respiratorios/cobertura.json', (route) =>
       route.fulfill({ status: 500, body: 'error' }),
     );
     await page.goto('/respiratorio');
@@ -152,14 +152,14 @@ test.describe('observatorio respiratorio', () => {
       motivo,
       aviso: 'aviso de honestidad',
     });
-    await page.route('**/api/respiratorios/cobertura', (route) =>
+    await page.route('**/datos/respiratorios/cobertura.json', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: cuerpo,
       }),
     );
-    await page.route('**/api/respiratorios/virus', (route) =>
+    await page.route('**/datos/respiratorios/virus.json', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -195,7 +195,7 @@ test.describe('observatorio respiratorio', () => {
       { semana_inicio: '2026-01-04', anio: 2026, semana_epi: 1, conteo: 263 },
       { semana_inicio: '2026-01-11', anio: 2026, semana_epi: 2, conteo: 210 },
     ];
-    await page.route('**/api/neumonias/nacional', (route) =>
+    await page.route('**/datos/neumonias/nacional.json', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -258,7 +258,7 @@ test.describe('observatorio respiratorio', () => {
   }) => {
     const motivo =
       'La serie nacional del tablero de MINSAL no está cargada en este despliegue.';
-    await page.route('**/api/ira/nacional', (route) =>
+    await page.route('**/datos/ira/nacional.json', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',

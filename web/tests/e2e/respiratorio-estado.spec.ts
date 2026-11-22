@@ -19,7 +19,7 @@ const DEPARTAMENTOS = [
 
 async function simularApi(page: Page) {
   for (const evento of ['ira', 'neumonias']) {
-    await page.route(`**/api/${evento}/departamental`, (r) =>
+    await page.route(`**/datos/${evento}/departamental.json`, (r) =>
       r.fulfill({
         json: {
           aviso: 'x',
@@ -34,7 +34,7 @@ async function simularApi(page: Page) {
         },
       }),
     );
-    await page.route(`**/api/${evento}/temporal/*`, (r) => {
+    await page.route(`**/datos/${evento}/temporal/*`, (r) => {
       const codigo = r.request().url().split('/').pop()?.split('?')[0] ?? '';
       const nombre = DEPARTAMENTOS.find(([c]) => c === codigo)?.[1] ?? codigo;
       return r.fulfill({
@@ -57,7 +57,7 @@ async function simularApi(page: Page) {
       });
     });
   }
-  await page.route('**/api/neumonias/heatmap/*', (r) =>
+  await page.route('**/datos/neumonias/heatmap/*', (r) =>
     r.fulfill({
       json: {
         departamentos: DEPARTAMENTOS.map(([codigo, nombre]) => ({
@@ -76,9 +76,9 @@ test.describe('respiratorio con estado compartido', () => {
   }) => {
     await simularApi(page);
     await page.goto('/respiratorio');
-    const solicitudIra = page.waitForRequest('**/api/ira/temporal/SV-SA*');
+    const solicitudIra = page.waitForRequest('**/datos/ira/temporal/SV-SA*');
     const solicitudNeu = page.waitForRequest(
-      '**/api/neumonias/temporal/SV-SA*',
+      '**/datos/neumonias/temporal/SV-SA*',
     );
 
     const rutaSantaAna = page.locator(

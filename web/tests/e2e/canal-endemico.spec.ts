@@ -24,7 +24,7 @@ const semanas = Array.from({ length: 52 }, (_, i) => ({
 }));
 
 test('el canal endémico dibuja las bandas y su tabla', async ({ page }) => {
-  await page.route('**/api/v1/presion/temporal/**', (ruta) =>
+  await page.route('**/datos/v1/presion/temporal/**', (ruta) =>
     ruta.fulfill({
       json: {
         departamento_codigo: 'SV-SS',
@@ -59,7 +59,7 @@ test('el canal endémico dibuja las bandas y su tabla', async ({ page }) => {
 });
 
 test('sin datos en la fuente muestra el estado sin dato', async ({ page }) => {
-  await page.route('**/api/v1/presion/temporal/**', (ruta) =>
+  await page.route('**/datos/v1/presion/temporal/**', (ruta) =>
     ruta.fulfill({
       json: {
         disponible: false,

@@ -12,9 +12,7 @@ interface Props {
 const evento = Astro.props.evento ?? 'ira';
 const etiqueta = evento === 'neumonias' ? 'neumonías' : 'IRA';
 const endpoint =
-  evento === 'neumonias'
-    ? '/api/neumonias/departamental'
-    : '/api/ira/departamental';
+  evento === 'neumonias' ? 'neumonias/departamental' : 'ira/departamental';
 
 const geo = JSON.parse(
   readFileSync(join(process.cwd(), 'public/geo/slv-adm1.geojson'), 'utf8'),
@@ -228,6 +226,7 @@ const mapaSvg = proyectarDepartamentos(geo, 700, 14, 0.4);
 </style>
 
 <script>
+  import { urlDato } from '../lib/datos-estaticos';
   import { escapeHtml } from '../utils/security';
   import {
     DEPARTAMENTOS,
@@ -240,7 +239,6 @@ const mapaSvg = proyectarDepartamentos(geo, 700, 14, 0.4);
   } from '../lib/respiratorio-state';
   import { esNoDisponible, motivoNoDisponible } from './estado-async';
 
-  const API_BASE = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8000';
   const SIN_DATO = '#e4e4e7';
   const RAMPA = ['#cde2fb', '#9ec5f4', '#5598e7', '#256abf', '#0d366b'];
 
@@ -311,7 +309,7 @@ const mapaSvg = proyectarDepartamentos(geo, 700, 14, 0.4);
     const tooltip = seccion.querySelector(
       '[data-mapa-tooltip]',
     ) as HTMLElement | null;
-    const endpoint = seccion.dataset.mapaEndpoint ?? '/api/ira/departamental';
+    const endpoint = seccion.dataset.mapaEndpoint ?? 'ira/departamental';
 
     if (
       !contenedorCanvas ||
@@ -386,7 +384,7 @@ const mapaSvg = proyectarDepartamentos(geo, 700, 14, 0.4);
     let valores: Map<string, number | undefined> | null = null;
 
     try {
-      const resp = await fetch(`${API_BASE}${endpoint}`);
+      const resp = await fetch(urlDato(endpoint));
       if (!resp.ok) throw new Error('respuesta no OK');
       const datos: { departamentos: DatoDepartamentoIra[] } | unknown =
         await resp.json();

@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { defineConfig, fontProviders } from 'astro/config';
 import tailwindcss from '@tailwindcss/vite';
 import icon from 'astro-icon';
@@ -6,6 +7,18 @@ import sitemap from '@astrojs/sitemap';
 // El único origen de datos al que el navegador puede conectarse además del
 // propio sitio: la API. Sale de la misma variable que usa el código (build).
 const apiBase = process.env.PUBLIC_API_URL ?? 'http://localhost:8000';
+
+// El corte se genera antes de compilar, también en el entorno de desarrollo.
+const rutaCorte = new URL('./public/datos/corte.json', import.meta.url);
+let corte;
+try {
+  corte = JSON.parse(readFileSync(rutaCorte, 'utf8'));
+} catch (error) {
+  throw new Error(
+    'Genera los archivos del sitio con scripts/exportar-datos-estaticos.sh desde la raíz del repositorio.',
+    { cause: error },
+  );
+}
 
 // Configuración principal del framework Astro
 export default defineConfig({
@@ -131,5 +144,11 @@ export default defineConfig({
     // Tailwind v4 se integra como plugin de Vite directamente -- @astrojs/tailwind
     // (la integración anterior) no soporta Tailwind v4 ni Astro 6+.
     plugins: [tailwindcss()],
+    define: {
+      'import.meta.env.PUBLIC_ULTIMO_ANIO_CLIMA': JSON.stringify(
+        corte.ultimo_anio_clima,
+      ),
+      'import.meta.env.PUBLIC_FECHA_CORTE': JSON.stringify(corte.fecha),
+    },
   },
 });

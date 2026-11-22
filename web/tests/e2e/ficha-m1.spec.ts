@@ -112,7 +112,7 @@ test.describe('ficha enriquecida de M1', () => {
   test('si la API falla, la simulación sigue y se ofrece reintentar', async ({
     page,
   }) => {
-    await page.route('**/api/v1/temporal/**', (ruta) => ruta.abort());
+    await page.route('**/datos/v1/temporal/**', (ruta) => ruta.abort());
     await page.goto(RUTA);
     await expect(
       page.locator('[data-lab-real]').getByRole('button', {

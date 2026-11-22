@@ -83,6 +83,7 @@ import PanelWorkspace from './analisis/PanelWorkspace.astro';
 </PanelWorkspace>
 
 <script>
+  import { urlDato } from '../lib/datos-estaticos';
   import {
     esNoDisponible,
     motivoNoDisponible,
@@ -90,7 +91,6 @@ import PanelWorkspace from './analisis/PanelWorkspace.astro';
     renderSinDato,
   } from './estado-async';
 
-  const API_BASE = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8000';
   const VIRUS_DEFAULT = [
     'influenza',
     'vsr',
@@ -158,7 +158,7 @@ import PanelWorkspace from './analisis/PanelWorkspace.astro';
     try {
       heatmap.setAttribute('aria-busy', 'true');
       renderEsqueletoMatriz(heatmap, 5);
-      const datos = await jsonOk(`${API_BASE}/api/respiratorios/virus`);
+      const datos = await jsonOk(urlDato('respiratorios/virus'));
       if (esNoDisponible(datos)) {
         error.classList.add('hidden');
         aviso.textContent = '';
@@ -240,7 +240,9 @@ import PanelWorkspace from './analisis/PanelWorkspace.astro';
           if (vistos.has(virus)) continue;
           vistos.add(virus);
           const datos = await jsonOk(
-            `${API_BASE}/api/respiratorios/temporal?virus=${encodeURIComponent(virus)}&metrica=${encodeURIComponent(metrica)}`,
+            urlDato(
+              `respiratorios/temporal/${encodeURIComponent(virus)}/${encodeURIComponent(metrica)}`,
+            ),
           );
           if (esNoDisponible(datos)) {
             error.classList.add('hidden');

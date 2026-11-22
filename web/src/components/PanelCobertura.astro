@@ -40,6 +40,7 @@ import PanelWorkspace from './analisis/PanelWorkspace.astro';
 </PanelWorkspace>
 
 <script>
+  import { urlDato } from '../lib/datos-estaticos';
   import {
     esNoDisponible,
     motivoNoDisponible,
@@ -47,7 +48,6 @@ import PanelWorkspace from './analisis/PanelWorkspace.astro';
     renderSinDato,
   } from './estado-async';
 
-  const API_BASE = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8000';
   const ANIOS = ['2018', '2019', '2021', '2022', '2023'];
 
   function filaAnios(
@@ -97,7 +97,7 @@ import PanelWorkspace from './analisis/PanelWorkspace.astro';
       error.classList.add('hidden');
       cuerpo.setAttribute('aria-busy', 'true');
       renderEsqueletoRegistro(cuerpo);
-      const resp = await fetch(`${API_BASE}/api/respiratorios/cobertura`);
+      const resp = await fetch(urlDato('respiratorios/cobertura'));
       if (!resp.ok) throw new Error('no ok');
       const d = await resp.json();
       if (esNoDisponible(d)) {

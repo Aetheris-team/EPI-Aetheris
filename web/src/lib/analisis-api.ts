@@ -1,3 +1,4 @@
+import { leerDato, urlDato } from './datos-estaticos';
 import {
   esNoDisponible,
   type RespuestaNoDisponible,
@@ -21,10 +22,9 @@ import type {
   SerieTemporalPresion,
 } from './tipos-analisis';
 
-const API_BASE = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8000';
 /** Archivos completos de clima y dengue, enlazados desde el menú «Exportar». */
-export const URL_CLIMA_POR_ANIO = `${API_BASE}/api/clima-dengue/por-anio`;
-export const URL_CLIMA_MULTIPAIS = `${API_BASE}/api/clima-dengue/multipais`;
+export const URL_CLIMA_POR_ANIO = urlDato('clima-dengue/por-anio');
+export const URL_CLIMA_MULTIPAIS = urlDato('clima-dengue/multipais');
 const cachePorAnio = new Map<
   AnioAnalisisDengue,
   Promise<DatasetAnaliticoDengue>
@@ -81,32 +81,28 @@ function cargarDataset(
   anio: AnioAnalisisDengue,
 ): Promise<DatasetAnaliticoDengue> {
   return registrarPeticion(
-    fetch(`${API_BASE}/api/v1/analisis/dengue?year=${anio}`).then(
-      async (respuesta) => {
-        if (!respuesta.ok) {
-          throw new Error(
-            `No se pudo cargar el dataset analítico (${respuesta.status}).`,
-          );
-        }
-        const datos: unknown = await respuesta.json();
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('epi:datos-cargados'));
-        }
-        if (esNoDisponible(datos)) {
-          return datos as any;
-        }
-        if (
-          !datos ||
-          typeof datos !== 'object' ||
-          !Array.isArray((datos as { departamentos?: unknown }).departamentos)
-        ) {
-          throw new Error(
-            'El dataset analítico no tiene el contrato esperado.',
-          );
-        }
-        return datos as DatasetAnaliticoDengue;
-      },
-    ),
+    fetch(urlDato(`v1/analisis/dengue/${anio}`)).then(async (respuesta) => {
+      if (!respuesta.ok) {
+        throw new Error(
+          `No se pudo cargar el dataset analítico (${respuesta.status}).`,
+        );
+      }
+      const datos: unknown = await respuesta.json();
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('epi:datos-cargados'));
+      }
+      if (esNoDisponible(datos)) {
+        return datos as any;
+      }
+      if (
+        !datos ||
+        typeof datos !== 'object' ||
+        !Array.isArray((datos as { departamentos?: unknown }).departamentos)
+      ) {
+        throw new Error('El dataset analítico no tiene el contrato esperado.');
+      }
+      return datos as DatasetAnaliticoDengue;
+    }),
   );
 }
 
@@ -127,7 +123,7 @@ export function obtenerDatasetAnalitico(
 export function obtenerCasosNacionales(): Promise<CasoNacionalSemanal[]> {
   if (!cacheCasosNacionales) {
     cacheCasosNacionales = registrarPeticion(
-      fetch(`${API_BASE}/api/casos-nacional`)
+      fetch(urlDato('casos-nacional'))
         .then(async (respuesta) => {
           if (!respuesta.ok) {
             throw new Error(
@@ -155,7 +151,7 @@ export function obtenerCasosNacionales(): Promise<CasoNacionalSemanal[]> {
 export function obtenerIntegridadVigilancia(): Promise<IntegridadVigilancia> {
   if (!cacheIntegridad) {
     cacheIntegridad = registrarPeticion(
-      fetch(`${API_BASE}/api/v1/vigilancia/integridad`)
+      fetch(urlDato('v1/vigilancia/integridad'))
         .then(async (respuesta) => {
           if (!respuesta.ok) {
             throw new Error(
@@ -194,7 +190,7 @@ export function obtenerIntegridadVigilancia(): Promise<IntegridadVigilancia> {
 export function obtenerIraDepartamental(): Promise<RespuestaIraDepartamental> {
   if (!cacheIraDepartamental) {
     cacheIraDepartamental = registrarPeticion(
-      fetch(`${API_BASE}/api/ira/departamental`)
+      fetch(urlDato('ira/departamental'))
         .then(async (respuesta) => {
           if (!respuesta.ok) {
             throw new Error(
@@ -236,7 +232,7 @@ export function obtenerSerieRespiratoriaNacional(
   let solicitud = cacheRespiratorioNacional.get(evento);
   if (!solicitud) {
     solicitud = registrarPeticion(
-      fetch(`${API_BASE}/api/${evento}/nacional`)
+      fetch(urlDato(`${evento}/nacional`))
         .then(async (respuesta) => {
           if (!respuesta.ok) {
             throw new Error(
@@ -272,9 +268,7 @@ export function obtenerSerieIdoneidad(
   let solicitud = cacheSerieIdoneidad.get(clave);
   if (!solicitud) {
     solicitud = registrarPeticion(
-      fetch(
-        `${API_BASE}/api/v1/temporal/${encodeURIComponent(codigo)}?anio=${anio}`,
-      )
+      fetch(urlDato(`v1/temporal/${encodeURIComponent(codigo)}/${anio}`))
         .then(async (respuesta) => {
           if (!respuesta.ok) {
             throw new Error(
@@ -313,7 +307,7 @@ export function obtenerSeriePresion(
   if (!solicitud) {
     solicitud = registrarPeticion(
       fetch(
-        `${API_BASE}/api/v1/presion/temporal/${encodeURIComponent(codigo)}?anio=${anio}`,
+        urlDato(`v1/presion/temporal/${encodeURIComponent(codigo)}/${anio}`),
       )
         .then(async (respuesta) => {
           if (!respuesta.ok) {
@@ -358,26 +352,11 @@ export function obtenerProcedenciaAnalitica(
   ].join(':');
   let solicitud = cacheProcedencia.get(clave);
   if (!solicitud) {
-    const parametros = new URLSearchParams({
-      year: String(filtros.anio),
-      week: String(filtros.semana),
-      serie: filtros.serie,
-      dept: filtros.departamento,
-    });
     solicitud = registrarPeticion(
-      fetch(`${API_BASE}/api/v1/analisis/dengue/procedencia?${parametros}`)
-        .then(async (respuesta) => {
-          if (!respuesta.ok) {
-            throw new Error(
-              `No se pudo cargar la procedencia (${respuesta.status}).`,
-            );
-          }
-          const datos: unknown = await respuesta.json();
-          if (esNoDisponible(datos)) {
-            return datos as any;
-          }
-          return datos as ProcedenciaAnalitica;
-        })
+      leerDato<Record<string, Record<number, ProcedenciaAnalitica>>>(
+        `v1/analisis/dengue/procedencia/${filtros.anio}/${filtros.departamento}`,
+      )
+        .then((datos) => datos[filtros.serie][filtros.semana])
         .catch((error) => {
           cacheProcedencia.delete(clave);
           throw error;
@@ -391,7 +370,7 @@ export function obtenerProcedenciaAnalitica(
 export function obtenerNowcastDengue(): Promise<NowcastDengue> {
   if (!cacheNowcastDengue) {
     cacheNowcastDengue = registrarPeticion(
-      fetch(`${API_BASE}/api/nowcast-dengue`)
+      fetch(urlDato('nowcast-dengue'))
         .then(async (respuesta) => {
           if (!respuesta.ok) {
             throw new Error(
@@ -412,7 +391,7 @@ export function obtenerNowcastDengue(): Promise<NowcastDengue> {
 export function obtenerNowcastRetrospectivo(): Promise<NowcastDengueRetrospectivo> {
   if (!cacheNowcastRetro) {
     cacheNowcastRetro = registrarPeticion(
-      fetch(`${API_BASE}/api/nowcast-dengue/retrospectivo`)
+      fetch(urlDato('nowcast-dengue/retrospectivo'))
         .then(async (respuesta) => {
           if (!respuesta.ok) {
             throw new Error(
@@ -539,7 +518,7 @@ export function obtenerClimaDengueMultipais(): Promise<
 export function obtenerAlertasDengue(): Promise<AlertaPublica[]> {
   if (!cacheAlertasDengue) {
     cacheAlertasDengue = registrarPeticion(
-      fetch(`${API_BASE}/api/alertas?tipo=dengue`)
+      fetch(urlDato('alertas/registradas-activas'))
         .then(async (respuesta) => {
           if (!respuesta.ok) {
             throw new Error(
@@ -551,7 +530,9 @@ export function obtenerAlertasDengue(): Promise<AlertaPublica[]> {
           if (!Array.isArray(alertas)) {
             throw new Error('Las alertas de dengue llegaron con otro formato.');
           }
-          return alertas as AlertaPublica[];
+          return (alertas as AlertaPublica[]).filter(
+            (alerta) => alerta.tipo === 'dengue',
+          );
         })
         .catch((error) => {
           cacheAlertasDengue = null;

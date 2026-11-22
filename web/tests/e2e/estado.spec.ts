@@ -5,7 +5,7 @@ test('/estado lista la última semana con dato de cada serie', async ({
   page,
 }) => {
   await page.route('**/health', (r) => r.fulfill({ json: { status: 'ok' } }));
-  await page.route('**/api/v1/vigilancia/integridad', (r) =>
+  await page.route('**/datos/v1/vigilancia/integridad.json', (r) =>
     r.fulfill({
       json: {
         aviso: 'x',
@@ -40,7 +40,7 @@ test('/estado lista la última semana con dato de cada serie', async ({
 test('/estado explica el fallo de la consulta sin romper la página', async ({
   page,
 }) => {
-  await page.route('**/api/v1/vigilancia/integridad', (r) =>
+  await page.route('**/datos/v1/vigilancia/integridad.json', (r) =>
     r.fulfill({ status: 500, body: 'error' }),
   );
   await page.goto('/estado');

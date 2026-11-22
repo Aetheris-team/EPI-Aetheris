@@ -151,10 +151,10 @@ export function respuestas() {
 
 export async function simularApi(page: Page) {
   const { principal, retro } = respuestas();
-  await page.route('**/api/nowcast-dengue/retrospectivo', (ruta) =>
+  await page.route('**/datos/nowcast-dengue/retrospectivo.json', (ruta) =>
     ruta.fulfill({ json: retro }),
   );
-  await page.route('**/api/nowcast-dengue', (ruta) =>
+  await page.route('**/datos/nowcast-dengue.json', (ruta) =>
     ruta.fulfill({ json: principal }),
   );
 }

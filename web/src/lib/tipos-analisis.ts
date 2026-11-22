@@ -1,3 +1,5 @@
+import { ultimoAnioClima } from './datos-estaticos.ts';
+
 export const ANIOS_ANALISIS_DENGUE = [2018, 2019, 2021, 2022, 2023] as const;
 
 export type AnioAnalisisDengue = (typeof ANIOS_ANALISIS_DENGUE)[number];
@@ -11,8 +13,7 @@ export function esAnioAnalisisDengue(
 }
 
 /** Años pintables en M1/M2. No amplía el dataset de dengue (ADR 0018). */
-export function aniosClimaPresentacion(hoy: Date = new Date()): number[] {
-  const fin = hoy.getFullYear();
+export function aniosClimaPresentacion(fin = ultimoAnioClima()): number[] {
   const anios: number[] = [];
   for (let anio = 2018; anio <= fin; anio += 1) anios.push(anio);
   return anios;

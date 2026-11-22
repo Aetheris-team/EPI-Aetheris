@@ -151,7 +151,7 @@ test('un error de red permite reintentar y el panel se carga', async ({
   page,
 }) => {
   let fallar = true;
-  await page.route('**/api/clima-dengue/por-anio', async (ruta) => {
+  await page.route('**/datos/clima-dengue/por-anio.json', async (ruta) => {
     if (fallar) {
       await ruta.fulfill({ status: 500, body: 'error' });
       return;

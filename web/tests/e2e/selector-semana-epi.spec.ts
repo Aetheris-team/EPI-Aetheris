@@ -4,7 +4,7 @@ import { expect, test } from '@playwright/test';
 test.describe('Selector interactivo de semana epidemiológica (Epi-Calendar)', () => {
   test.beforeEach(async ({ page }) => {
     // Interceptar llamadas pesadas para que la prueba cargue de inmediato
-    await page.route('**/api/**', (route) =>
+    await page.route('**/datos/**', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',

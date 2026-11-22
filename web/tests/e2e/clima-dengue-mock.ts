@@ -372,11 +372,11 @@ export async function simularClimaDengue(
       });
     };
   await page.route(
-    '**/api/clima-dengue/por-anio',
+    '**/datos/clima-dengue/por-anio.json',
     responder(climaPorAnio, modo.porAnio ?? 'datos'),
   );
   await page.route(
-    '**/api/clima-dengue/multipais',
+    '**/datos/clima-dengue/multipais.json',
     responder(climaMultipais, modo.multipais ?? 'datos'),
   );
 }

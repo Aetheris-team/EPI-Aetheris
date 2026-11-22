@@ -14,7 +14,7 @@ interface Props {
 const evento = Astro.props.evento ?? 'ira';
 const departamentoFijo = Astro.props.departamento;
 const etiqueta = evento === 'neumonias' ? 'Neumonías' : 'IRA';
-const apiBase = evento === 'neumonias' ? '/api/neumonias' : '/api/ira';
+const apiBase = evento === 'neumonias' ? 'neumonias' : 'ira';
 const idPrefijo = `curva-${evento}${departamentoFijo ? `-${departamentoFijo}` : ''}`;
 ---
 
@@ -132,6 +132,7 @@ const idPrefijo = `curva-${evento}${departamentoFijo ? `-${departamentoFijo}` : 
 </PanelWorkspace>
 
 <script>
+  import { urlDato } from '../lib/datos-estaticos';
   import type {
     DepartamentoIRA,
     RespuestaIraDepartamental,
@@ -288,13 +289,11 @@ const idPrefijo = `curva-${evento}${departamentoFijo ? `-${departamentoFijo}` : 
     return grafico;
   }
 
-  const API_BASE = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8000';
-
   async function cargarTemporal(
     apiBase: string,
     codigo: string,
   ): Promise<Record<string, Punto[]>> {
-    const resp = await fetch(`${API_BASE}${apiBase}/temporal/${codigo}`);
+    const resp = await fetch(urlDato(`${apiBase}/temporal/${codigo}`));
     if (!resp.ok) throw new Error('respuesta no OK');
     const datos = await resp.json();
     if (esNoDisponible(datos)) {
@@ -313,7 +312,7 @@ const idPrefijo = `curva-${evento}${departamentoFijo ? `-${departamentoFijo}` : 
 
   async function iniciarSeccion(seccion: HTMLElement) {
     let grafico: GraficoMontado | null = null;
-    const apiBase = seccion.dataset.curvaApi ?? '/api/ira';
+    const apiBase = seccion.dataset.curvaApi ?? 'ira';
     const contenedor = seccion.querySelector(
       '[data-curva-canvas]',
     ) as HTMLElement | null;
@@ -361,7 +360,7 @@ const idPrefijo = `curva-${evento}${departamentoFijo ? `-${departamentoFijo}` : 
 
     let departamentos: DepartamentoIRA[];
     try {
-      const resp = await fetch(`${API_BASE}${apiBase}/departamental`);
+      const resp = await fetch(urlDato(`${apiBase}/departamental`));
       if (!resp.ok) throw new Error('respuesta no OK');
       const datos = await resp.json();
       if (esNoDisponible(datos)) {

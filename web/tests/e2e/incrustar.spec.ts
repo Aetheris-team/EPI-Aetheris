@@ -12,7 +12,7 @@ const casos = Array.from({ length: 30 }, (_, i) => ({
 test('las vistas incrustables salen del índice y llevan atribución', async ({
   page,
 }) => {
-  await page.route('**/api/casos-nacional*', (r) => r.fulfill({ json: casos }));
+  await page.route('**/datos/casos-nacional*', (r) => r.fulfill({ json: casos }));
   for (const ruta of [
     '/incrustar/curva-nacional',
     '/incrustar/ultima-semana',
@@ -34,7 +34,7 @@ test('las vistas incrustables salen del índice y llevan atribución', async ({
 test('los enlaces internos de una vista incrustada abren el sitio completo', async ({
   page,
 }) => {
-  await page.route('**/api/casos-nacional*', (r) => r.fulfill({ json: casos }));
+  await page.route('**/datos/casos-nacional*', (r) => r.fulfill({ json: casos }));
   await page.goto('/incrustar/ultima-semana');
   await page.waitForFunction(
     () => document.querySelectorAll('main a[href]').length > 0,
@@ -73,7 +73,7 @@ test('el botón Incrustar copia un iframe con la ruta de la vista', async ({
 test('la vista incrustada no presenta violaciones WCAG A y AA', async ({
   page,
 }) => {
-  await page.route('**/api/casos-nacional*', (r) => r.fulfill({ json: casos }));
+  await page.route('**/datos/casos-nacional*', (r) => r.fulfill({ json: casos }));
   await page.goto('/incrustar/curva-nacional');
   await expect(page.locator('main svg[role="img"]').first()).toBeVisible();
   const resultados = await new AxeBuilder({ page })

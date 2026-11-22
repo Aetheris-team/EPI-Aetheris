@@ -412,6 +412,7 @@ const mapaSvg = proyectarDepartamentos(geo, 720, 14, 0.4);
 </style>
 
 <script>
+  import { urlDato, leerDato } from '../lib/datos-estaticos';
   import {
     obtenerAlertasDengue,
     obtenerDatasetAnalitico,
@@ -468,7 +469,6 @@ const mapaSvg = proyectarDepartamentos(geo, 720, 14, 0.4);
     tooltipValor: (valor: number | undefined) => string;
   }
 
-  const API_BASE = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8000';
   const SIN_DATO = '#e4e4e7';
   const RUTA_FICHA_M1 = rutaFicha('m1-idoneidad-biofisica');
   const RUTA_FICHA_M2 = rutaFicha('m2-anomalia-climatica');
@@ -670,21 +670,24 @@ const mapaSvg = proyectarDepartamentos(geo, 720, 14, 0.4);
     DatoEspacial
   > | null> {
     if (!cacheEspacial) {
+      const semana = SEMANA_ESPACIAL;
       cacheEspacial = (async () => {
         try {
-          const resp = await fetch(
-            `${API_BASE}/api/v1/spatial/current?week=${SEMANA_ESPACIAL}&year=${ANIO_ESPACIAL}`,
-          );
-          if (!resp.ok) return null;
-          const cuerpo: {
-            departamentos?: Array<{
-              codigo: string;
-              iv: number | null;
-              anomaly_sigma: number | null;
-            }>;
-          } = await resp.json();
+          const semanas = await leerDato<
+            Record<
+              number,
+              {
+                departamentos: Array<{
+                  codigo: string;
+                  iv: number | null;
+                  anomaly_sigma: number | null;
+                }>;
+              }
+            >
+          >(`v1/spatial/current/${ANIO_ESPACIAL}`);
+          const cuerpo = semanas[semana];
           const mapa = new Map<string, DatoEspacial>();
-          for (const fila of cuerpo.departamentos ?? []) {
+          for (const fila of cuerpo?.departamentos ?? []) {
             mapa.set(fila.codigo, {
               codigo: fila.codigo,
               iv: typeof fila.iv === 'number' ? fila.iv : undefined,
@@ -892,13 +895,13 @@ const mapaSvg = proyectarDepartamentos(geo, 720, 14, 0.4);
 
   async function obtenerIntegridadSemana(): Promise<IntegridadSemana | null> {
     if (!cacheConfianza) {
+      const semana = SEMANA_ESPACIAL;
       cacheConfianza = (async () => {
         try {
-          const resp = await fetch(
-            `${API_BASE}/api/v1/vigilancia/integridad?week=${SEMANA_ESPACIAL}&year=${ANIO_ESPACIAL}`,
+          const semanas = await leerDato<Record<number, IntegridadSemana>>(
+            `v1/vigilancia/integridad/${ANIO_ESPACIAL}`,
           );
-          if (!resp.ok) return null;
-          return (await resp.json()) as IntegridadSemana;
+          return semanas[semana] ?? null;
         } catch {
           return null;
         }
@@ -1229,7 +1232,7 @@ const mapaSvg = proyectarDepartamentos(geo, 720, 14, 0.4);
 
       try {
         const resp = await fetch(
-          `${API_BASE}/api/v1/temporal/${codigo}?anio=${ANIO_ESPACIAL}`,
+          urlDato(`v1/temporal/${codigo}/${ANIO_ESPACIAL}`),
         );
         if (!resp.ok) throw new Error('respuesta no OK');
         const datos: { semanas: SemanaTemporal[] } = await resp.json();

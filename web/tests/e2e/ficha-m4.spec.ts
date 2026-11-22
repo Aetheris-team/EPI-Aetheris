@@ -126,7 +126,7 @@ test.describe('ficha enriquecida de M4', () => {
   test('si la API falla, la simulación sigue y se ofrece reintentar', async ({
     page,
   }) => {
-    await page.route('**/api/v1/vigilancia/integridad**', (ruta) =>
+    await page.route('**/datos/v1/vigilancia/integridad**', (ruta) =>
       ruta.abort(),
     );
     await page.goto(RUTA);
@@ -142,7 +142,7 @@ test.describe('ficha enriquecida de M4', () => {
   test('muestra la antigüedad y el resumen anual que devuelve la API', async ({
     page,
   }) => {
-    await page.route('**/api/v1/vigilancia/integridad**', (ruta) =>
+    await page.route('**/datos/v1/vigilancia/integridad**', (ruta) =>
       ruta.fulfill({
         json: {
           aviso: '',

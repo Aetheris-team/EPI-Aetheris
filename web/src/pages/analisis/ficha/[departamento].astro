@@ -692,6 +692,7 @@ const { codigo, nombre } = departamento;
 </Layout>
 
 <script>
+  import { urlDato, ultimoAnioClima } from '../../../lib/datos-estaticos';
   import {
     encontrarUltimaSemanaM1M2,
     encontrarUltimaSemanaPresion,
@@ -744,7 +745,6 @@ const { codigo, nombre } = departamento;
     return anios.length > 0 ? String(anios[0]) : null;
   }
 
-  const API_BASE = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8000';
   const root = document.querySelector<HTMLElement>('[data-ficha]');
   const codigo = root?.dataset.codigo ?? 'SV-SS';
 
@@ -952,12 +952,8 @@ const { codigo, nombre } = departamento;
     }
   }
 
-  // El anio del corte climatico (M1/M2) no es un literal: los endpoints de
-  // clima ya responden para el anio en curso (ADR 0018). Se pide el anio
-  // calendario y, si todavia no tiene observaciones ERA5 (primeras semanas de
-  // enero), se cae al anterior. El rotulo usa el `anio` que devuelve la
-  // respuesta, no una constante.
-  const ANIO_ACTUAL = new Date().getFullYear();
+  // El año del corte climático se toma del archivo exportado.
+  const ANIO_ACTUAL = ultimoAnioClima();
   // La presion epidemiologica (M3) si se detiene en 2023: los boletines MINSAL
   // no llegan mas alla. El rotulo lo deja explicito para no confundirlo con la
   // fecha de generacion de la hoja.
@@ -965,12 +961,12 @@ const { codigo, nombre } = departamento;
 
   const promesaTemporal = (async (): Promise<RespuestaM1M2> => {
     const actual = await traer<RespuestaM1M2>(
-      `${API_BASE}/api/v1/temporal/${codigo}?anio=${ANIO_ACTUAL}`,
+      urlDato(`v1/temporal/${codigo}/${ANIO_ACTUAL}`),
     );
     if (encontrarUltimaSemanaM1M2(actual.semanas)) return actual;
     try {
       const previo = await traer<RespuestaM1M2>(
-        `${API_BASE}/api/v1/temporal/${codigo}?anio=${ANIO_ACTUAL - 1}`,
+        urlDato(`v1/temporal/${codigo}/${ANIO_ACTUAL - 1}`),
       );
       if (encontrarUltimaSemanaM1M2(previo.semanas)) return previo;
     } catch {
@@ -980,19 +976,19 @@ const { codigo, nombre } = departamento;
   })();
 
   const promesaPresion = traer<RespuestaPresion>(
-    `${API_BASE}/api/v1/presion/temporal/${codigo}?anio=${ANIO_MINSAL}`,
+    urlDato(`v1/presion/temporal/${codigo}/${ANIO_MINSAL}`),
   );
 
   const promesaIra = traer<RespuestaSerieRespiratoria>(
-    `${API_BASE}/api/ira/temporal/${codigo}`,
+    urlDato(`ira/temporal/${codigo}`),
   );
 
   const promesaNeumonias = traer<RespuestaSerieRespiratoria>(
-    `${API_BASE}/api/neumonias/temporal/${codigo}`,
+    urlDato(`neumonias/temporal/${codigo}`),
   );
 
   const promesaAlertas = traer<PayloadAlertasRespuesta>(
-    `${API_BASE}/api/alertas`,
+    urlDato('alertas/registradas-activas'),
   );
 
   // Ejecucion concurrente con gate de impresion

@@ -25,7 +25,7 @@ const semanas = Array.from({ length: 52 }, (_, i) => ({
 test('el canal endémico se descarga como SVG con el pie de fuente y sin variables CSS', async ({
   page,
 }) => {
-  await page.route('**/api/v1/presion/temporal/**', (ruta) =>
+  await page.route('**/datos/v1/presion/temporal/**', (ruta) =>
     ruta.fulfill({
       json: {
         departamento_codigo: 'SV-SS',
@@ -63,7 +63,7 @@ test('el canal endémico se descarga como SVG con el pie de fuente y sin variabl
 });
 
 test('el canal endémico se descarga como PNG', async ({ page }) => {
-  await page.route('**/api/v1/presion/temporal/**', (ruta) =>
+  await page.route('**/datos/v1/presion/temporal/**', (ruta) =>
     ruta.fulfill({
       json: {
         departamento_codigo: 'SV-SS',

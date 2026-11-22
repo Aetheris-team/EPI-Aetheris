@@ -54,7 +54,7 @@ const SEMANAS_PRESION = Array.from({ length: 52 }, (_, i) => ({
 async function simularApi(page: Page) {
   await page.route('**/api/alertas?**', (r) => r.fulfill({ json: ALERTAS }));
   await page.route('**/api/alertas', (r) => r.fulfill({ json: ALERTAS }));
-  await page.route('**/api/v1/presion/temporal/**', (r) =>
+  await page.route('**/datos/v1/presion/temporal/**', (r) =>
     r.fulfill({
       json: {
         departamento_codigo: 'SV-SS',
@@ -65,7 +65,7 @@ async function simularApi(page: Page) {
       },
     }),
   );
-  await page.route('**/api/v1/temporal/**', (r) =>
+  await page.route('**/datos/v1/temporal/**', (r) =>
     r.fulfill({
       json: {
         departamento_codigo: 'SV-SS',
@@ -84,7 +84,7 @@ async function simularApi(page: Page) {
     }),
   );
   for (const evento of ['ira', 'neumonias']) {
-    await page.route(`**/api/${evento}/temporal/*`, (r) =>
+    await page.route(`**/datos/${evento}/temporal/*`, (r) =>
       r.fulfill({
         json: {
           departamento_codigo: 'SV-SS',

@@ -110,28 +110,28 @@ test.describe('Ficha departamental imprimible', () => {
     page,
   }) => {
     // Interceptar llamadas al backend
-    await page.route('**/api/v1/temporal/SV-SS*', (route) =>
+    await page.route('**/datos/v1/temporal/SV-SS/*', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify(MOCK_TEMPORAL),
       }),
     );
-    await page.route('**/api/v1/presion/temporal/SV-SS*', (route) =>
+    await page.route('**/datos/v1/presion/temporal/SV-SS/*', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify(MOCK_PRESION),
       }),
     );
-    await page.route('**/api/ira/temporal/SV-SS*', (route) =>
+    await page.route('**/datos/ira/temporal/SV-SS*', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify(MOCK_IRA),
       }),
     );
-    await page.route('**/api/neumonias/temporal/SV-SS*', (route) =>
+    await page.route('**/datos/neumonias/temporal/SV-SS*', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -192,28 +192,28 @@ test.describe('Ficha departamental imprimible', () => {
     page,
   }) => {
     // Simular que el endpoint de respiratorios falla con 500 y presión responde 500
-    await page.route('**/api/v1/temporal/SV-SS*', (route) =>
+    await page.route('**/datos/v1/temporal/SV-SS/*', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify(MOCK_TEMPORAL),
       }),
     );
-    await page.route('**/api/v1/presion/temporal/SV-SS*', (route) =>
+    await page.route('**/datos/v1/presion/temporal/SV-SS/*', (route) =>
       route.fulfill({
         status: 500,
         contentType: 'application/json',
         body: JSON.stringify({ detail: 'Error interno' }),
       }),
     );
-    await page.route('**/api/ira/temporal/SV-SS*', (route) =>
+    await page.route('**/datos/ira/temporal/SV-SS*', (route) =>
       route.fulfill({
         status: 500,
         contentType: 'application/json',
         body: JSON.stringify({ detail: 'Fallo simulado' }),
       }),
     );
-    await page.route('**/api/neumonias/temporal/SV-SS*', (route) =>
+    await page.route('**/datos/neumonias/temporal/SV-SS*', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -264,28 +264,28 @@ test.describe('Ficha departamental imprimible', () => {
     page,
   }) => {
     // M1/M2 falla, M3 responde: la tabla debe listar las semanas de M3.
-    await page.route('**/api/v1/temporal/SV-SS*', (route) =>
+    await page.route('**/datos/v1/temporal/SV-SS/*', (route) =>
       route.fulfill({
         status: 500,
         contentType: 'application/json',
         body: JSON.stringify({ detail: 'Fallo simulado' }),
       }),
     );
-    await page.route('**/api/v1/presion/temporal/SV-SS*', (route) =>
+    await page.route('**/datos/v1/presion/temporal/SV-SS/*', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify(MOCK_PRESION),
       }),
     );
-    await page.route('**/api/ira/temporal/SV-SS*', (route) =>
+    await page.route('**/datos/ira/temporal/SV-SS*', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify(MOCK_IRA),
       }),
     );
-    await page.route('**/api/neumonias/temporal/SV-SS*', (route) =>
+    await page.route('**/datos/neumonias/temporal/SV-SS*', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -340,28 +340,28 @@ test.describe('Ficha departamental imprimible', () => {
   test('reusa el aviso de la respuesta y escapa el contenido de las alertas', async ({
     page,
   }) => {
-    await page.route('**/api/v1/temporal/SV-SS*', (route) =>
+    await page.route('**/datos/v1/temporal/SV-SS/*', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify(MOCK_TEMPORAL),
       }),
     );
-    await page.route('**/api/v1/presion/temporal/SV-SS*', (route) =>
+    await page.route('**/datos/v1/presion/temporal/SV-SS/*', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify(MOCK_PRESION),
       }),
     );
-    await page.route('**/api/ira/temporal/SV-SS*', (route) =>
+    await page.route('**/datos/ira/temporal/SV-SS*', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify(MOCK_IRA),
       }),
     );
-    await page.route('**/api/neumonias/temporal/SV-SS*', (route) =>
+    await page.route('**/datos/neumonias/temporal/SV-SS*', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -424,13 +424,13 @@ test.describe('Ficha departamental imprimible', () => {
           body: JSON.stringify(cuerpo),
         });
     await page.route(
-      '**/api/v1/presion/temporal/SV-SS*',
+      '**/datos/v1/presion/temporal/SV-SS/*',
       responder(MOCK_PRESION),
     );
-    await page.route('**/api/v1/temporal/SV-SS*', responder(MOCK_TEMPORAL));
-    await page.route('**/api/ira/temporal/SV-SS*', responder(MOCK_IRA));
+    await page.route('**/datos/v1/temporal/SV-SS/*', responder(MOCK_TEMPORAL));
+    await page.route('**/datos/ira/temporal/SV-SS*', responder(MOCK_IRA));
     await page.route(
-      '**/api/neumonias/temporal/SV-SS*',
+      '**/datos/neumonias/temporal/SV-SS*',
       responder(MOCK_NEUMONIAS),
     );
     await page.route('**/api/alertas*', (route) =>
@@ -475,28 +475,28 @@ test.describe('Ficha departamental imprimible', () => {
         },
       ],
     };
-    await page.route('**/api/v1/temporal/SV-SS*', (route) =>
+    await page.route('**/datos/v1/temporal/SV-SS/*', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify(MOCK_TEMPORAL),
       }),
     );
-    await page.route('**/api/v1/presion/temporal/SV-SS*', (route) =>
+    await page.route('**/datos/v1/presion/temporal/SV-SS/*', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify(MOCK_PRESION),
       }),
     );
-    await page.route('**/api/ira/temporal/SV-SS*', (route) =>
+    await page.route('**/datos/ira/temporal/SV-SS*', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify(MOCK_IRA),
       }),
     );
-    await page.route('**/api/neumonias/temporal/SV-SS*', (route) =>
+    await page.route('**/datos/neumonias/temporal/SV-SS*', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',

@@ -4,6 +4,8 @@
 // -- Astro no genera un tipo para PUBLIC_API_URL sin un esquema astro:env.
 interface ImportMetaEnv {
   readonly PUBLIC_API_URL?: string;
+  readonly PUBLIC_ULTIMO_ANIO_CLIMA: number;
+  readonly PUBLIC_FECHA_CORTE: string;
   // 'true' enciende los enlaces y las pantallas de cuentas (/cuenta, /admin).
   // Cualquier otro valor, o ninguno, las deja apagadas.
   readonly PUBLIC_CUENTAS_HABILITADAS?: string;

@@ -4,34 +4,25 @@
 // endpoints que ya usan otros paneles (casos-nacional, vigilancia/integridad);
 // no hay lectura de riesgo ni umbral. La predicción de la semana siguiente
 // vive solo en /prediccion.
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import type { CasoNacionalSemanal } from '../lib/tipos-analisis';
 import { RUTA_PREDICCION, RUTA_SENSIBILIDAD } from '../lib/enlaces';
 import BotonIncrustar from './BotonIncrustar.astro';
 
-// Copia de la serie tomada al compilar: la franja se pinta al instante con ella
-// y luego se actualiza desde la API. Si el backend no responde durante el
-// build, el sitio compila igual y la franja carga como siempre.
-const API_BUILD = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8000';
-let instantanea: { generado: string; casos: unknown[] } | null = null;
-if (!import.meta.env.DEV) {
-  try {
-    const respuesta = await fetch(`${API_BUILD}/api/casos-nacional`, {
-      signal: AbortSignal.timeout(5000),
-    });
-    if (respuesta.ok) {
-      const datos: unknown = await respuesta.json();
-      if (Array.isArray(datos)) {
-        instantanea = {
-          generado: new Date().toISOString().slice(0, 10),
-          casos: datos
-            .filter((c) => c && c.fuente === 'minsal_tablero')
-            .slice(-120),
-        };
-      }
-    }
-  } catch {
-    instantanea = null;
-  }
-}
+// Inserta una copia del mismo archivo que leerán las gráficas en el cliente.
+const instantanea = import.meta.env.DEV
+  ? null
+  : {
+      generado: import.meta.env.PUBLIC_FECHA_CORTE,
+      casos: (
+        JSON.parse(
+          readFileSync(resolve('public/datos/casos-nacional.json'), 'utf8'),
+        ) as CasoNacionalSemanal[]
+      )
+        .filter((caso) => caso.fuente === 'minsal_tablero')
+        .slice(-120),
+    };
 
 interface Props {
   class?: string;
@@ -224,7 +215,7 @@ const { class: clasePersonalizada } = Astro.props;
 
     const instantanea = leerInstantanea();
     const notaInstantanea = instantanea
-      ? `Cifras guardadas al publicar el sitio (${fecha(instantanea.generado)}); se actualizan al cargar. `
+      ? `Corte de datos del ${fecha(instantanea.generado)}. `
       : '';
     if (instantanea) {
       pintar(contenedor, instantanea.casos, null, notaInstantanea);
@@ -241,7 +232,7 @@ const { class: clasePersonalizada } = Astro.props;
           contenedor,
           instantanea.casos,
           integridad,
-          `No se pudo actualizar; se muestran las cifras guardadas al publicar el sitio (${fecha(instantanea.generado)}). `,
+          `Se muestra la copia incluida en la página. Corte del ${fecha(instantanea.generado)}. `,
         );
       } else {
         renderErrorFuente(contenedor, () => void iniciar());
