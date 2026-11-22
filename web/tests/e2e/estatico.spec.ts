@@ -73,3 +73,20 @@ test('el archivo aplica tipo y solapamiento de fechas del enlace', async ({
     page.locator('[data-alerta]:not([data-alerta-historica])'),
   ).toHaveCount(0);
 });
+
+test('los años con solo clima conservan el contrato de presión sin observaciones', async ({
+  request,
+}) => {
+  const respuesta = await request.get(
+    '/datos/v1/presion/temporal/SV-SS/2020.json',
+  );
+  expect(respuesta.ok()).toBe(true);
+  const presion = await respuesta.json();
+  expect(presion.semanas.length).toBeGreaterThan(0);
+  expect(
+    presion.semanas.every(
+      (semana: { probable: { percentil: number | null } }) =>
+        semana.probable.percentil === null,
+    ),
+  ).toBe(true);
+});

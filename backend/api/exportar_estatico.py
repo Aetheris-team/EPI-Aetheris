@@ -144,14 +144,12 @@ def exportar(destino, sitio):
         for anio in anios_clima:
             trabajos.append(pool.submit(exportar_semana_anual, anio))
             for codigo in departamentos:
-                ruta = f"v1/temporal/{codigo}"
-                trabajos.append(pool.submit(exportar_ruta, ruta, f"{ruta}/{anio}", anio=anio))
+                for ruta in (f"v1/temporal/{codigo}", f"v1/presion/temporal/{codigo}"):
+                    trabajos.append(pool.submit(exportar_ruta, ruta, f"{ruta}/{anio}", anio=anio))
         for anio in ANIOS_ANALISIS_DENGUE:
             ruta = "v1/analisis/dengue"
             trabajos.append(pool.submit(exportar_ruta, ruta, f"{ruta}/{anio}", year=anio))
             for codigo in departamentos:
-                ruta = f"v1/presion/temporal/{codigo}"
-                trabajos.append(pool.submit(exportar_ruta, ruta, f"{ruta}/{anio}", anio=anio))
                 trabajos.append(pool.submit(exportar_procedencia, anio, codigo))
         for anio in ANIOS_NEUMONIAS:
             trabajos.append(pool.submit(exportar_ruta, f"neumonias/heatmap/{anio}"))
