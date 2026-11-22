@@ -393,12 +393,12 @@ const NAV: { href: string; etiqueta: string; rutas?: string[] }[] = [
     <script>
       // Registro del service worker (ADR 0014). Solo en producción: en dev el
       // cache del shell tapa los cambios en caliente de Astro.
-      const apiBase = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8000';
 
       if ('serviceWorker' in navigator && import.meta.env.PROD) {
         window.addEventListener('load', async () => {
           try {
-            await navigator.serviceWorker.register('/sw.js');
+            const version = import.meta.env.PUBLIC_VERSION_CORTE;
+            await navigator.serviceWorker.register(`/sw.js?corte=${version}`);
             const registro = await navigator.serviceWorker.ready;
             // En la primera visita el service worker se activa después de que
             // el documento pidió sus scripts y estilos, así que esos no
@@ -408,8 +408,13 @@ const NAV: { href: string; etiqueta: string; rutas?: string[] }[] = [
             const recursos = performance
               .getEntriesByType('resource')
               .map((entrada) => entrada.name)
-              .filter((url) => url.startsWith(window.location.origin));
-            const urls = [...new Set([window.location.pathname, ...recursos])];
+              .filter((url) => new URL(url).origin === window.location.origin);
+            const urls = [
+              ...new Set([
+                window.location.pathname + window.location.search,
+                ...recursos,
+              ]),
+            ];
             const canal = new MessageChannel();
             const listo = new Promise((resolver) => {
               canal.port1.onmessage = () => resolver(undefined);
@@ -418,7 +423,6 @@ const NAV: { href: string; etiqueta: string; rutas?: string[] }[] = [
               {
                 tipo: 'precache',
                 urls,
-                api: `${apiBase}/api/alertas`,
               },
               [canal.port2],
             );

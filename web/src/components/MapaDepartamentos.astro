@@ -1269,11 +1269,11 @@ const mapaSvg = proyectarDepartamentos(geo, 720, 14, 0.4);
         });
     }
 
-    async function cargarAlertasVigentes() {
+    async function cargarAlertasDelCorte() {
       const avisoNacional = document.getElementById('mapa-alertas-nacionales');
       try {
         const alertas = (await obtenerAlertasDengue()).filter((a) =>
-          alertaEstaVigente(a),
+          alertaEstaVigente(a, import.meta.env.PUBLIC_FECHA_CORTE),
         );
         const nuevas = new Set<string>();
         let nacionales = 0;
@@ -1285,7 +1285,7 @@ const mapaSvg = proyectarDepartamentos(geo, 720, 14, 0.4);
         departamentosConAlerta = nuevas;
         if (avisoNacional && nacionales > 0) {
           avisoNacional.classList.remove('hidden');
-          avisoNacional.innerHTML = `Hay ${nacionales} ${nacionales === 1 ? 'alerta nacional vigente' : 'alertas nacionales vigentes'} de dengue. Los departamentos con contorno punteado tienen además una alerta propia. <a href="/alertas?tipo=dengue" class="font-medium text-accent underline">Ver alertas</a>`;
+          avisoNacional.innerHTML = `Hay ${nacionales} ${nacionales === 1 ? 'alerta nacional registrada' : 'alertas nacionales registradas'} de dengue en el corte. El contorno punteado señala un registro departamental. <a href="/alertas?tipo=dengue" class="font-medium text-accent underline">Ver alertas</a>`;
         } else if (avisoNacional && nuevas.size > 0) {
           avisoNacional.classList.remove('hidden');
           avisoNacional.textContent =
@@ -1735,7 +1735,7 @@ const mapaSvg = proyectarDepartamentos(geo, 720, 14, 0.4);
     );
     capaActivaId = idCapaInicial;
     pintarSelector(idCapaInicial);
-    void cargarAlertasVigentes();
+    void cargarAlertasDelCorte();
     await activarCapa(idCapaInicial);
 
     let filtrosAplicados = obtenerFiltrosAnalisis();

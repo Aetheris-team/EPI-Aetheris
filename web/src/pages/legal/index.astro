@@ -1,21 +1,4 @@
 ---
-/**
- * Índice de la sección legal (/legal). Es la puerta de entrada, no un cuarto
- * documento: cada tarjeta resume lo que el documento enlazado dice de verdad,
- * y el bloque «En pocas palabras» adelanta los hechos que más preguntan
- * quienes llegan aquí. Todos se pueden comprobar en el código (sin cookies
- * para quien solo lee, una cookie de sesión para las cuentas, sin analítica,
- * mapas vectoriales SVG locales sin peticiones de teselas a terceros, licencia
- * GPL-3.0).
- *
- * Si cambia el contenido de una de las tres legales, hay que revisar su
- * descripción aquí: una tarjeta que promete algo que el documento no dice es
- * peor que no tener índice.
- *
- * Las fechas de actualización no se repiten en las tarjetas a propósito: cada
- * documento muestra la suya en el encabezado y copiarlas aquí solo añadiría un
- * sitio más donde pueden quedar desfasadas.
- */
 import Layout from '../../layouts/Layout.astro';
 import Icono from '../../components/Icono.astro';
 import { RUTA_SENSIBILIDAD } from '../../lib/enlaces';
@@ -25,14 +8,14 @@ const SECCIONES = [
     href: '/legal/privacidad',
     titulo: 'Política de privacidad',
     descripcion:
-      'Qué datos circulan al leer el sitio y qué se guarda de las personas con cuenta, quién los recibe, cuánto tiempo se conservan, la cookie de sesión, por qué no hay transferencias a servidores de mapas y cómo ejercer los derechos sobre los datos personales.',
+      'Qué datos circulan al leer el sitio, quién los recibe, cuánto tiempo se conservan y cómo ejercer los derechos sobre los datos personales.',
     icono: 'shield-check',
   },
   {
     href: '/legal/terminos',
     titulo: 'Términos de uso',
     descripcion:
-      'Qué es y qué no es la herramienta, cómo usar la API, qué deberes tiene quien publica con una cuenta, qué licencias tienen el código y los datos, y por qué se ofrece sin garantías.',
+      'Condiciones de consulta del sitio y licencias del código y los datos.',
     icono: 'file-text',
   },
   {
@@ -68,8 +51,8 @@ const SECCIONES = [
         class="mt-3 max-w-2xl font-sans text-sm leading-relaxed text-ink-muted"
       >
         Tres documentos explican quién está detrás de EPI-Aetheris, qué datos se
-        tratan al visitarlo y en qué condiciones se pueden usar el sitio, la API
-        y los datos.
+        tratan al visitarlo y en qué condiciones se pueden usar el sitio y los
+        datos.
       </p>
     </header>
 
@@ -117,8 +100,7 @@ const SECCIONES = [
       <ul class="mt-3 list-disc space-y-2 pl-5">
         <li>
           Quien solo lee el sitio no tiene cuenta ni recibe cookies, y no hay
-          herramientas de analítica. Solo las personas del equipo con cuenta
-          reciben una cookie de sesión.
+          herramientas de analítica.
         </li>
         <li>
           Los mapas son geometrías vectoriales locales en SVG: no se solicitan

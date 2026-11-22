@@ -17,6 +17,10 @@ export default defineConfig({
   expect: { timeout: 10_000 },
   use: {
     baseURL: URL_BASE,
+    serviceWorkers: 'block',
+    launchOptions: {
+      executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE,
+    },
     // La barra del análisis se contrae sola a los 5 s sin actividad
     // (ToolbarAnalisis.astro); con eso los specs verían los controles
     // desaparecer a mitad de test. Su propio spec arranca sin esta clave.

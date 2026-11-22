@@ -294,7 +294,7 @@ test('archive non-vigente row shows NO VIGENTE', async ({ page }) => {
 test('/alertas anuncia el feed Atom en la cabecera y con un enlace visible', async ({
   page,
 }) => {
-  await page.route('**/api/alertas?**', (ruta) =>
+  await page.route('**/datos/alertas/registradas-activas.json', (ruta) =>
     ruta.fulfill({
       json: {
         aviso: AVISO_HONESTIDAD_ALERTAS,
@@ -307,7 +307,10 @@ test('/alertas anuncia el feed Atom en la cabecera y con un enlace visible', asy
   const cabecera = page.locator(
     'head link[rel="alternate"][type="application/atom+xml"]',
   );
-  await expect(cabecera).toHaveAttribute('href', /\/api\/alertas\/feed\.xml$/);
+  await expect(cabecera).toHaveAttribute(
+    'href',
+    /\/datos\/alertas\/feed\.xml$/,
+  );
   await expect(page.locator('[data-enlace-feed]')).toBeVisible();
 });
 

@@ -15,7 +15,7 @@ const { codigo, nombre } = Astro.props;
     id="dep-alertas-titulo"
     class="font-display text-xl font-semibold text-ink"
   >
-    Alertas de campo vigentes
+    Alertas de campo en el corte
   </h2>
   <p class="mt-1 font-sans text-xs text-ink-muted">
     Las nacionales y las que nombran a {nombre}.
@@ -32,6 +32,7 @@ const { codigo, nombre } = Astro.props;
 </section>
 
 <script>
+  import { urlDato } from '../lib/datos-estaticos';
   import {
     alertaAplicaA,
     esAlertaNacional,
@@ -43,8 +44,6 @@ const { codigo, nombre } = Astro.props;
     type PayloadAlertas,
   } from '../lib/vista-alertas';
 
-  const API_BASE = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8000';
-
   document
     .querySelectorAll<HTMLElement>('[data-departamento-alertas]')
     .forEach(async (raiz) => {
@@ -53,7 +52,7 @@ const { codigo, nombre } = Astro.props;
       const lista = raiz.querySelector<HTMLElement>('[data-alertas-lista]');
       if (!estado || !lista) return;
       try {
-        const respuesta = await fetch(`${API_BASE}/api/alertas`);
+        const respuesta = await fetch(urlDato('alertas/registradas-activas'));
         if (!respuesta.ok) throw new Error(String(respuesta.status));
         const datos = (await respuesta.json()) as PayloadAlertas;
         // Las que nombran al departamento van antes que las nacionales.
@@ -65,7 +64,7 @@ const { codigo, nombre } = Astro.props;
         estado.setAttribute('aria-busy', 'false');
         if (aplican.length === 0) {
           estado.textContent =
-            'Sin alertas de campo vigentes para este departamento.';
+            'Sin alertas en el corte para este departamento.';
           return;
         }
         estado.hidden = true;

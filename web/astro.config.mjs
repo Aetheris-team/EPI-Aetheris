@@ -4,10 +4,6 @@ import tailwindcss from '@tailwindcss/vite';
 import icon from 'astro-icon';
 import sitemap from '@astrojs/sitemap';
 
-// El único origen de datos al que el navegador puede conectarse además del
-// propio sitio: la API. Sale de la misma variable que usa el código (build).
-const apiBase = process.env.PUBLIC_API_URL ?? 'http://localhost:8000';
-
 // El corte se genera antes de compilar, también en el entorno de desarrollo.
 const rutaCorte = new URL('./public/datos/corte.json', import.meta.url);
 let corte;
@@ -118,7 +114,7 @@ export default defineConfig({
     csp: {
       directives: [
         "default-src 'self'",
-        `connect-src 'self' ${apiBase}`,
+        "connect-src 'self'",
         // Teselas de OpenStreetMap en los mapas de Leaflet; data: y blob: para
         // las imágenes que generan los gráficos al exportar.
         "img-src 'self' data: blob: https://*.tile.openstreetmap.org",
@@ -149,6 +145,7 @@ export default defineConfig({
         corte.ultimo_anio_clima,
       ),
       'import.meta.env.PUBLIC_FECHA_CORTE': JSON.stringify(corte.fecha),
+      'import.meta.env.PUBLIC_VERSION_CORTE': JSON.stringify(corte.version),
     },
   },
 });

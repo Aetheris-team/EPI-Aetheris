@@ -1,22 +1,4 @@
 ---
-/**
- * Aviso legal / Impressum: identificación pública de quién está detrás del
- * dominio. Corto y factual a propósito; lo que necesita explicación se
- * explica en las otras dos legales, y aquí solo se enlaza.
- *
- * Cada dato de la tabla tiene respaldo fuera de esta página: el dominio es el
- * `site` de astro.config.mjs, el correo coincide con security.txt y con
- * /contacto, y el alojamiento en Render (región de Oregón, EE. UU.) sale del
- * render.yaml del monorepo. Si cambia alguno, hay que cambiarlo en todos.
- *
- * Encargados del tratamiento (Render, Cloudflare como red de distribución de
- * Render, Resend para el correo de las cuentas): la lista completa y lo que
- * recibe cada uno está en privacidad.astro; aquí solo se nombran.
- *
- * Lo que un aviso legal mercantil incluiría y aquí no aparece (domicilio
- * comercial, datos de inscripción) se dice explícitamente en vez de omitirlo
- * en silencio: quien busca ese dato tiene que saber por qué no está.
- */
 import DocumentoTexto from '../../components/DocumentoTexto.astro';
 import { navegacionLegal } from '../../lib/navegacion-documentos';
 ---
@@ -88,12 +70,8 @@ import { navegacionLegal } from '../../lib/navegacion-documentos';
 
   <h2>Alojamiento</h2>
   <p>
-    El sitio, la API y la base de datos se alojan en servidores de Render
-    Services, Inc., en Estados Unidos, que entrega el sitio por la red de
-    Cloudflare. Los correos de las cuentas del equipo los envía Resend, Inc.,
-    también en Estados Unidos. Qué datos recibe cada proveedor se explica en la{
-      ' '
-    }
+    El despliegue público del sitio estático en Render usa la red de Cloudflare.
+    Qué datos recibe cada proveedor se explica en la{' '}
     <a href="/legal/privacidad">política de privacidad</a>.
   </p>
 

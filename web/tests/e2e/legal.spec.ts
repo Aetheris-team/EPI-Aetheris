@@ -85,20 +85,14 @@ test('la política de privacidad nombra las transferencias reales a terceros y l
   await expect(documento).toContainText('no recibe cookies');
 });
 
-test('la política de privacidad declara los datos y los encargados de las cuentas', async ({
+test('la política describe el archivo y el almacenamiento local', async ({
   page,
 }) => {
   await page.goto('/legal/privacidad');
   const documento = page.locator('.doc-texto');
-  // Con cuentas hay más encargados que Render y OSM, y una cookie de sesión.
-  // Si alguien quita un proveedor del texto sin quitarlo del sistema, esto lo
-  // frena. Las cuentas se describen aunque estén apagadas: la política es la
-  // condición para la primera invitación (ADR 0024).
-  await expect(documento).toContainText('Resend');
+  await expect(documento).toContainText('El archivo conserva el nombre');
   await expect(documento).toContainText('Cloudflare');
-  await expect(documento).toContainText('Have I Been Pwned');
-  await expect(documento).toContainText('__Host-epi_sid');
-  await expect(documento).toContainText('72 horas');
+  await expect(documento).not.toContainText('__Host-epi_sid');
   await expect(documento).toContainText('Agencia de Ciberseguridad del Estado');
 });
 
@@ -114,21 +108,16 @@ test('la política y los términos no dejan marcadores pendientes a la vista', a
   }
 });
 
-test('los términos fijan los deberes de quien publica con una cuenta', async ({
+test('los términos describen la reutilización de los datos del corte', async ({
   page,
 }) => {
   await page.goto('/legal/terminos');
   await page.getByRole('button', { name: 'Expandir todo' }).click();
   const documento = page.locator('.doc-texto');
   await expect(
-    documento.getByRole('heading', {
-      level: 2,
-      name: /Deberes de quien publica/,
-    }),
+    documento.getByRole('heading', { name: /Reutilización de los datos/ }),
   ).toBeVisible();
-  await expect(documento).toContainText('Sin datos personales de pacientes');
-  await expect(documento).toContainText('Firma con nombre e institución');
-  await expect(documento).toContainText('ese motivo es público');
+  await expect(documento).toContainText('Identificar el corte');
   await expect(
     documento.getByRole('link', { name: 'aviso de sensibilidad' }).first(),
   ).toHaveAttribute('href', '/biblioteca/05-sensibilidad-y-honestidad');

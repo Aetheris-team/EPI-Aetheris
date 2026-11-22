@@ -1,6 +1,7 @@
 """Exporta el contrato público de lectura a archivos para el sitio Astro."""
 
 import argparse
+import hashlib
 import json
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -87,6 +88,9 @@ def guardar_json(destino, ruta, cuerpo):
 
 
 def exportar(destino, sitio):
+    destino.mkdir(parents=True, exist_ok=True)
+    if any(destino.iterdir()):
+        raise ValueError("La carpeta de exportación debe estar vacía.")
     esperar_api()
     corte, ultimo_anio_clima, departamentos = obtener_corte()
     anios_clima = range(min(ANIOS_ANALISIS_DENGUE), ultimo_anio_clima + 1)
@@ -126,13 +130,8 @@ def exportar(destino, sitio):
     with _abrir_conexion() as conn:
         resumen = construir_integridad(conn, hoy=corte)
     guardar_json(destino, "v1/vigilancia/integridad", resumen)
-    guardar_json(destino, "corte", {
-        "fecha": corte.isoformat(),
-        "ultimo_anio_clima": ultimo_anio_clima,
-        "series": resumen["antiguedad"],
-    })
     alertas = exportar_ruta("alertas", incluir_inactivas="true")
-    activas = exportar_ruta("alertas", archivo="alertas/registradas-activas")
+    exportar_ruta("alertas", archivo="alertas/registradas-activas")
     fuente = construir_feed_atom(
         alertas["alertas"], alertas["ultima_revision"],
         sitio=sitio, api_url=f"{sitio}/datos/alertas/feed.xml",
@@ -168,7 +167,19 @@ def exportar(destino, sitio):
         for trabajo in trabajos:
             trabajo.result()
 
-    print(f"Corte {corte}: {len(departamentos)} departamentos y {len(activas['alertas'])} alertas marcadas activas.")
+    huella = hashlib.sha256()
+    for archivo in sorted(destino.rglob("*")):
+        if archivo.is_file():
+            huella.update(archivo.relative_to(destino).as_posix().encode("utf-8"))
+            huella.update(hashlib.sha256(archivo.read_bytes()).digest())
+    guardar_json(destino, "corte", {
+        "fecha": corte.isoformat(),
+        "version": huella.hexdigest()[:16],
+        "ultimo_anio_clima": ultimo_anio_clima,
+        "series": resumen["antiguedad"],
+    })
+
+    print(f"Corte {corte}: {len(departamentos)} departamentos y {len(alertas['alertas'])} alertas públicas.")
 
 
 if __name__ == "__main__":

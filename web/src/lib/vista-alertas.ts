@@ -254,10 +254,11 @@ function pintarTarjeta(
   articulo.setAttribute('data-tipo', alerta.tipo);
   articulo.setAttribute('data-nivel', alerta.nivel);
   articulo.id = `alerta-${alerta.id}`;
+  articulo.dataset.alertaHistorica = '';
   if (esAlertaEtiquetada(alerta)) {
     articulo.setAttribute('data-alerta-etiqueta', String(alerta.etiqueta));
   }
-  if (!alertaEstaVigente(alerta)) {
+  if (!alertaEstaVigente(alerta, import.meta.env?.PUBLIC_FECHA_CORTE)) {
     articulo.setAttribute('data-alerta-no-vigente-tarjeta', '');
   }
 
@@ -270,7 +271,10 @@ function pintarTarjeta(
     articulo.appendChild(avisoPrueba);
   }
 
-  const avisoNoVigente = textoNoVigente(alerta);
+  const avisoNoVigente = textoNoVigente(
+    alerta,
+    import.meta.env?.PUBLIC_FECHA_CORTE,
+  );
   if (avisoNoVigente) {
     const avisoVencida = document.createElement('p');
     avisoVencida.setAttribute('data-alerta-no-vigente', '');
@@ -279,6 +283,11 @@ function pintarTarjeta(
     avisoVencida.innerHTML = `${svgIcono('clock', 'h-5 w-5 text-ink-muted shrink-0')}<span>${escapeHtml(avisoNoVigente)}</span>`;
     articulo.appendChild(avisoVencida);
   }
+
+  const rotulo = document.createElement('p');
+  rotulo.className = 'mb-3 font-mono text-xs font-semibold text-ink-muted';
+  rotulo.textContent = 'Registro histórico';
+  articulo.appendChild(rotulo);
 
   const tipo = ETIQUETAS_TIPO[alerta.tipo] ?? alerta.tipo;
   const nivel = esNivelAlerta(alerta.nivel)

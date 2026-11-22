@@ -2,11 +2,9 @@
 import Layout from '../../layouts/Layout.astro';
 import Icono from '../../components/Icono.astro';
 
-const tipoPedido = Astro.url.searchParams.get('tipo');
-const desdePedido = Astro.url.searchParams.get('desde') ?? '';
-const hastaPedido = Astro.url.searchParams.get('hasta') ?? '';
-const filtroDengue = tipoPedido === 'dengue';
-const filtroRespiratorio = tipoPedido === 'respiratorio';
+import { formatearFechaIso } from '../../lib/vista-alertas';
+
+const fechaCorte = import.meta.env.PUBLIC_FECHA_CORTE;
 ---
 
 <Layout
@@ -27,7 +25,7 @@ const filtroRespiratorio = tipoPedido === 'respiratorio';
               class="area-tactil inline-flex items-center gap-1 font-medium text-accent hover:underline underline-offset-2"
             >
               <Icono nombre="arrow-left" class="h-3.5 w-3.5" />
-              <span>Volver a alertas vigentes</span>
+              <span>Volver al resumen de alertas</span>
             </a>
           </li>
           <li aria-hidden="true" class="text-border">/</li>
@@ -42,7 +40,7 @@ const filtroRespiratorio = tipoPedido === 'respiratorio';
           class="inline-flex items-center gap-1.5 rounded-full border border-accent/25 bg-accent/5 px-3 py-1 font-mono text-xs font-semibold text-accent shadow-2xs"
         >
           <Icono nombre="history" class="h-3.5 w-3.5" />
-          <span>Registro histórico · 2023–2026</span>
+          <span>Corte del {formatearFechaIso(fechaCorte)}</span>
         </span>
         <span
           class="rounded-full bg-secondary/80 px-2.5 py-0.5 font-mono text-micro font-medium text-secondary-ink"
@@ -56,9 +54,8 @@ const filtroRespiratorio = tipoPedido === 'respiratorio';
       <p
         class="mt-3 font-sans text-base leading-relaxed text-ink-muted sm:text-lg max-w-3xl"
       >
-        Consulta qué se emitió y cuándo. Una alerta vencida o apagada no se ve
-        igual que una vigente: lleva el texto <strong>NO VIGENTE</strong>. Esta
-        página no se usa como material para decisiones tomadas sin conexión.
+        Consulta qué se emitió y cuándo. Cada aviso incluye su período original
+        y las fuentes citadas en el momento de su publicación.
       </p>
 
       {/* Accesos rápidos */}
@@ -117,11 +114,9 @@ const filtroRespiratorio = tipoPedido === 'respiratorio';
               name="tipo"
               class="rounded-xl border border-border bg-bg px-3.5 py-2 font-sans text-xs sm:text-sm text-ink focus:border-accent focus:outline-hidden"
             >
-              <option value="" selected={!tipoPedido}>Todos los tipos</option>
-              <option value="dengue" selected={filtroDengue}>Dengue</option>
-              <option value="respiratorio" selected={filtroRespiratorio}
-                >Respiratorio</option
-              >
+              <option value="">Todos los tipos</option>
+              <option value="dengue">Dengue</option>
+              <option value="respiratorio">Respiratorio</option>
             </select>
           </label>
 
@@ -137,7 +132,6 @@ const filtroRespiratorio = tipoPedido === 'respiratorio';
               type="date"
               name="desde"
               data-archivo-desde
-              value={desdePedido}
               class="rounded-xl border border-border bg-bg px-3.5 py-2 font-sans text-xs sm:text-sm text-ink focus:border-accent focus:outline-hidden"
             />
           </label>
@@ -154,7 +148,6 @@ const filtroRespiratorio = tipoPedido === 'respiratorio';
               type="date"
               name="hasta"
               data-archivo-hasta
-              value={hastaPedido}
               class="rounded-xl border border-border bg-bg px-3.5 py-2 font-sans text-xs sm:text-sm text-ink focus:border-accent focus:outline-hidden"
             />
           </label>
@@ -171,14 +164,14 @@ const filtroRespiratorio = tipoPedido === 'respiratorio';
               data-rango-preset="30d"
               class="rounded-full border border-border/80 bg-bg px-2.5 py-1 text-ink-muted hover:border-accent hover:text-ink transition-colors"
             >
-              Últimos 30 días
+              30 días hasta el corte
             </button>
             <button
               type="button"
               data-rango-preset="90d"
               class="rounded-full border border-border/80 bg-bg px-2.5 py-1 text-ink-muted hover:border-accent hover:text-ink transition-colors"
             >
-              Últimos 90 días
+              90 días hasta el corte
             </button>
             <button
               type="button"
@@ -289,13 +282,13 @@ const filtroRespiratorio = tipoPedido === 'respiratorio';
 </Layout>
 
 <script>
+  import { leerDato } from '../../lib/datos-estaticos';
   import {
     aplicarVistaAlertas,
     type PayloadAlertas,
     type PintarAlertas,
   } from '../../lib/vista-alertas';
 
-  const API_BASE = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8000';
   const root = document.querySelector<HTMLElement>('[data-alertas]');
 
   const formFiltros = document.querySelector<HTMLFormElement>(
@@ -317,8 +310,8 @@ const filtroRespiratorio = tipoPedido === 'respiratorio';
     .forEach((btn) => {
       btn.addEventListener('click', () => {
         const preset = btn.dataset.rangoPreset;
-        const hoy = new Date();
-        const hoyIso = hoy.toISOString().slice(0, 10);
+        const hoyIso = import.meta.env.PUBLIC_FECHA_CORTE;
+        const hoy = new Date(`${hoyIso}T00:00:00Z`);
 
         if (!inputDesde || !inputHasta) return;
 
@@ -369,29 +362,33 @@ const filtroRespiratorio = tipoPedido === 'respiratorio';
       pintar;
 
     const params = new URLSearchParams(window.location.search);
-    const tipo = params.get('tipo');
-    const consulta = new URLSearchParams();
-    consulta.set('incluir_inactivas', 'true');
-    if (tipo === 'dengue' || tipo === 'respiratorio') {
-      consulta.set('tipo', tipo);
-    }
-    const desde = params.get('desde');
-    const hasta = params.get('hasta');
-    if (desde) consulta.set('desde', desde);
-    if (hasta) consulta.set('hasta', hasta);
+    const tipo = params.get('tipo') ?? '';
+    const desde = params.get('desde') ?? '';
+    const hasta = params.get('hasta') ?? '';
+    const selectorTipo = formFiltros?.querySelector<HTMLSelectElement>(
+      'select[name="tipo"]',
+    );
+    if (selectorTipo)
+      selectorTipo.value =
+        tipo === 'dengue' || tipo === 'respiratorio' ? tipo : '';
+    if (inputDesde) inputDesde.value = desde;
+    if (inputHasta) inputHasta.value = hasta;
 
-    fetch(`${API_BASE}/api/alertas?${consulta.toString()}`)
-      .then(async (respuesta) => {
-        if (!respuesta.ok) throw new Error(String(respuesta.status));
-        const datos: unknown = await respuesta.json();
-        if (
-          !datos ||
-          typeof datos !== 'object' ||
-          !Array.isArray((datos as PayloadAlertas).alertas)
-        ) {
-          throw new Error('contrato');
-        }
-        pintar(datos as PayloadAlertas);
+    leerDato<PayloadAlertas>('alertas')
+      .then((datos) => {
+        if (!Array.isArray(datos?.alertas)) throw new Error('contrato');
+        const alertas = datos.alertas.filter(
+          (alerta) =>
+            ((tipo !== 'dengue' && tipo !== 'respiratorio') ||
+              alerta.tipo === tipo) &&
+            (!desde ||
+              !alerta.vigente_hasta ||
+              alerta.vigente_hasta >= desde) &&
+            (!hasta || alerta.vigente_desde <= hasta),
+        );
+        pintar({ ...datos, alertas });
+        const ancla = window.location.hash.slice(1);
+        if (ancla) document.getElementById(ancla)?.scrollIntoView();
       })
       .catch(() => {
         const carga = root.querySelector<HTMLElement>('[data-alertas-carga]');

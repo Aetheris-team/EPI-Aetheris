@@ -52,8 +52,9 @@ const SEMANAS_PRESION = Array.from({ length: 52 }, (_, i) => ({
 }));
 
 async function simularApi(page: Page) {
-  await page.route('**/api/alertas?**', (r) => r.fulfill({ json: ALERTAS }));
-  await page.route('**/api/alertas', (r) => r.fulfill({ json: ALERTAS }));
+  await page.route('**/datos/alertas/registradas-activas.json', (r) =>
+    r.fulfill({ json: ALERTAS }),
+  );
   await page.route('**/datos/v1/presion/temporal/**', (r) =>
     r.fulfill({
       json: {

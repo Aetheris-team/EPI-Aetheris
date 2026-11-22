@@ -138,7 +138,7 @@ test.describe('Ficha departamental imprimible', () => {
         body: JSON.stringify(MOCK_NEUMONIAS),
       }),
     );
-    await page.route('**/api/alertas*', (route) =>
+    await page.route('**/datos/alertas/registradas-activas.json', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -223,7 +223,7 @@ test.describe('Ficha departamental imprimible', () => {
         }),
       }),
     );
-    await page.route('**/api/alertas*', (route) =>
+    await page.route('**/datos/alertas/registradas-activas.json', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -292,7 +292,7 @@ test.describe('Ficha departamental imprimible', () => {
         body: JSON.stringify(MOCK_NEUMONIAS),
       }),
     );
-    await page.route('**/api/alertas*', (route) =>
+    await page.route('**/datos/alertas/registradas-activas.json', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -368,7 +368,7 @@ test.describe('Ficha departamental imprimible', () => {
         body: JSON.stringify(MOCK_NEUMONIAS),
       }),
     );
-    await page.route('**/api/alertas*', (route) =>
+    await page.route('**/datos/alertas/registradas-activas.json', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -433,7 +433,7 @@ test.describe('Ficha departamental imprimible', () => {
       '**/datos/neumonias/temporal/SV-SS*',
       responder(MOCK_NEUMONIAS),
     );
-    await page.route('**/api/alertas*', (route) =>
+    await page.route('**/datos/alertas/registradas-activas.json', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -503,7 +503,7 @@ test.describe('Ficha departamental imprimible', () => {
         body: JSON.stringify(MOCK_NEUMONIAS),
       }),
     );
-    await page.route('**/api/alertas*', (route) =>
+    await page.route('**/datos/alertas/registradas-activas.json', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',

@@ -143,7 +143,7 @@ test('/alertas muestra el sello de frescura y el botón de imprimir', async ({
   );
   await expect(page.locator('[data-imprimir]')).toBeVisible();
   const sello = page.locator('[data-sello-frescura]');
-  await expect(sello).toContainText('Datos cargados el');
+  await expect(sello).toContainText('Corte del');
   // Sin service worker en juego, la carga viene de red, no de cache.
   await expect(sello).toHaveAttribute('data-desde-cache', '0');
 });
@@ -252,44 +252,49 @@ test('los campos clínicos en null no dejan bloques vacíos en la tarjeta', asyn
   ).toHaveCount(1);
 });
 
-test('/alertas abre sin conexión desde el cache del service worker', async ({
-  page,
-  context,
-}) => {
-  // El item que se justificó por consecuencia clínica: si el cache no sirve
-  // /alertas sin red, el sello de frescura nunca se dispara y la función no
-  // existe. Se verifica de verdad, no por construcción.
-  await page.goto('/alertas');
-  await expect(page.locator('[data-alertas]')).toHaveAttribute(
-    'data-cargado',
-    '1',
-    { timeout: 15_000 },
-  );
-  await page.evaluate(() => navigator.serviceWorker.ready);
-  // El SW confirma que ya guardó los subrecursos de esta página.
-  await expect(page.locator('html')).toHaveAttribute('data-sw-listo', '1', {
-    timeout: 15_000,
-  });
+test.describe('caché del sitio compilado', () => {
+  test.use({ serviceWorkers: 'allow' });
+  test('/alertas abre sin conexión desde el cache del service worker', async ({
+    page,
+    context,
+  }) => {
+    // El item que se justificó por consecuencia clínica: si el cache no sirve
+    // /alertas sin red, el sello de frescura nunca se dispara y la función no
+    // existe. Se verifica de verdad, no por construcción.
+    await page.goto('/alertas');
+    await expect(page.locator('[data-alertas]')).toHaveAttribute(
+      'data-cargado',
+      '1',
+      { timeout: 15_000 },
+    );
+    await page.evaluate(() => navigator.serviceWorker.ready);
+    // El SW confirma que ya guardó los subrecursos de esta página.
+    await expect(page.locator('html')).toHaveAttribute('data-sw-listo', '1', {
+      timeout: 15_000,
+    });
 
-  // context.setOffline no alcanza al service worker (corre en otro contexto y
-  // sigue llegando a la red). Se corta la API a nivel de contexto, que sí
-  // intercepta las peticiones que origina el worker.
-  await context.route('**/api/alertas*', (ruta) => ruta.abort());
-  await page.reload();
-  await expect(page.locator('[data-alertas]')).toHaveAttribute(
-    'data-cargado',
-    '1',
-    { timeout: 15_000 },
-  );
-  await expect(page.locator('[data-sello-frescura]')).toHaveAttribute(
-    'data-desde-cache',
-    '1',
-  );
-  await expect(page.locator('[data-sello-frescura]')).toContainText(
-    'Sin conexión',
-  );
-  await expect(page.locator('[data-alerta]').first()).toBeVisible();
-  await context.unroute('**/api/alertas*');
+    // context.setOffline no alcanza al service worker (corre en otro contexto y
+    // sigue llegando a la red). Se corta la API a nivel de contexto, que sí
+    // intercepta las peticiones que origina el worker.
+    await context.route('**/datos/alertas/registradas-activas.json', (ruta) =>
+      ruta.abort(),
+    );
+    await page.reload();
+    await expect(page.locator('[data-alertas]')).toHaveAttribute(
+      'data-cargado',
+      '1',
+      { timeout: 15_000 },
+    );
+    await expect(page.locator('[data-sello-frescura]')).toHaveAttribute(
+      'data-desde-cache',
+      '1',
+    );
+    await expect(page.locator('[data-sello-frescura]')).toContainText(
+      'Sin conexión',
+    );
+    await expect(page.locator('[data-alerta]').first()).toBeVisible();
+    await context.unroute('**/datos/alertas/registradas-activas.json');
+  });
 });
 
 test('el pie expone las cuatro columnas y el aviso de sensibilidad', async ({

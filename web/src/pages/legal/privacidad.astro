@@ -1,80 +1,4 @@
 ---
-/**
- * Política de privacidad. El contenido no es una plantilla: cada dato que
- * enumera está verificado en el código, y si el código cambia esta página
- * tiene que cambiar con él. Dónde mirar:
- *
- *  - Registros de acceso: Render aloja el sitio estático, la API y la base
- *    (render.yaml del monorepo; región oregon para API y base). Render
- *    entrega el sitio por la red de Cloudflare (el dominio resuelve a
- *    *.cdn.cloudflare.net y las respuestas llevan `server: cloudflare`).
- *  - Límite de peticiones: backend/api/main.py, `_client_ip` como key_func de
- *    slowapi con almacenamiento en memoria.
- *  - Cartografía local: mapas vectoriales SVG integrados, renderizados sin
- *    contactar con servidores externos ni solicitar teselas a OpenStreetMap.
- *  - Tipografías: Fonts API de Astro en astro.config.mjs, descargadas en build.
- *  - Formulario de operadores: src/pages/alertas/nueva.astro.
- *  - Almacenamiento local: las dos claves `epi-aetheris:*` (nueva.astro y
- *    src/lib/vista-alertas.ts), `epi:tema` (Layout.astro), `epi:animaciones`
- *    (src/lib/animaciones.ts), `epi:departamento`
- *    (src/lib/departamento-recordado.ts), `epi:toolbar-fija`
- *    (ToolbarAnalisis.astro) y las cachés de public/sw.js.
- *
- * Personas con cuenta (ADR 0024). Fuente de cada dato, en el monorepo:
- *  - Tablas: db/migrations/0014_cuentas_identidad.sql (usuarios,
- *    instituciones, usuarios_roles, credenciales_clave,
- *    factores_autenticacion, codigos_recuperacion, invitaciones,
- *    tokens_un_solo_uso), 0015_cuentas_sesiones_y_correo.sql (sesiones,
- *    desafios, intentos_ingreso, correos_salientes) y
- *    0016_auditoria_encadenada.sql (auditoria).
- *  - Contraseña, TOTP, llaves y códigos: backend/api/cuentas/contrasenas.py,
- *    servicio.py y config.py. La consulta a Have I Been Pwned envía los
- *    primeros 5 caracteres del SHA-1 (contrasenas.py).
- *  - Sesión y cookie: config.py (COOKIE_SESION `__Host-epi_sid`), rutas.py
- *    (`_poner_cookie`: HttpOnly, Secure, SameSite=Strict, sin fecha de
- *    caducidad), sesiones.py (inactividad 20 min, 10 los administradores;
- *    duración máxima 8 h, 4 los administradores; 5 sesiones a la vez).
- *  - Red truncada y navegador resumido: sesiones.py y auditoria.py (/24 en
- *    IPv4, /48 en IPv6; primeros 200 caracteres del user-agent).
- *  - Correo: correo.py (SMTP de Resend; la bandeja guarda destinatario,
- *    plantilla y estado, no el cuerpo).
- *  - Plazos de la invitación, de restablecer clave y de verificar correo:
- *    servicio.py.
- *
- * Pendiente de código (E2): hoy no hay purga automática de los plazos de
- * conservación, ni baja con anonimización, ni descarga de los datos propios,
- * ni edición de perfil. La tabla de conservación y la sección de derechos
- * describen el compromiso del proyecto (sistema-cuentas.local.md, 8.4) y se
- * atienden por correo mientras tanto. Quien active las cuentas tiene que
- * implementar esas tareas o ajustar este texto antes de invitar a más
- * personas.
- *
- * Plazo de las copias cifradas del proyecto: 90 días (decidido el
- * 2026-10-04). Antes de publicar, que no quede ningún marcador pendiente:
- *
- *   grep -rnE "«PENDIENTE_[A-Z_]+»" dist/
- *
- * Estructura: arranca con un resumen en lenguaje llano y después sigue el
- * contenido mínimo que el artículo 24 de la Ley para la Protección de Datos
- * Personales de El Salvador (Decreto Legislativo n.º 144) exige a un aviso de
- * privacidad: domicilio del responsable, datos tratados señalando los
- * sensibles, fundamento legal, finalidades, cómo ejercer los derechos
- * ARCO-POL y revocar el consentimiento, delegado, cómo se comunican los
- * cambios, datos del encargado y uso de cookies. Si se reordena la página,
- * que no se pierda ninguno de esos bloques. El artículo 5, letra e, de la ley
- * pide un lenguaje claro y sin tecnicismos: por eso las medidas de seguridad
- * se describen en llano. RGPD y CCPA no se citan como obligaciones: el
- * proyecto no tiene establecimiento ni público objetivo fuera de El Salvador.
- *
- * El responsable y el correo se publican literales, no como marcadores: el
- * aviso legal es la fuente de esos datos y esta página los repite para que se
- * lea sola.
- *
- * VERSION_TERMINOS del backend (backend/api/cuentas/servicio.py) es
- * «2026-10» y es la que firma cada persona al aceptar la invitación. Si el
- * texto de esta página o de los términos cambia de fondo, hay que subir esa
- * versión para que las personas con cuenta vuelvan a aceptar.
- */
 import DocumentoTexto from '../../components/DocumentoTexto.astro';
 import { navegacionLegal } from '../../lib/navegacion-documentos';
 ---
@@ -83,8 +7,8 @@ import { navegacionLegal } from '../../lib/navegacion-documentos';
   navegacion={navegacionLegal('/legal/privacidad')}
   seccion="Documento legal"
   titulo="Política de privacidad"
-  descripcion="Qué datos se tratan al leer EPI-Aetheris y al tener una cuenta del equipo, para qué, quién más los recibe, cuánto se conservan y cómo ejercer los derechos que reconoce la ley."
-  actualizado="4 de octubre de 2026"
+  descripcion="Qué datos se tratan al consultar esta edición de EPI-Aetheris, quién los recibe y cómo ejercer los derechos que reconoce la ley."
+  actualizado="21 de noviembre de 2026"
 >
   <h2>En resumen</h2>
   <ul>
@@ -99,9 +23,8 @@ import { navegacionLegal } from '../../lib/navegacion-documentos';
       externos.
     </li>
     <li>
-      Las cuentas existen solo para las personas del equipo que publican o
-      revisan contenido. Se crean por invitación, y el nombre, el cargo si se
-      indica y la institución de quien firma una alerta son públicos.
+      El archivo conserva el nombre de quien firmó una alerta y el contacto de
+      vigilancia que se incluyó al publicarla.
     </li>
     <li>
       Las cifras de salud están agregadas por departamento y semana. No
@@ -128,15 +51,15 @@ import { navegacionLegal } from '../../lib/navegacion-documentos';
   <p>
     Esta política sigue la Ley para la Protección de Datos Personales de El
     Salvador (Decreto Legislativo n.º 144, publicado en el Diario Oficial n.º
-    219, tomo 445, del 15 de noviembre de 2024). Versión 2026-10.
+    219, tomo 445, del 15 de noviembre de 2024). Versión 2026-11.
   </p>
 
   <h2>Qué es EPI-Aetheris</h2>
   <p>
     Es un proyecto académico sin fines comerciales. Publica datos agregados de
     dengue y enfermedad respiratoria en El Salvador, a partir de fuentes
-    públicas. Se consulta sin registrarse y sin pagar. Las cuentas sirven para
-    que el equipo publique alertas y otros contenidos con su firma.
+    públicas. Esta edición es de solo lectura y se consulta sin registrarse ni
+    pagar.
   </p>
 
   <h2>Qué datos no se recogen</h2>
@@ -146,15 +69,6 @@ import { navegacionLegal } from '../../lib/navegacion-documentos';
     <li>Analítica, píxeles de seguimiento ni cookies publicitarias.</li>
     <li>Ubicación del dispositivo.</li>
     <li>Mensajes: el sitio no tiene formulario de contacto.</li>
-    <li>
-      Documento de identidad, teléfono ni fecha de nacimiento de las personas
-      con cuenta.
-    </li>
-    <li>
-      Huellas dactilares, rostro ni otros datos biométricos. Las llaves de
-      acceso guardan la huella o el rostro en el propio dispositivo, y al
-      proyecto solo llega una clave pública.
-    </li>
   </ul>
   <p>
     Tampoco se venden ni se ceden datos, no se elaboran perfiles y no se toman
@@ -163,17 +77,16 @@ import { navegacionLegal } from '../../lib/navegacion-documentos';
 
   <h2>Qué datos se tratan al leer el sitio</h2>
   <p>
-    Aun sin cuentas ni analítica, hay cinco momentos en los que circulan datos
-    técnicos, aunque algunos no se vean en pantalla. Ninguno es un dato
+    Al consultar la edición estática circulan datos técnicos. Ninguno es un dato
     sensible: no se tratan datos de salud, origen étnico, biométricos ni
     creencias de quien visita el sitio.
   </p>
 
   <h3>1. Al abrir cualquier página</h3>
   <p>
-    Render, la empresa que aloja el sitio y la API, registra cada visita. Guarda
-    la dirección IP, el navegador y sistema (user-agent), la fecha y la página
-    pedida. Render entrega el sitio por la red de Cloudflare, que también
+    En el despliegue público de Render, el alojamiento registra cada visita.
+    Guarda la dirección IP, el navegador y sistema (user-agent), la fecha y la
+    página pedida. Render entrega el sitio por la red de Cloudflare, que también
     procesa esa conexión.
   </p>
   <ul>
@@ -183,19 +96,9 @@ import { navegacionLegal } from '../../lib/navegacion-documentos';
 
   <h3>2. Al consultar datos</h3>
   <p>
-    Las gráficas y tablas piden los datos a la API del proyecto. La API limita
-    cuántas consultas puede hacer una misma dirección IP por minuto.
+    Las gráficas y tablas descargan archivos del mismo sitio. El navegador hace
+    al alojamiento las peticiones necesarias para recibirlos.
   </p>
-  <ul>
-    <li>
-      Para qué: evitar que un programa automático sature el servicio y lo deje
-      sin capacidad para el resto.
-    </li>
-    <li>
-      Cuánto tiempo: la IP se guarda solo en memoria mientras dura el recuento.
-      No se guarda en la base de datos ni se asocia a ninguna otra información.
-    </li>
-  </ul>
 
   <h3>3. Al ver un mapa</h3>
   <p>
@@ -225,17 +128,6 @@ import { navegacionLegal } from '../../lib/navegacion-documentos';
     ni a otro proveedor de fuentes.
   </p>
 
-  <h3>5. Al publicar una alerta de campo con la clave del equipo</h3>
-  <p>
-    Mientras las alertas se publiquen con la clave de publicación (token) y no
-    con una cuenta, el formulario es de uso interno: la página no está enlazada
-    en el menú. Se envían la clave y el contenido de la alerta, que incluye el
-    nombre de quien la firma y, si se rellena, un contacto de vigilancia. Todo
-    el contenido se publica y cualquiera puede leerlo. La alerta se guarda en la
-    base de datos, sigue visible en el archivo de alertas y se corrige o se
-    retira a petición.
-  </p>
-
   <h2>Datos de salud</h2>
   <p>
     Todo lo que publica EPI-Aetheris son cifras agregadas por departamento y
@@ -250,212 +142,12 @@ import { navegacionLegal } from '../../lib/navegacion-documentos';
     <a href="/biblioteca/04-fuentes-de-datos">de dónde salen los datos</a>.
   </p>
 
-  <h2>Qué datos se guardan de las personas con cuenta</h2>
-  <p>
-    Una cuenta se crea solo por invitación de un administrador. Estos son los
-    datos que el sistema guarda de cada persona. Ninguno es un dato sensible en
-    los términos de la ley.
-  </p>
-  <table>
-    <thead>
-      <tr>
-        <th scope="col">Dato</th>
-        <th scope="col">Para qué</th>
-        <th scope="col">Quién lo ve</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>
-          Nombre, cargo si la persona lo indica, e institución con su estado de
-          verificación
-        </td>
-        <td>Firmar lo que se publica y que se sepa quién lo dice</td>
-        <td>Cualquiera, en lo que la persona firma</td>
-      </tr>
-      <tr>
-        <td>
-          Correo electrónico y fecha en que se verificó. En la invitación, quién
-          invitó y una nota interna sobre cómo se comprobó quién es la persona
-        </td>
-        <td>
-          Ingresar, recuperar la cuenta y recibir avisos de seguridad. La nota
-          permite demostrar que la invitación fue a la persona correcta
-        </td>
-        <td>Los administradores</td>
-      </tr>
-      <tr>
-        <td>
-          Roles, estado de la cuenta, fechas de alta, de último ingreso y de
-          baja con su motivo, y versión de los términos aceptada con su fecha
-        </td>
-        <td>Dar los permisos que corresponden y probar qué se aceptó</td>
-        <td>Los administradores</td>
-      </tr>
-      <tr>
-        <td>
-          Contraseña, guardada solo como una huella irreversible (Argon2id con
-          una clave adicional del servidor)
-        </td>
-        <td>Comprobar la identidad al ingresar</td>
-        <td>Nadie. Ni los administradores pueden verla</td>
-      </tr>
-      <tr>
-        <td>
-          Segundo factor: el secreto de la aplicación de códigos, guardado
-          cifrado, y de cada llave de acceso la clave pública, su identificador,
-          un contador de uso y los tipos de conexión. Códigos de recuperación,
-          guardados solo como huella
-        </td>
-        <td>Comprobar la identidad al ingresar</td>
-        <td>Nadie</td>
-      </tr>
-      <tr>
-        <td>
-          Sesiones: fechas de inicio y de última actividad, método de ingreso,
-          los primeros 200 caracteres del navegador (user-agent) y la dirección
-          IP recortada (se descartan las últimas cifras: el último grupo en IPv4
-          y los últimos 80 bits en IPv6)
-        </td>
-        <td>
-          Mostrar a la persona sus sesiones abiertas y detectar accesos
-          sospechosos
-        </td>
-        <td>
-          La persona ve sus sesiones. Los administradores ven la red recortada
-          en el registro de auditoría
-        </td>
-      </tr>
-      <tr>
-        <td>
-          Intentos de ingreso fallidos: un contador asociado a dos claves
-          derivadas con un cálculo irreversible, una del correo y otra de la IP,
-          de modo que no se guarda ninguna de las dos en claro, y la hora hasta
-          la que se bloquea
-        </td>
-        <td>Frenar los intentos de adivinar contraseñas</td>
-        <td>Nadie</td>
-      </tr>
-      <tr>
-        <td>
-          Registro de auditoría: qué hizo la persona (ingresar, cambiar la
-          clave, publicar, retirar), cuándo, y la red recortada. Cada registro
-          se encadena al anterior para que nadie pueda alterar uno sin que se
-          note
-        </td>
-        <td>Investigar incidentes y demostrar quién hizo qué</td>
-        <td>Los administradores</td>
-      </tr>
-      <tr>
-        <td>
-          Correos enviados: destinatario, tipo de mensaje, estado y fecha, sin
-          el texto del mensaje
-        </td>
-        <td>Saber si un aviso de seguridad llegó</td>
-        <td>Los administradores</td>
-      </tr>
-    </tbody>
-  </table>
-  <p>
-    Al elegir una contraseña, el sistema comprueba si aparece en filtraciones
-    conocidas con el servicio Have I Been Pwned. Le envía solo los primeros
-    cinco caracteres de una huella de la contraseña, que no bastan para
-    reconstruirla, y nunca la contraseña ni la huella completa.
-  </p>
-
-  <h2>Para qué se usan y en qué se apoyan</h2>
-  <ul>
-    <li>
-      Crear y mantener la cuenta, y firmar lo publicado: se apoyan en el
-      consentimiento de la persona. Lo da al aceptar la invitación, después de
-      leer esta política y los términos de uso, y puede retirarlo en cualquier
-      momento (ver derechos).
-    </li>
-    <li>
-      Proteger las cuentas y poder demostrar quién publicó qué: se apoyan en el
-      interés legítimo del proyecto, porque una alerta puede llegar a personal
-      de salud y su autoría tiene que poder comprobarse (artículo 5, letra g, de
-      la ley).
-    </li>
-    <li>
-      Los datos de una cuenta no se usan para publicidad, perfiles ni ninguna
-      otra finalidad. Si algún día se quisiera usarlos para algo distinto, se
-      pedirá un nuevo consentimiento.
-    </li>
-  </ul>
-
   <h2>Cuánto tiempo se conservan</h2>
   <p>
-    Estos son los plazos a los que se compromete el proyecto. Se aplican a las
-    personas con cuenta.
-  </p>
-  <table>
-    <thead>
-      <tr>
-        <th scope="col">Dato</th>
-        <th scope="col">Plazo</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>Datos de la cuenta</td>
-        <td>Mientras la persona colabore con el proyecto</td>
-      </tr>
-      <tr>
-        <td>Cuenta dada de baja</td>
-        <td>
-          La cuenta deja de funcionar de inmediato. En un máximo de 30 días se
-          eliminan el correo, las credenciales y las sesiones, y el perfil queda
-          sin datos de contacto. Lo que la persona firmó se mantiene con su
-          firma, porque forma parte del registro público del proyecto
-        </td>
-      </tr>
-      <tr>
-        <td>Sesiones</td>
-        <td>
-          Se cierran por inactividad (20 minutos, 10 en las cuentas de
-          administración) o al cumplir 8 horas (4 en administración). La red
-          recortada se conserva 90 días más
-        </td>
-      </tr>
-      <tr>
-        <td>Intentos de ingreso</td>
-        <td>24 horas</td>
-      </tr>
-      <tr>
-        <td>Enlaces de un solo uso (invitación, restablecer clave)</td>
-        <td>
-          Caducan a las 72 horas la invitación, a los 30 minutos el
-          restablecimiento de clave y a las 24 horas la verificación de correo.
-          Se borran 7 días después de caducar o usarse
-        </td>
-      </tr>
-      <tr>
-        <td>Registro de auditoría de seguridad</td>
-        <td>24 meses</td>
-      </tr>
-      <tr>
-        <td>Registro de auditoría y versiones de lo publicado</td>
-        <td>Mientras exista la pieza publicada</td>
-      </tr>
-      <tr>
-        <td>Registro de correos enviados</td>
-        <td>90 días, sin el texto del mensaje</td>
-      </tr>
-      <tr>
-        <td>Copias de seguridad</td>
-        <td>
-          Render conserva copias de recuperación de la base durante 3 días. Las
-          copias cifradas que hace el proyecto se conservan 90 días y después se
-          borran. En ambos casos, un dato borrado desaparece de las copias al
-          vencer ese plazo
-        </td>
-      </tr>
-    </tbody>
-  </table>
-  <p>
-    Los registros de visita de quien solo lee el sitio los conserva Render, con
-    el plazo de su política.
+    Los registros de visita los conserva el proveedor de alojamiento con el
+    plazo de su política. El archivo histórico conserva la identificación
+    pública de quien firmó un aviso. Si la persona pide que se retire una pieza
+    concreta o que se cambie su firma, el proyecto estudia la solicitud.
   </p>
 
   <h2>Cookies y almacenamiento en el navegador</h2>
@@ -463,16 +155,6 @@ import { navegacionLegal } from '../../lib/navegacion-documentos';
     Quien solo lee el sitio no recibe cookies, ni propias ni de terceros. Por
     eso no aparece ningún aviso de consentimiento. Tampoco hay nada que
     rastrear, así que la señal «No rastrear» (Do Not Track) no cambia nada.
-  </p>
-  <p>
-    Las personas con cuenta reciben una sola cookie al ingresar, llamada
-    __Host-epi_sid. Guarda un identificador de la sesión abierta y sin ella no
-    se puede mantener la sesión. Es de este mismo sitio, se envía solo por
-    conexiones cifradas, el navegador no deja que un programa de la página la
-    lea, no se envía desde otros sitios y se borra al cerrar el navegador o al
-    salir. No sirve para seguir a nadie ni para medir la actividad. Por ser
-    imprescindible para el ingreso, no requiere un aviso de consentimiento
-    aparte. Se informa de ella en la página de ingreso.
   </p>
   <p>
     Sí se guardan algunas cosas en el propio navegador. Ninguna se envía al
@@ -487,14 +169,6 @@ import { navegacionLegal } from '../../lib/navegacion-documentos';
       </tr>
     </thead>
     <tbody>
-      <tr>
-        <td>La clave de publicación de alertas</td>
-        <td>
-          Que un operador no tenga que escribirla cada vez. Solo se guarda si
-          marca «Recordar el token en este navegador» al publicar.
-        </td>
-        <td>Botón «Cerrar sesión (olvidar token)» del formulario.</td>
-      </tr>
       <tr>
         <td>La lista de alertas ya vistas (solo sus números)</td>
         <td>Marcar como «Nueva» una alerta que no se había visto antes.</td>
@@ -552,11 +226,8 @@ import { navegacionLegal } from '../../lib/navegacion-documentos';
             rel="noopener noreferrer">Política de privacidad de Render</a
           >
         </td>
-        <td>Aloja el sitio, la API y la base de datos</td>
-        <td>
-          Todo lo que guarda el sistema, incluidos los datos de las cuentas, y
-          la IP, user-agent, fecha y página de cada visita
-        </td>
+        <td>Aloja las páginas y los archivos públicos</td>
+        <td> IP, user-agent, fecha y página de cada visita </td>
       </tr>
       <tr>
         <td>
@@ -568,38 +239,8 @@ import { navegacionLegal } from '../../lib/navegacion-documentos';
             rel="noopener noreferrer">Política de privacidad de Cloudflare</a
           >
         </td>
-        <td>Entrega el sitio y la API desde servidores cercanos</td>
+        <td>Entrega el sitio desde servidores cercanos</td>
         <td>IP, user-agent y contenido de las conexiones</td>
-      </tr>
-      <tr>
-        <td>
-          Resend, Inc. (EE. UU.).{' '}
-          <a
-            href="https://resend.com/legal/privacy-policy"
-            target="_blank"
-            rel="noopener noreferrer">Política de privacidad de Resend</a
-          >
-        </td>
-        <td>
-          Envía los correos de invitación, de restablecimiento de clave y de
-          avisos de seguridad a las personas con cuenta
-        </td>
-        <td>
-          El correo de la persona y el texto del mensaje, que incluye el enlace
-          de un solo uso
-        </td>
-      </tr>
-      <tr>
-        <td>
-          Have I Been Pwned (Troy Hunt, Australia).{' '}
-          <a
-            href="https://haveibeenpwned.com/Privacy"
-            target="_blank"
-            rel="noopener noreferrer">Política de privacidad de HIBP</a
-          >
-        </td>
-        <td>Indica si una contraseña aparece en filtraciones conocidas</td>
-        <td>Los primeros cinco caracteres de una huella de la contraseña</td>
       </tr>
       <tr>
         <td>
@@ -621,71 +262,14 @@ import { navegacionLegal } from '../../lib/navegacion-documentos';
     cifras y procesa los límites vectoriales internamente; el navegador de quien
     visita el sitio nunca se conecta con ellos para solicitar datos ni teselas.
   </p>
-  <p>
-    Los datos de las cuentas no se entregan a ninguna otra empresa ni
-    institución, salvo que una autoridad competente los pida conforme a la ley.
-  </p>
-
   <h2>Datos fuera de El Salvador</h2>
   <p>
-    La API y la base de datos, con los datos de las cuentas, están en servidores
-    de Render en Estados Unidos. Los correos de las cuentas pasan por Resend,
-    también en Estados Unidos. Las páginas se sirven desde la red de Cloudflare,
-    que tiene servidores en varios países. La cartografía no realiza peticiones
-    a servidores externos fuera del país, ya que se renderiza localmente como
-    SVG. Por eso los datos descritos arriba, salvo los de los mapas, salen del
-    país.
-  </p>
-  <p>
-    Para las personas con cuenta, esa salida es parte de lo que aceptan al
-    recibir la invitación. El proyecto no ha verificado que la Agencia de
-    Ciberseguridad del Estado haya declarado un nivel adecuado de protección en
-    Estados Unidos. La ley (artículo 44) permite la transferencia cuando la
-    persona la consiente y el responsable adopta medidas para proteger los
-    datos. Las medidas que aplica el proyecto están en la sección siguiente.
+    Render opera en Estados Unidos y Cloudflare tiene servidores en varios
+    países. Los datos técnicos de acceso pueden procesarse fuera de El Salvador.
   </p>
 
   <h2>Seguridad</h2>
-  <p>
-    Todas las conexiones con el sitio y con la API van cifradas (HTTPS). Para
-    las cuentas, el proyecto aplica estas medidas:
-  </p>
-  <ul>
-    <li>
-      Ingreso con contraseña y un segundo factor obligatorio, ya sea una
-      aplicación de códigos o una llave de acceso. Las cuentas de administración
-      exigen llave de acceso.
-    </li>
-    <li>
-      Las contraseñas y los códigos de recuperación no se guardan: solo su
-      huella irreversible. El secreto de la aplicación de códigos se guarda
-      cifrado.
-    </li>
-    <li>
-      Las sesiones caducan por inactividad y por duración máxima, se pueden
-      cerrar desde el perfil y se cierran las demás al cambiar la contraseña.
-    </li>
-    <li>
-      Los enlaces de invitación y restablecimiento sirven una sola vez y se
-      guardan solo como huella.
-    </li>
-    <li>
-      Tras varios intentos fallidos seguidos, el ingreso se bloquea con una
-      espera que crece hasta 15 minutos.
-    </li>
-    <li>
-      El registro de auditoría solo admite agregar registros nuevos y cada uno
-      queda encadenado al anterior.
-    </li>
-    <li>
-      Los permisos se dan por roles (publicador, revisor y administrador), y las
-      acciones delicadas piden volver a comprobar la identidad.
-    </li>
-    <li>
-      Las claves del servidor no están en el código: las guarda el proyecto
-      aparte.
-    </li>
-  </ul>
+  <p>La edición pública usa conexiones cifradas (HTTPS).</p>
   <p>
     Si ocurre una vulneración de seguridad que afecte datos personales, el
     proyecto la notifica a la Agencia de Ciberseguridad del Estado, a la
@@ -706,34 +290,11 @@ import { navegacionLegal } from '../../lib/navegacion-documentos';
     Cómo ejercerlos. Basta con escribir al responsable, sin intermediarios, a
     <a href="mailto:epi-aetheris@epi-aetheris.dev"
       >epi-aetheris@epi-aetheris.dev</a
-    >. Conviene indicar qué derecho se ejerce y sobre qué dato. Las personas con
-    cuenta escriben desde el correo de su cuenta, y así se comprueba quién es.
-    Quien no tiene cuenta puede indicar la fecha aproximada y la dirección IP si
-    la solicitud trata de un registro de visita. Ejercer los derechos no tiene
-    costo, salvo el de reproducir o enviar la información si se pide en papel.
+    >. Conviene indicar qué derecho se ejerce y sobre qué dato. Puedes indicar
+    la fecha aproximada y la dirección IP si la solicitud trata de un registro
+    de visita. Ejercer los derechos no tiene costo, salvo el de reproducir o
+    enviar la información si se pide en papel.
   </p>
-  <p>Qué se puede pedir a una persona con cuenta:</p>
-  <ul>
-    <li>
-      Acceso: una copia de los datos que se guardan de ella, que se entrega por
-      correo en un formato legible, y quién los ha consultado.
-    </li>
-    <li>
-      Rectificación: corregir el nombre, el cargo o el correo. La institución la
-      cambia un administrador.
-    </li>
-    <li>
-      Baja y cancelación: se cierra la cuenta y se eliminan los datos en los
-      plazos de la tabla de conservación. Lo ya publicado con su firma se
-      mantiene, porque la autoría es parte de lo que se publicó. Si la persona
-      pide que se retire una pieza concreta o que se cambie su firma, el
-      proyecto lo estudia caso por caso y responde con los motivos.
-    </li>
-    <li>
-      Oposición y limitación: la persona puede pedir que se deje de tratar un
-      dato o que se suspenda su uso, y se atiende por correo.
-    </li>
-  </ul>
   <p>
     Plazos. La respuesta llega dentro de los veinte días hábiles que fija la ley
     (artículos 9 y 20). Si hay causa justificada, el plazo puede ampliarse otros
@@ -759,16 +320,13 @@ import { navegacionLegal } from '../../lib/navegacion-documentos';
   <h2>Menores de edad</h2>
   <p>
     El sitio no está dirigido a menores y no recoge datos de ellos a sabiendas.
-    Las cuentas son solo para personas mayores de edad.
   </p>
 
   <h2>Cambios en esta política</h2>
   <p>
     Cada cambio se publica en esta misma página y actualiza la fecha del
-    encabezado. Si el cambio afecta a las personas con cuenta, se les avisa por
-    correo y se les pide aceptar de nuevo. El código del sitio es público, así
-    que el historial completo de este documento puede consultarse en el
-    repositorio.
+    encabezado. El código del sitio es público, así que el historial completo de
+    este documento puede consultarse en el repositorio.
   </p>
 
   <hr />

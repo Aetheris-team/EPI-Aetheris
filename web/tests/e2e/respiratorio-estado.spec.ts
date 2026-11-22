@@ -35,7 +35,13 @@ async function simularApi(page: Page) {
       }),
     );
     await page.route(`**/datos/${evento}/temporal/*`, (r) => {
-      const codigo = r.request().url().split('/').pop()?.split('?')[0] ?? '';
+      const codigo =
+        r
+          .request()
+          .url()
+          .split('/')
+          .pop()
+          ?.replace(/\.json$/, '') ?? '';
       const nombre = DEPARTAMENTOS.find(([c]) => c === codigo)?.[1] ?? codigo;
       return r.fulfill({
         json: {

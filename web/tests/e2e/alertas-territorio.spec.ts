@@ -30,8 +30,9 @@ const PAYLOAD = {
 
 test.describe('alertas con alcance territorial', () => {
   test.beforeEach(async ({ page }) => {
-    await page.route('**/api/alertas?**', (r) => r.fulfill({ json: PAYLOAD }));
-    await page.route('**/api/alertas', (r) => r.fulfill({ json: PAYLOAD }));
+    await page.route('**/datos/alertas/registradas-activas.json', (r) =>
+      r.fulfill({ json: PAYLOAD }),
+    );
   });
 
   test('cada tarjeta muestra su alcance y sin filtro aparecen todas', async ({
@@ -70,14 +71,14 @@ test.describe('alertas con alcance territorial', () => {
   }) => {
     await page.goto('/alertas?dept=SV-US');
     await expect(page.locator('[data-alerta]')).toHaveCount(1);
-    await page.route('**/api/alertas**', (r) =>
+    await page.route('**/datos/alertas/registradas-activas.json', (r) =>
       r.fulfill({
         json: { ...PAYLOAD, alertas: [PAYLOAD.alertas[2]] },
       }),
     );
     await page.reload();
     await expect(page.locator('[data-alertas-vacio]')).toContainText(
-      'No hay alertas vigentes para Usulután',
+      'No hay alertas registradas para Usulután',
     );
   });
 
@@ -93,65 +94,5 @@ test.describe('alertas con alcance territorial', () => {
     );
     await expect(page.locator('[data-alerta]')).toHaveCount(2);
     await expect(page.locator('#alerta-2')).toHaveCount(0);
-  });
-
-  test('el formulario de alta ofrece los 14 departamentos', async ({
-    page,
-  }) => {
-    await page.goto('/alertas/nueva');
-    await expect(page.locator('input[name="departamentos"]')).toHaveCount(14);
-    await expect(page.getByRole('group', { name: /Alcance/ })).toContainText(
-      'Sin marcar ninguno, la alerta es nacional',
-    );
-  });
-
-  test('la vista previa de indicaciones muestra el HTML como texto', async ({
-    page,
-  }) => {
-    await page.goto('/alertas/nueva');
-    await page
-      .locator('textarea[name="indicaciones"]')
-      .fill(
-        '- <img src=x onerror="window.__inyectado = true"> uno\n<b>dos</b>',
-      );
-    const vista = page.locator('#preview-indicaciones');
-    await expect(vista).toContainText('<img src=x onerror=');
-    await expect(vista.locator('img, b')).toHaveCount(0);
-    expect(await page.evaluate(() => 'inyectado' in window)).toBe(false);
-  });
-
-  test('el token recordado vive en sessionStorage, no en localStorage', async ({
-    page,
-  }) => {
-    await page.goto('/alertas/nueva');
-    await page.evaluate(() =>
-      window.localStorage.setItem('epi-aetheris:alertas-token', 'viejo'),
-    );
-    await page.reload();
-    expect(
-      await page.evaluate(() =>
-        window.localStorage.getItem('epi-aetheris:alertas-token'),
-      ),
-    ).toBeNull();
-
-    await page.locator('input[name="token"]').fill('secreto-de-prueba');
-    await page.locator('[data-alerta-recordar-token]').check();
-    // Un envío con el formulario incompleto no llega al servidor, pero el
-    // navegador no dispara submit; se fuerza para ejercitar el guardado.
-    await page.evaluate(() =>
-      document
-        .querySelector<HTMLFormElement>('[data-form-alerta]')
-        ?.dispatchEvent(new Event('submit', { cancelable: true })),
-    );
-    expect(
-      await page.evaluate(() =>
-        window.sessionStorage.getItem('epi-aetheris:alertas-token'),
-      ),
-    ).toBe('secreto-de-prueba');
-    expect(
-      await page.evaluate(() =>
-        window.localStorage.getItem('epi-aetheris:alertas-token'),
-      ),
-    ).toBeNull();
   });
 });

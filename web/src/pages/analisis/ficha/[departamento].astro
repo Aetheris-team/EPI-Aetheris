@@ -652,13 +652,13 @@ const { codigo, nombre } = departamento;
             4. Guías oficiales de prevención citadas
           </h2>
           <span class="font-sans text-xs text-ink-muted print:text-black"
-            >Contenedores de material oficial publicado</span
+            >Material citado en alertas históricas</span
           >
         </div>
 
         <div id="seccion-prevencion-cuerpo" class="space-y-3 font-sans text-xs">
           <p data-prevencion-carga class="text-ink-muted print:text-black">
-            Cargando guías citadas de alertas vigentes…
+            Cargando guías citadas en el archivo de alertas…
           </p>
           <div
             data-prevencion-lista
@@ -1378,10 +1378,7 @@ const { codigo, nombre } = departamento;
           caja.className =
             'rounded-lg border border-border bg-surface p-3 print:border-black space-y-2';
 
-          // Todo campo de la alerta se escapa antes de entrar al DOM como
-          // markup: /api/alertas se escribe por POST/PATCH autenticado
-          // (ADR 0015), asi que su contenido no es de confianza. Se reusa el
-          // mismo par escapeHtml / renderTextoAccionable de /alertas.
+          // Los campos redactados en las alertas se escapan al crear el HTML.
           let bloquesClinicos = '';
           if (alerta.signos_alarma) {
             bloquesClinicos += `
@@ -1423,7 +1420,7 @@ const { codigo, nombre } = departamento;
       } else if (prevLista) {
         prevLista.innerHTML = `
           <div class="col-span-full rounded-lg border border-border bg-surface p-3 text-ink-muted print:text-black text-xs">
-            Sin alertas de campo vigentes para este departamento.
+            Sin alertas en el corte para este departamento.
           </div>
         `;
       }

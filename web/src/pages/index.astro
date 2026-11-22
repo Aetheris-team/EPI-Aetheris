@@ -335,7 +335,7 @@ const STACK = [
 
     <div class="mx-auto max-w-[1600px] px-4 sm:px-8 lg:px-12">
       {
-        /* Tira de alertas vigentes: el unico estado que cambia en la portada,
+        /* Tira de avisos del corte de alertas,
           y el unico lugar donde aparece el coral de la marca. Si el backend
           no responde, la seccion entera se queda oculta. */
       }
@@ -363,7 +363,7 @@ const STACK = [
               class="flex items-center gap-2.5 font-sans text-sm font-semibold text-ink"
             >
               <span class="punto-vigente" aria-hidden="true"></span>
-              Alertas vigentes ahora
+              Alertas registradas en el corte
             </h2>
             <a
               href="/alertas"
@@ -619,6 +619,7 @@ const STACK = [
 </Layout>
 
 <script>
+  import { urlDato } from '../lib/datos-estaticos';
   import {
     ETIQUETAS_NIVEL,
     ETIQUETAS_TIPO,
@@ -649,14 +650,13 @@ const STACK = [
     }
   }
 
-  const API_BASE = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8000';
   const seccion = document.querySelector<HTMLElement>('[data-tira-alertas]');
   const lista = document.querySelector<HTMLElement>(
     '[data-tira-alertas-lista]',
   );
 
   if (seccion && lista) {
-    fetch(`${API_BASE}/api/alertas`)
+    fetch(urlDato('alertas/registradas-activas'))
       .then(async (respuesta) => {
         if (!respuesta.ok) throw new Error(String(respuesta.status));
         const datos = (await respuesta.json()) as PayloadAlertas;
@@ -691,7 +691,7 @@ const STACK = [
           enlace.href = `/alertas?tipo=${encodeURIComponent(alerta.tipo)}#alerta-${alerta.id}`;
           enlace.className = 'enlace-filete text-ink';
           // textContent, no innerHTML: el titulo lo redacta una persona y
-          // llega como texto plano desde la API.
+          // llega como texto plano del archivo.
           enlace.textContent = alerta.titulo;
           item.append(etiqueta, enlace);
           lista.appendChild(item);
@@ -699,7 +699,7 @@ const STACK = [
         seccion.hidden = false;
       })
       .catch(() => {
-        // Backend caido o dormido: la portada se queda sin la tira y ya.
+        // La portada sigue disponible si falla la lectura del archivo.
       });
   }
 </script>
