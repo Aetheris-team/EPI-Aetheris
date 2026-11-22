@@ -65,3 +65,7 @@ indicaciones-configuracion-codex-documentacion-EPI-Aetheris.md
 
 /skills-lock.json
 /db/migrations/seed_datos_reales.sql
+
+# Exportación local para el sitio estático
+/web/public/datos/
+/web/.exportacion.*/

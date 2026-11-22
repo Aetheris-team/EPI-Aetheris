@@ -1,0 +1,32 @@
+# Base efímera para calcular el corte a partir del volcado versionado.
+services:
+  db:
+    build: ./db
+    environment:
+      POSTGRES_USER: aetheris_export
+      POSTGRES_PASSWORD: aetheris_export
+      POSTGRES_DB: epi_aetheris
+    healthcheck:
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-U", "aetheris_export", "-d", "epi_aetheris"]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+  exportador:
+    build: ./backend
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_USER: aetheris_export
+      POSTGRES_PASSWORD: aetheris_export
+      POSTGRES_DB: epi_aetheris
+      RATE_LIMIT_ENABLED: "false"
+      CUENTAS_HABILITADAS: "false"
+    depends_on:
+      db:
+        condition: service_healthy
+    command:
+      - /bin/sh
+      - -ec
+      - |
+        uvicorn api.main:app --host 127.0.0.1 --port 8000 --no-access-log &
+        python -m api.exportar_estatico /tmp/datos
+    restart: "no"

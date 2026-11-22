@@ -6,5 +6,5 @@
 # vuelven a ejecutar.
 FROM postgres:15-alpine
 
-COPY migrations/*.sql /docker-entrypoint-initdb.d/
-COPY seed/seed_datos_reales.sql /docker-entrypoint-initdb.d/9999_seed_datos_reales.sql
+COPY --chmod=0644 migrations/*.sql /docker-entrypoint-initdb.d/
+COPY --chmod=0644 seed/seed_datos_reales.sql /docker-entrypoint-initdb.d/9999_seed_datos_reales.sql

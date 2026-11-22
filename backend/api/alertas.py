@@ -405,6 +405,8 @@ def construir_feed_atom(
     ultima_revision: str | None,
     sitio: str,
     api_url: str,
+    *,
+    historico: bool = False,
 ) -> str:
     """Feed Atom de las alertas activas sin etiqueta (ADR 0013, 0022).
 
@@ -414,18 +416,20 @@ def construir_feed_atom(
     """
     sitio = sitio.rstrip("/")
     actualizado = f"{ultima_revision or '1970-01-01'}T00:00:00Z"
+    titulo = "archivo de alertas de campo" if historico else "alertas de campo vigentes"
+    ruta = "/alertas/archivo" if historico else "/alertas"
     partes = [
         '<?xml version="1.0" encoding="utf-8"?>',
         '<feed xmlns="http://www.w3.org/2005/Atom" xml:lang="es">',
-        "<title>EPI-Aetheris: alertas de campo vigentes</title>",
+        f"<title>EPI-Aetheris: {titulo}</title>",
         f'<link rel="self" type="application/atom+xml" href="{_texto_xml(api_url)}"/>',
-        f'<link rel="alternate" type="text/html" href="{_texto_xml(sitio)}/alertas"/>',
+        f'<link rel="alternate" type="text/html" href="{_texto_xml(sitio)}{ruta}"/>',
         f"<id>tag:epi-aetheris.dev,2026:alertas</id>",
         f"<updated>{actualizado}</updated>",
         f"<subtitle>{_texto_xml(AVISO_HONESTIDAD_ALERTAS)}</subtitle>",
     ]
     for alerta in alertas:
-        enlace = f"{sitio}/alertas?tipo={alerta['tipo']}#alerta-{alerta['id']}"
+        enlace = f"{sitio}{ruta}?tipo={alerta['tipo']}#alerta-{alerta['id']}"
         desde = f"{alerta['vigente_desde']}T00:00:00Z"
         departamentos = alerta.get("departamentos") or []
         alcance = ", ".join(departamentos) if departamentos else "nacional"
