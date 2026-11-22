@@ -141,7 +141,7 @@ test('cada panel de clima tiene un solo botón «Exportar» con la imagen y los 
     await expect(opciones.nth(1)).toHaveText('Imagen (PNG)');
     await expect(opciones.nth(2)).toHaveAttribute(
       'href',
-      /\/api\/clima-dengue\/(por-anio|multipais)$/,
+      /\/datos\/clima-dengue\/(por-anio|multipais)\.json$/,
     );
     await page.keyboard.press('Escape');
     await expect(boton).toHaveAttribute('aria-expanded', 'false');
