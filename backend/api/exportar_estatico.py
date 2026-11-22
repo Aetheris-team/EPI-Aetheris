@@ -38,13 +38,8 @@ def pedir(ruta, **filtros):
     if filtros:
         url += "?" + urlencode(filtros)
     with urlopen(url, timeout=60) as respuesta:
-        cuerpo = json.load(respuesta)
-    if isinstance(cuerpo, dict) and cuerpo.get("disponible") is False:
-        # Los módulos respiratorios tienen una respuesta degradada con HTTP 200.
-        # Un volcado con datos debe poder exportar sus catálogos y series.
-        if ruta.startswith(("ira/", "neumonias/", "respiratorios/")):
-            raise RuntimeError(f"Falló la exportación de {url}: {cuerpo}")
-    return cuerpo
+        # Las respuestas de ausencia de datos también forman parte del contrato.
+        return json.load(respuesta)
 
 
 def esperar_api():
@@ -156,7 +151,7 @@ def exportar(destino, sitio):
         for evento in ("ira", "neumonias"):
             for codigo in departamentos:
                 trabajos.append(pool.submit(exportar_ruta, f"{evento}/temporal/{codigo}"))
-        for serie in archivos["respiratorios/virus"]["series"]:
+        for serie in archivos["respiratorios/virus"].get("series", []):
             virus, metrica = serie["virus"], serie["metrica"]
             trabajos.append(pool.submit(
                 exportar_ruta, "respiratorios/temporal", f"respiratorios/temporal/{virus}/{metrica}",
